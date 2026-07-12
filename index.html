@@ -790,6 +790,44 @@ body:not(.is-admin) .gal-add{display:none}
 body:not(.is-admin) .gal-del{display:none}
 body:not(.is-admin) .gal-empty{display:none}
 
+
+/* ══ COVER PHOTO ══ */
+.gal-item.is-cover{ border-color:var(--go); box-shadow:0 0 0 2px var(--go) inset; }
+.gal-cover-tag{
+  position:absolute;bottom:0;left:0;right:0;z-index:2;
+  background:var(--go);color:var(--e);
+  font-size:.5rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;
+  text-align:center;padding:.12rem;
+}
+.gal-cover-btn{
+  position:absolute;bottom:2px;left:2px;z-index:2;
+  width:20px;height:20px;line-height:1;padding:0;
+  border:1.5px solid var(--e);background:var(--w);color:var(--gh);
+  font-size:.7rem;
+  display:flex;align-items:center;justify-content:center;
+}
+.gal-cover-btn:hover{background:var(--go);color:var(--e);border-color:var(--e)}
+
+/* ══ MULTI-TRIP POPUP ══ */
+.pop-multi-lbl{
+  font-size:.55rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--go);margin:.15rem 0 .4rem;
+}
+.pop-list{display:flex;flex-direction:column;gap:.28rem;max-height:190px;overflow-y:auto}
+.pop-item{
+  display:flex;flex-direction:column;align-items:flex-start;gap:.1rem;
+  background:var(--b);border:1px solid var(--bm);
+  padding:.35rem .5rem;cursor:pointer;text-align:left;width:100%;
+  transition:border-color .12s,background .12s;
+}
+.pop-item:hover{border-color:var(--go);background:var(--e)}
+.pi-date{font-size:.52rem;font-weight:700;letter-spacing:.05em;color:var(--rl)}
+.pi-name{font-family:var(--ff-d);font-size:.8rem;font-weight:700;color:var(--s);line-height:1.2}
+.pi-cat{
+  font-size:.48rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;
+  padding:.08rem .25rem;border:1px solid;margin-top:.1rem;
+}
+
 /* ══ TOAST ══ */
 .toast{position:fixed;bottom:1.3rem;left:50%;z-index:2000;transform:translateX(-50%) translateY(55px);background:var(--f);color:var(--c);border:2px solid var(--fl);padding:.52rem 1.1rem;font-size:.7rem;font-weight:600;letter-spacing:.04em;white-space:nowrap;transition:transform .28s cubic-bezier(.22,1,.36,1)}
 .toast.on{transform:translateX(-50%) translateY(0)}
@@ -1122,10 +1160,10 @@ body:not(.is-admin) .gal-empty{display:none}
    ═══════════════════════════════════════════ */
 const SEED = [
 {id:1,nameSk:"Začiatok",nameEn:"The Beginning",countrySk:"Slovensko",countryEn:"Slovakia",dateFrom:"2018-04-06",dateTo:"",lat:48.1486,lng:17.1077,places:"Bratislava",cat:"origin",flag:"♥",noteSk:"Presný dátum nevieme. Dohodli sme sa na 6. apríli 2018 — a odvtedy to počítame.",noteEn:"We never knew the exact date. We settled on 6 April 2018 — and we've counted from there.",photo:null},
-{id:2,nameSk:"Štúrovo a Ostrihom",nameEn:"Štúrovo and Esztergom",countrySk:"Slovensko / Maďarsko",countryEn:"Slovakia / Hungary",dateFrom:"2018-04-14",dateTo:"",lat:47.7957,lng:18.7161,stops:[{n:"Štúrovo",lat:47.7957,lng:18.7444},{n:"Esztergom",lat:47.793,lng:18.7395}],places:"Štúrovo, Esztergom",cat:"trip",flag:"🇸🇰",noteSk:"Prvý spoločný výlet. Dunaj, most a bazilika na druhej strane.",noteEn:"Our first trip together. The Danube, the bridge, and the basilica on the far bank.",photo:null},
-{id:3,nameSk:"Maroko",nameEn:"Morocco",countrySk:"Maroko",countryEn:"Morocco",dateFrom:"2018-06-03",dateTo:"2018-06-08",lat:30.4278,lng:-9.5981,stops:[{n:"Agadir",lat:30.4278,lng:-9.5981},{n:"Taghazout",lat:30.5459,lng:-9.7092},{n:"Sidi Kaouki",lat:31.3833,lng:-9.85},{n:"Marrákeš",lat:31.6295,lng:-7.9811}],places:"Agadir, Taghazout, Sidi Kaouki, Marrákeš",cat:"holiday",flag:"🇲🇦",noteSk:"Prvá spoločná dovolenka. Súk, vietor od oceánu a farby, ktoré sa nedajú opísať.",noteEn:"Our first holiday. Souks, ocean wind, and colours that don't photograph properly.",photo:null},
-{id:4,nameSk:"Cyprus",nameEn:"Cyprus",countrySk:"Cyprus",countryEn:"Cyprus",dateFrom:"2018-08-30",dateTo:"2018-09-05",lat:34.9232,lng:33.6346,stops:[{n:"Larnaka",lat:34.9182,lng:33.6233},{n:"Ayia Napa",lat:34.9885,lng:34.0},{n:"Olymbos",lat:34.9358,lng:32.8656},{n:"Akrotiri",lat:34.6067,lng:32.988}],places:"Larnaka, Ayia Napa, Olymbos, Blue Lagoon, Akrotiri",cat:"holiday",flag:"🇨🇾",noteSk:"Soľné jazero, modrá lagúna a britská základňa v horách.",noteEn:"The salt lake, the blue lagoon, and an RAF base up in the mountains.",photo:null},
-{id:5,nameSk:"USA — západné pobrežie",nameEn:"USA — West Coast",countrySk:"USA",countryEn:"USA",dateFrom:"2019-02-27",dateTo:"2019-03-15",lat:34.0522,lng:-118.2437,stops:[{n:"Los Angeles",lat:34.0522,lng:-118.2437},{n:"San Diego",lat:32.7157,lng:-117.1611},{n:"Needles",lat:34.8481,lng:-114.6141},{n:"Santa Cruz",lat:36.9741,lng:-122.0308},{n:"San Francisco",lat:37.7749,lng:-122.4194},{n:"Las Vegas",lat:36.1699,lng:-115.1398},{n:"Hoover Dam",lat:36.0161,lng:-114.7377}],places:"LA, San Diego, Needles, Santa Cruz, San Francisco, Las Vegas, Hoover Dam",cat:"holiday",flag:"🇺🇸",noteSk:"Sedemnásť dní na západe. Route 66, púšť, Vegas a Pacifik.",noteEn:"Seventeen days out west. Route 66, the desert, Vegas and the Pacific.",photo:null},
+{id:2,nameSk:"Štúrovo a Ostrihom",nameEn:"Štúrovo and Esztergom",countrySk:"Slovensko / Maďarsko",countryEn:"Slovakia / Hungary",dateFrom:"2018-04-14",dateTo:"",lat:47.7957,lng:18.7161,stops:[{n:"Štúrovo",lat:47.7957,lng:18.7444,iso:"sk"},{n:"Esztergom",lat:47.793,lng:18.7395,iso:"hu"}],places:"Štúrovo, Esztergom",cat:"trip",flag:"🇸🇰",noteSk:"Prvý spoločný výlet. Dunaj, most a bazilika na druhej strane.",noteEn:"Our first trip together. The Danube, the bridge, and the basilica on the far bank.",photo:null},
+{id:3,nameSk:"Maroko",nameEn:"Morocco",countrySk:"Maroko",countryEn:"Morocco",dateFrom:"2018-06-03",dateTo:"2018-06-08",lat:30.4278,lng:-9.5981,stops:[{n:"Agadir",lat:30.4278,lng:-9.5981,iso:"ma"},{n:"Taghazout",lat:30.5459,lng:-9.7092,iso:"ma"},{n:"Sidi Kaouki",lat:31.3833,lng:-9.85,iso:"ma"},{n:"Marrákeš",lat:31.6295,lng:-7.9811,iso:"ma"}],places:"Agadir, Taghazout, Sidi Kaouki, Marrákeš",cat:"holiday",flag:"🇲🇦",noteSk:"Prvá spoločná dovolenka. Súk, vietor od oceánu a farby, ktoré sa nedajú opísať.",noteEn:"Our first holiday. Souks, ocean wind, and colours that don't photograph properly.",photo:null},
+{id:4,nameSk:"Cyprus",nameEn:"Cyprus",countrySk:"Cyprus",countryEn:"Cyprus",dateFrom:"2018-08-30",dateTo:"2018-09-05",lat:34.9232,lng:33.6346,stops:[{n:"Larnaka",lat:34.9182,lng:33.6233,iso:"cy"},{n:"Ayia Napa",lat:34.9885,lng:34.0,iso:"cy"},{n:"Olymbos",lat:34.9358,lng:32.8656,iso:"cy"},{n:"Akrotiri",lat:34.6067,lng:32.988,iso:"cy"}],places:"Larnaka, Ayia Napa, Olymbos, Blue Lagoon, Akrotiri",cat:"holiday",flag:"🇨🇾",noteSk:"Soľné jazero, modrá lagúna a britská základňa v horách.",noteEn:"The salt lake, the blue lagoon, and an RAF base up in the mountains.",photo:null},
+{id:5,nameSk:"USA — západné pobrežie",nameEn:"USA — West Coast",countrySk:"USA",countryEn:"USA",dateFrom:"2019-02-27",dateTo:"2019-03-15",lat:34.0522,lng:-118.2437,stops:[{n:"Los Angeles",lat:34.0522,lng:-118.2437,iso:"us"},{n:"San Diego",lat:32.7157,lng:-117.1611,iso:"us"},{n:"Needles",lat:34.8481,lng:-114.6141,iso:"us"},{n:"Santa Cruz",lat:36.9741,lng:-122.0308,iso:"us"},{n:"San Francisco",lat:37.7749,lng:-122.4194,iso:"us"},{n:"Las Vegas",lat:36.1699,lng:-115.1398,iso:"us"},{n:"Hoover Dam",lat:36.0161,lng:-114.7377,iso:"us"}],places:"LA, San Diego, Needles, Santa Cruz, San Francisco, Las Vegas, Hoover Dam",cat:"holiday",flag:"🇺🇸",noteSk:"Sedemnásť dní na západe. Route 66, púšť, Vegas a Pacifik.",noteEn:"Seventeen days out west. Route 66, the desert, Vegas and the Pacific.",photo:null},
 {id:6,nameSk:"Slovinsko — Bled",nameEn:"Slovenia — Bled",countrySk:"Slovinsko",countryEn:"Slovenia",dateFrom:"2019-07-18",dateTo:"2019-07-20",lat:46.3683,lng:14.1146,places:"Bled, Vogel",cat:"weekend",flag:"🇸🇮",noteSk:"Ostrov na jazere a lanovka na Vogel — s Karinkinými rodičmi.",noteEn:"The island on the lake and the cable car up Vogel — with Karinka's parents.",photo:null},
 {id:7,nameSk:"Senj",nameEn:"Senj",countrySk:"Chorvátsko",countryEn:"Croatia",dateFrom:"2019-08-16",dateTo:"2019-08-18",lat:44.9906,lng:14.9058,places:"Senj",cat:"weekend",flag:"🇭🇷",noteSk:"Prvý spoločný víkend v Seni. Ja sem chodím už roky — teraz som ju konečne zobral so sebou.",noteEn:"Our first weekend in Senj together. I'd been coming here for years — I finally brought her along.",photo:null},
 {id:8,nameSk:"Kanárske ostrovy",nameEn:"Canary Islands",countrySk:"Španielsko",countryEn:"Spain",dateFrom:"2019-10-29",dateTo:"2019-11-08",lat:28.2916,lng:-16.6291,places:"Tenerife, Fuerteventura",cat:"holiday",flag:"🇪🇸",noteSk:"Dva ostrovy, jedenásť dní. Sopky, duny a atlantický vietor.",noteEn:"Two islands, eleven days. Volcanoes, dunes and Atlantic wind.",photo:null},
@@ -1136,9 +1174,9 @@ const SEED = [
 {id:13,nameSk:"Krížna",nameEn:"Krížna",countrySk:"Slovensko",countryEn:"Slovakia",dateFrom:"2020-08-20",dateTo:"2020-08-20",lat:48.8470,lng:19.5260,places:"Krížna, Veľká Fatra",cat:"trip",flag:"🇸🇰",noteSk:"Hrebeň Veľkej Fatry. Dlhý výstup, ešte dlhší výhľad.",noteEn:"The Veľká Fatra ridge. A long climb, an even longer view.",photo:null},
 {id:14,nameSk:"Vrátna",nameEn:"Vrátna",countrySk:"Slovensko",countryEn:"Slovakia",dateFrom:"2021-07-03",dateTo:"2021-07-04",lat:49.2380,lng:18.9540,places:"Vrátna dolina",cat:"trip",flag:"🇸🇰",noteSk:"Malá Fatra s Karinkinými rodičmi. Lanovka a horský vzduch.",noteEn:"Malá Fatra with Karinka's parents. Cable car and mountain air.",photo:null},
 {id:15,nameSk:"Vysoké Tatry",nameEn:"High Tatras",countrySk:"Slovensko",countryEn:"Slovakia",dateFrom:"2021-07-31",dateTo:"2021-08-01",lat:49.1461,lng:20.1348,places:"Vysoké Tatry",cat:"trip",flag:"🇸🇰",noteSk:"Tatry s Lukyho rodinou. Plesá a kamenné chodníky.",noteEn:"The Tatras with Luky's family. Mountain lakes and stone paths.",photo:null},
-{id:16,nameSk:"Východné Slovensko",nameEn:"Eastern Slovakia",countrySk:"Slovensko",countryEn:"Slovakia",dateFrom:"2021-08-14",dateTo:"2021-08-20",lat:48.7164,lng:21.2611,stops:[{n:"Košice",lat:48.7164,lng:21.2611},{n:"Nová Sedlica",lat:49.085,lng:22.5578},{n:"Vihorlat",lat:48.9,lng:22.1167},{n:"Šarišský hrad",lat:49.0333,lng:21.3167},{n:"Spišský hrad",lat:48.9917,lng:20.7642}],places:"Košice, Nová Sedlica, Poloniny, opálové bane, Vihorlat, Šarišský hrad, Spišský hrad, Prielom Hornádu",cat:"holiday",flag:"🇸🇰",noteSk:"Týždeň na východe. Hrady, poloniny, opálové bane a Prielom Hornádu.",noteEn:"A week out east. Castles, primeval forest, opal mines and the Hornád gorge.",photo:null},
-{id:17,nameSk:"Orava a Čičmany",nameEn:"Orava and Čičmany",countrySk:"Slovensko",countryEn:"Slovakia",dateFrom:"2021-09-12",dateTo:"2021-09-15",lat:49.2610,lng:19.3550,stops:[{n:"Oravský hrad",lat:49.2536,lng:19.34},{n:"Oravská priehrada",lat:49.3167,lng:19.5},{n:"Čičmany",lat:49.0333,lng:18.6167}],places:"Oravský hrad, Oravská priehrada, Oravská Polhora, Čičmany",cat:"weekend",flag:"🇸🇰",noteSk:"Oravský hrad nad riekou. A potom maľované domy v Čičmanoch.",noteEn:"Orava Castle above the river. Then the painted houses of Čičmany.",photo:null},
-{id:18,nameSk:"Ždiar a Liptovská Mara",nameEn:"Ždiar and Liptovská Mara",countrySk:"Slovensko",countryEn:"Slovakia",dateFrom:"2021-11-01",dateTo:"2021-11-05",lat:49.2568,lng:20.1413,stops:[{n:"Ždiar",lat:49.2568,lng:20.2192},{n:"Liptovská Mara",lat:49.0833,lng:19.5333}],places:"Ždiar, Liptovská Mara",cat:"weekend",flag:"🇸🇰",noteSk:"Novembrové hory. Prázdno, ticho a hmla nad priehradou.",noteEn:"November in the mountains. Empty, quiet, fog over the reservoir.",photo:null},
+{id:16,nameSk:"Východné Slovensko",nameEn:"Eastern Slovakia",countrySk:"Slovensko",countryEn:"Slovakia",dateFrom:"2021-08-14",dateTo:"2021-08-20",lat:48.7164,lng:21.2611,stops:[{n:"Košice",lat:48.7164,lng:21.2611,iso:"sk"},{n:"Nová Sedlica",lat:49.085,lng:22.5578,iso:"sk"},{n:"Vihorlat",lat:48.9,lng:22.1167,iso:"sk"},{n:"Šarišský hrad",lat:49.0333,lng:21.3167,iso:"sk"},{n:"Spišský hrad",lat:48.9917,lng:20.7642,iso:"sk"}],places:"Košice, Nová Sedlica, Poloniny, opálové bane, Vihorlat, Šarišský hrad, Spišský hrad, Prielom Hornádu",cat:"holiday",flag:"🇸🇰",noteSk:"Týždeň na východe. Hrady, poloniny, opálové bane a Prielom Hornádu.",noteEn:"A week out east. Castles, primeval forest, opal mines and the Hornád gorge.",photo:null},
+{id:17,nameSk:"Orava a Čičmany",nameEn:"Orava and Čičmany",countrySk:"Slovensko",countryEn:"Slovakia",dateFrom:"2021-09-12",dateTo:"2021-09-15",lat:49.2610,lng:19.3550,stops:[{n:"Oravský hrad",lat:49.2536,lng:19.34,iso:"sk"},{n:"Oravská priehrada",lat:49.3167,lng:19.5,iso:"sk"},{n:"Čičmany",lat:49.0333,lng:18.6167,iso:"sk"}],places:"Oravský hrad, Oravská priehrada, Oravská Polhora, Čičmany",cat:"weekend",flag:"🇸🇰",noteSk:"Oravský hrad nad riekou. A potom maľované domy v Čičmanoch.",noteEn:"Orava Castle above the river. Then the painted houses of Čičmany.",photo:null},
+{id:18,nameSk:"Ždiar a Liptovská Mara",nameEn:"Ždiar and Liptovská Mara",countrySk:"Slovensko",countryEn:"Slovakia",dateFrom:"2021-11-01",dateTo:"2021-11-05",lat:49.2568,lng:20.1413,stops:[{n:"Ždiar",lat:49.2568,lng:20.2192,iso:"sk"},{n:"Liptovská Mara",lat:49.0833,lng:19.5333,iso:"sk"}],places:"Ždiar, Liptovská Mara",cat:"weekend",flag:"🇸🇰",noteSk:"Novembrové hory. Prázdno, ticho a hmla nad priehradou.",noteEn:"November in the mountains. Empty, quiet, fog over the reservoir.",photo:null},
 {id:19,nameSk:"Katschberg",nameEn:"Katschberg",countrySk:"Rakúsko",countryEn:"Austria",dateFrom:"2022-03-08",dateTo:"2022-03-13",lat:47.0598,lng:13.5534,places:"Katschberg",cat:"ski",flag:"🇦🇹",noteSk:"Prvý Katschberg s Lukyho rodinou. Šesť dní na svahoch.",noteEn:"First Katschberg with Luky's family. Six days on the slopes.",photo:null},
 {id:20,nameSk:"Barcelona",nameEn:"Barcelona",countrySk:"Španielsko",countryEn:"Spain",dateFrom:"2022-06-03",dateTo:"2022-06-08",lat:41.3851,lng:2.1734,places:"Tarragona, Barcelona — Red Hot Chili Peppers",cat:"gig",flag:"🇪🇸",noteSk:"RHCP v Barcelone. Tarragona ako bonus a šesť dní slnka.",noteEn:"RHCP in Barcelona. Tarragona as a bonus and six days of sun.",photo:null},
 {id:21,nameSk:"Bratislava",nameEn:"Bratislava",countrySk:"Slovensko",countryEn:"Slovakia",dateFrom:"2022-07-02",dateTo:"2022-07-02",lat:48.1486,lng:17.1077,places:"Bratislava — prvé korčuľovanie",cat:"trip",flag:"🇸🇰",noteSk:"Prvé korčuľovanie spolu. V júli.",noteEn:"Our first time skating together. In July.",photo:null},
@@ -1146,12 +1184,12 @@ const SEED = [
 {id:23,nameSk:"Balaton",nameEn:"Lake Balaton",countrySk:"Maďarsko",countryEn:"Hungary",dateFrom:"2022-08-19",dateTo:"2022-08-21",lat:46.8160,lng:17.8136,places:"Balaton",cat:"weekend",flag:"🇭🇺",noteSk:"Víkend pri Balatone. Plytká teplá voda a langoše.",noteEn:"A weekend at Balaton. Shallow warm water and lángos.",photo:null},
 {id:24,nameSk:"Trenčín",nameEn:"Trenčín",countrySk:"Slovensko",countryEn:"Slovakia",dateFrom:"2022-08-26",dateTo:"2022-08-27",lat:48.8944,lng:18.0416,places:"Trenčín — Punkáči deťom, The Bones",cat:"gig",flag:"🇸🇰",noteSk:"Punkáči deťom. The Bones druhýkrát — a tentoraz doma.",noteEn:"Punkáči deťom festival. The Bones for the second time — this time at home.",photo:null},
 {id:25,nameSk:"Terchová",nameEn:"Terchová",countrySk:"Slovensko",countryEn:"Slovakia",dateFrom:"2022-09-01",dateTo:"2022-09-03",lat:49.2617,lng:18.9689,places:"Terchová — Rastova štyridsiatka",cat:"weekend",flag:"🇸🇰",noteSk:"Chata v Terchovej a Rastove štyridsiate narodeniny.",noteEn:"A chalet in Terchová and Rasto's fortieth birthday.",photo:null},
-{id:26,nameSk:"Solún a Kréta",nameEn:"Thessaloniki and Crete",countrySk:"Grécko",countryEn:"Greece",dateFrom:"2022-11-02",dateTo:"2022-11-09",lat:40.6401,lng:22.9444,stops:[{n:"Solún",lat:40.6401,lng:22.9444},{n:"Kréta",lat:35.2401,lng:24.8093}],places:"Solún, Kréta",cat:"holiday",flag:"🇬🇷",noteSk:"Novembrové Grécko. Prázdne pláže, teplé more a nikde žiadni turisti.",noteEn:"Greece in November. Empty beaches, warm sea, no tourists anywhere.",photo:null},
+{id:26,nameSk:"Solún a Kréta",nameEn:"Thessaloniki and Crete",countrySk:"Grécko",countryEn:"Greece",dateFrom:"2022-11-02",dateTo:"2022-11-09",lat:40.6401,lng:22.9444,stops:[{n:"Solún",lat:40.6401,lng:22.9444,iso:"gr"},{n:"Kréta",lat:35.2401,lng:24.8093,iso:"gr"}],places:"Solún, Kréta",cat:"holiday",flag:"🇬🇷",noteSk:"Novembrové Grécko. Prázdne pláže, teplé more a nikde žiadni turisti.",noteEn:"Greece in November. Empty beaches, warm sea, no tourists anywhere.",photo:null},
 {id:27,nameSk:"Barcelona",nameEn:"Barcelona",countrySk:"Španielsko",countryEn:"Spain",dateFrom:"2022-12-02",dateTo:"2022-12-04",lat:41.3851,lng:2.1734,places:"Barcelona — Cock Sparrer",cat:"gig",flag:"🇪🇸",noteSk:"Cock Sparrer po prvý raz. Barcelona v decembri.",noteEn:"Cock Sparrer for the first time. Barcelona in December.",photo:null},
 {id:28,nameSk:"Katschberg",nameEn:"Katschberg",countrySk:"Rakúsko",countryEn:"Austria",dateFrom:"2023-03-01",dateTo:"2023-03-04",lat:47.0598,lng:13.5534,places:"Katschberg",cat:"ski",flag:"🇦🇹",noteSk:"Katschberg druhýkrát. Kariny aj Lukyho rodičia. Už je to zvyk.",noteEn:"Katschberg again. Both sets of parents. It's becoming a habit.",photo:null},
 {id:29,nameSk:"Tatranská Lomnica",nameEn:"Tatranská Lomnica",countrySk:"Slovensko",countryEn:"Slovakia",dateFrom:"2023-04-29",dateTo:"2023-05-01",lat:49.1656,lng:20.2771,places:"Tatranská Lomnica, Skalnaté pleso",cat:"ski",flag:"🇸🇰",noteSk:"Jarné lyžovanie na Skalnatom plese. Sneh v máji.",noteEn:"Spring skiing at Skalnaté pleso. Snow in May.",photo:null},
-{id:30,nameSk:"Tábor",nameEn:"Tábor",countrySk:"Česko",countryEn:"Czech Republic",dateFrom:"2023-06-22",dateTo:"2023-06-23",lat:49.4144,lng:14.6578,stops:[{n:"Dvůr Králové",lat:50.4326,lng:15.8181},{n:"Tábor",lat:49.4144,lng:14.6578}],places:"Dvůr Králové ZOO, Tábor — Mighty Sounds, Rancid",cat:"gig",flag:"🇨🇿",noteSk:"Cez deň zoo vo Dvore Králové, večer Rancid na Mighty Sounds.",noteEn:"Dvůr Králové zoo by day, Rancid at Mighty Sounds by night.",photo:null},
-{id:31,nameSk:"Taliansko, Chorvátsko, Rumunsko",nameEn:"Italy, Croatia, Romania",countrySk:"Taliansko / Chorvátsko / Rumunsko",countryEn:"Italy / Croatia / Romania",dateFrom:"2023-07-29",dateTo:"2023-08-11",lat:45.4654,lng:12.3589,stops:[{n:"Benátky",lat:45.4408,lng:12.3155},{n:"Novigrad",lat:45.3167,lng:13.5667},{n:"Novi Vinodolski",lat:45.1333,lng:14.7833},{n:"Transfăgărășan",lat:45.6,lng:24.6167}],places:"Sever Talianska, Novigrad, Novi Vinodolski, Transfagaraš",cat:"holiday",flag:"🇮🇹",noteSk:"Štrnásť dní a tri krajiny. Benátky, Jadran a Transfagaraš na koniec.",noteEn:"Fourteen days, three countries. Venice, the Adriatic, and the Transfăgărășan to finish.",photo:null},
+{id:30,nameSk:"Tábor",nameEn:"Tábor",countrySk:"Česko",countryEn:"Czech Republic",dateFrom:"2023-06-22",dateTo:"2023-06-23",lat:49.4144,lng:14.6578,stops:[{n:"Dvůr Králové",lat:50.4326,lng:15.8181,iso:"cz"},{n:"Tábor",lat:49.4144,lng:14.6578,iso:"cz"}],places:"Dvůr Králové ZOO, Tábor — Mighty Sounds, Rancid",cat:"gig",flag:"🇨🇿",noteSk:"Cez deň zoo vo Dvore Králové, večer Rancid na Mighty Sounds.",noteEn:"Dvůr Králové zoo by day, Rancid at Mighty Sounds by night.",photo:null},
+{id:31,nameSk:"Taliansko, Chorvátsko, Rumunsko",nameEn:"Italy, Croatia, Romania",countrySk:"Taliansko / Chorvátsko / Rumunsko",countryEn:"Italy / Croatia / Romania",dateFrom:"2023-07-29",dateTo:"2023-08-11",lat:45.4654,lng:12.3589,stops:[{n:"Benátky",lat:45.4408,lng:12.3155,iso:"it"},{n:"Novigrad",lat:45.3167,lng:13.5667,iso:"hr"},{n:"Novi Vinodolski",lat:45.1333,lng:14.7833,iso:"hr"},{n:"Transfăgărășan",lat:45.6,lng:24.6167,iso:"ro"}],places:"Sever Talianska, Novigrad, Novi Vinodolski, Transfagaraš",cat:"holiday",flag:"🇮🇹",noteSk:"Štrnásť dní a tri krajiny. Benátky, Jadran a Transfagaraš na koniec.",noteEn:"Fourteen days, three countries. Venice, the Adriatic, and the Transfăgărășan to finish.",photo:null},
 {id:32,nameSk:"Viedeň — prírodovedné múzeum",nameEn:"Vienna",countrySk:"Rakúsko",countryEn:"Austria",dateFrom:"2023-11-02",dateTo:"2023-11-02",lat:48.2082,lng:16.3738,places:"Naturhistorisches Museum, Viedeň",cat:"trip",flag:"🇦🇹",noteSk:"Naturhistorisches Museum. Kostry, meteority a Venuša z Willendorfu.",noteEn:"The Naturhistorisches. Skeletons, meteorites and the Venus of Willendorf.",photo:null},
 {id:33,nameSk:"Londýn",nameEn:"London",countrySk:"Veľká Británia",countryEn:"United Kingdom",dateFrom:"2023-12-15",dateTo:"2023-12-17",lat:51.5074,lng:-0.1278,places:"100 Club, Oxford Street — Cockney Rejects",cat:"gig",flag:"🇬🇧",noteSk:"Cockney Rejects v 100 Clube na Oxford Street. Presne tam, kde majú byť.",noteEn:"Cockney Rejects at the 100 Club on Oxford Street. Exactly where they belong.",photo:null},
 {id:34,nameSk:"Katschberg",nameEn:"Katschberg",countrySk:"Rakúsko",countryEn:"Austria",dateFrom:"2024-03-03",dateTo:"2024-03-06",lat:47.0598,lng:13.5534,places:"Katschberg",cat:"ski",flag:"🇦🇹",noteSk:"Katschberg tretíkrát. Oficiálne je to tradícia.",noteEn:"Katschberg for the third time. Officially a tradition now.",photo:null},
@@ -1160,12 +1198,12 @@ const SEED = [
 {id:37,nameSk:"Bratislava",nameEn:"Bratislava",countrySk:"Slovensko",countryEn:"Slovakia",dateFrom:"2024-07-21",dateTo:"2024-07-21",lat:48.1486,lng:17.1077,places:"Bratislava — AC/DC",cat:"gig",flag:"🇸🇰",noteSk:"AC/DC. V Bratislave. Nemuseli sme nikam cestovať.",noteEn:"AC/DC. In Bratislava. We didn't have to travel anywhere.",photo:null},
 {id:38,nameSk:"Senj",nameEn:"Senj",countrySk:"Chorvátsko",countryEn:"Croatia",dateFrom:"2024-08-29",dateTo:"2024-09-01",lat:44.9906,lng:14.9058,places:"Senj",cat:"weekend",flag:"🇭🇷",noteSk:"Senj dvakrát za jedno leto. Tentoraz s rodičmi.",noteEn:"Senj twice in one summer. This time with the parents.",photo:null},
 {id:39,nameSk:"Kostolná Ves",nameEn:"Kostolná Ves",countrySk:"Slovensko",countryEn:"Slovakia",dateFrom:"2024-09-21",dateTo:"2024-09-21",lat:48.7350,lng:18.5420,places:"Kostolná Ves",cat:"weekend",flag:"🇸🇰",noteSk:"Chata so Simonami, Fabkom a spol.",noteEn:"A chalet with both Simonas, Fabko and the rest.",photo:null},
-{id:40,nameSk:"Cyprus a Neapol",nameEn:"Cyprus and Naples",countrySk:"Cyprus / Taliansko",countryEn:"Cyprus / Italy",dateFrom:"2024-10-29",dateTo:"2024-11-06",lat:34.6100,lng:32.9800,stops:[{n:"Pomos",lat:35.0333,lng:32.4167},{n:"Pissouri",lat:34.67,lng:32.705},{n:"Lady's Mile Beach",lat:34.61,lng:32.98},{n:"Neapol",lat:40.8518,lng:14.2681}],places:"Pomos, Pissouri, Akrotiri — Lady's Mile Beach; Neapol",cat:"holiday",flag:"💍",noteSk:"Prázdna Lady's Mile Beach. Smaragd v zlate. Povedala áno.",noteEn:"An empty Lady's Mile Beach. An emerald set in gold. She said yes.",photo:null},
+{id:40,nameSk:"Cyprus a Neapol",nameEn:"Cyprus and Naples",countrySk:"Cyprus / Taliansko",countryEn:"Cyprus / Italy",dateFrom:"2024-10-29",dateTo:"2024-11-06",lat:34.6100,lng:32.9800,stops:[{n:"Pomos",lat:35.0333,lng:32.4167,iso:"cy"},{n:"Pissouri",lat:34.67,lng:32.705,iso:"cy"},{n:"Lady's Mile Beach",lat:34.61,lng:32.98,iso:"cy"},{n:"Neapol",lat:40.8518,lng:14.2681,iso:"it"}],places:"Pomos, Pissouri, Akrotiri — Lady's Mile Beach; Neapol",cat:"holiday",flag:"💍",noteSk:"Prázdna Lady's Mile Beach. Smaragd v zlate. Povedala áno.",noteEn:"An empty Lady's Mile Beach. An emerald set in gold. She said yes.",photo:null},
 {id:41,nameSk:"Turček",nameEn:"Turček",countrySk:"Slovensko",countryEn:"Slovakia",dateFrom:"2024-12-30",dateTo:"2024-12-30",lat:48.6800,lng:18.9200,places:"Turček",cat:"trip",flag:"🇸🇰",noteSk:"Turček medzi sviatkami, s oboma rodičmi.",noteEn:"Turček between the holidays, with both sets of parents.",photo:null},
 {id:42,nameSk:"Edinburgh",nameEn:"Edinburgh",countrySk:"Veľká Británia",countryEn:"United Kingdom",dateFrom:"2025-02-28",dateTo:"2025-03-02",lat:55.9533,lng:-3.1883,places:"Edinburgh",cat:"weekend",flag:"🏴󠁧󠁢󠁳󠁣󠁴󠁿",noteSk:"Edinburgh vo februári. Hrad, whisky a vietor, ktorý reže.",noteEn:"Edinburgh in February. The castle, whisky, and wind that cuts.",photo:null},
 {id:43,nameSk:"Podhorie",nameEn:"Podhorie",countrySk:"Slovensko",countryEn:"Slovakia",dateFrom:"2025-04-18",dateTo:"2025-04-19",lat:48.5900,lng:18.8300,places:"Podhorie — u Moskovcov",cat:"weekend",flag:"🇸🇰",noteSk:"Víkend u Moskovcov v Podhorí.",noteEn:"A weekend at the Moskovci place in Podhorie.",photo:null},
 {id:44,nameSk:"Neziderské jazero",nameEn:"Neusiedler See",countrySk:"Rakúsko",countryEn:"Austria",dateFrom:"2025-06-29",dateTo:"2025-06-29",lat:47.8500,lng:16.7600,places:"Neusiedler See",cat:"trip",flag:"🇦🇹",noteSk:"Výlet k Nezideru s oboma rodičmi.",noteEn:"A day at Neusiedler See with both sets of parents.",photo:null},
-{id:45,nameSk:"Kostarika",nameEn:"Costa Rica",countrySk:"Kostarika",countryEn:"Costa Rica",dateFrom:"2025-07-03",dateTo:"2025-07-16",lat:9.7489,lng:-83.7534,stops:[{n:"La Fortuna",lat:10.4713,lng:-84.6428},{n:"Lake Arenal",lat:10.5,lng:-84.9167},{n:"Santa Teresa",lat:9.6425,lng:-85.1667},{n:"Montezuma",lat:9.65,lng:-85.0667},{n:"Tortuga Island",lat:9.7833,lng:-84.9167},{n:"Uvita",lat:9.1667,lng:-83.7333},{n:"Drake Bay",lat:8.7,lng:-83.65},{n:"Corcovado NP",lat:8.55,lng:-83.5833}],places:"La Fortuna, Arenal, Manzanillo, Santa Teresa, Montezuma, Tortuga, Uvita, Drake Bay, Corcovado",cat:"holiday",flag:"🇨🇷",noteSk:"Štrnásť dní a najďalej, ako sme kedy boli. Džungľa, opice, pura vida.",noteEn:"Fourteen days and the furthest we've ever been. Jungle, monkeys, pura vida.",photo:null},
+{id:45,nameSk:"Kostarika",nameEn:"Costa Rica",countrySk:"Kostarika",countryEn:"Costa Rica",dateFrom:"2025-07-03",dateTo:"2025-07-16",lat:9.7489,lng:-83.7534,stops:[{n:"La Fortuna",lat:10.4713,lng:-84.6428,iso:"cr"},{n:"Lake Arenal",lat:10.5,lng:-84.9167,iso:"cr"},{n:"Santa Teresa",lat:9.6425,lng:-85.1667,iso:"cr"},{n:"Montezuma",lat:9.65,lng:-85.0667,iso:"cr"},{n:"Tortuga Island",lat:9.7833,lng:-84.9167,iso:"cr"},{n:"Uvita",lat:9.1667,lng:-83.7333,iso:"cr"},{n:"Drake Bay",lat:8.7,lng:-83.65,iso:"cr"},{n:"Corcovado NP",lat:8.55,lng:-83.5833,iso:"cr"}],places:"La Fortuna, Arenal, Manzanillo, Santa Teresa, Montezuma, Tortuga, Uvita, Drake Bay, Corcovado",cat:"holiday",flag:"🇨🇷",noteSk:"Štrnásť dní a najďalej, ako sme kedy boli. Džungľa, opice, pura vida.",noteEn:"Fourteen days and the furthest we've ever been. Jungle, monkeys, pura vida.",photo:null},
 {id:46,nameSk:"Senj",nameEn:"Senj",countrySk:"Chorvátsko",countryEn:"Croatia",dateFrom:"2025-08-15",dateTo:"2025-08-19",lat:44.9906,lng:14.9058,places:"Senj",cat:"weekend",flag:"🇭🇷",noteSk:"Senj počtvrté spolu. Netreba nič plánovať, len prísť.",noteEn:"Senj together for the fourth time. Nothing left to plan, just turn up.",photo:null},
 {id:47,nameSk:"Brno",nameEn:"Brno",countrySk:"Česko",countryEn:"Czech Republic",dateFrom:"2025-10-03",dateTo:"2025-10-03",lat:49.1951,lng:16.6068,places:"Brno — HC Kometa vs. Rytíři Kladno",cat:"trip",flag:"🇨🇿",noteSk:"HC Kometa Brno proti Rytířom Kladno, s Lukyho rodičmi.",noteEn:"HC Kometa Brno versus Rytíři Kladno, with Luky's parents.",photo:null},
 {id:48,nameSk:"Lipsko",nameEn:"Leipzig",countrySk:"Nemecko",countryEn:"Germany",dateFrom:"2025-12-05",dateTo:"2025-12-06",lat:51.3397,lng:12.3731,places:"Hellraiser, Lipsko — A.C.A.B.",cat:"gig",flag:"🇩🇪",noteSk:"A.C.A.B. v Hellraiseri. Advent v Lipsku.",noteEn:"A.C.A.B. at the Hellraiser. Advent in Leipzig.",photo:null},
@@ -1180,7 +1218,7 @@ const SEED = [
 /* ═══════════ VERSION ═══════════
    Bump this on every iteration that ships — shown in the topbar next
    to the app icon, same pattern as Kvašung. One place to update. */
-const APP_VERSION = 'v2.2.0';
+const APP_VERSION = 'v2.3.0';
 
 /* ═══════════ SUPABASE ═══════════ */
 const SB_URL  = 'https://vchxjbdrromujmzujduo.supabase.co';
@@ -1430,9 +1468,21 @@ const ISO = {
   'Greece':'gr','Czech Republic':'cz','Italy':'it','Romania':'ro',
   'United Kingdom':'gb','Norway':'no','Costa Rica':'cr'
 };
+/* Primary country — used for the flag and the tricolour rail, where a
+   single answer is needed. */
 function isoOf(t){
   const first = (t.countryEn || '').split(' / ')[0].trim();
   return ISO[first] || null;
+}
+
+/* EVERY country a trip touched. A roadtrip through Italy, Croatia and
+   Romania should colour all three on the map, not just Italy — taking
+   only the first entry is what left Romania blank. */
+function isosOf(t){
+  return (t.countryEn || '')
+    .split(' / ')
+    .map(c => ISO[c.trim()])
+    .filter(Boolean);
 }
 /* Three representative colours per flag, used for the thin rail down
    the edge of a card. Not a literal flag — just enough to read the
@@ -1554,7 +1604,7 @@ function pinSize(zoom){
   if(zoom >= 7)  return 24;
   return 19;
 }
-function mkPin(cat, zoom, isSub){
+function mkPin(cat, zoom, isSub, badge){
   const f = CAT_FILL[cat] || '#B5350A';
   const s = isSub ? Math.round(pinSize(zoom)*0.7) : pinSize(zoom);
   const h = Math.round(s*1.35);
@@ -1575,13 +1625,45 @@ function mkPin(cat, zoom, isSub){
   });
 }
 
+/* Pin with a small count badge, for places we've been more than once. */
+function mkPinBadged(cat, zoom, n){
+  const f = CAT_FILL[cat] || '#B5350A';
+  const s = pinSize(zoom);
+  const h = Math.round(s*1.35);
+  const r = s/2;
+  const inner = s*0.34;
+  const bR = Math.max(s*0.30, 7);
+  const bx = s - bR*0.55, by = bR*0.55;
+  return L.divIcon({
+    className:'',
+    html:'<svg width="'+(s+bR)+'" height="'+h+'" viewBox="-2 -2 '+(s+bR+2)+' '+(h+2)+'" xmlns="http://www.w3.org/2000/svg">'+
+         '<path d="M'+r+' 0 C'+(r*1.66)+' 0 '+s+' '+(r*0.66)+' '+s+' '+r+
+           ' C'+s+' '+(r*1.8)+' '+r+' '+h+' '+r+' '+h+
+           ' C'+r+' '+h+' 0 '+(r*1.8)+' 0 '+r+
+           ' C0 '+(r*0.66)+' '+(r*0.34)+' 0 '+r+' 0 Z" '+
+           'fill="'+f+'" stroke="#1A0F05" stroke-width="1.4"/>'+
+         '<circle cx="'+r+'" cy="'+r+'" r="'+inner+'" fill="#FDFAF2"/>'+
+         '<circle cx="'+bx+'" cy="'+by+'" r="'+bR+'" fill="#C49020" stroke="#1A0F05" stroke-width="1.4"/>'+
+         '<text x="'+bx+'" y="'+(by + bR*0.36)+'" text-anchor="middle" '+
+           'font-family="Georgia,serif" font-weight="700" font-size="'+(bR*1.15)+'" fill="#1A0F05">'+n+'</text>'+
+         '</svg>',
+    iconSize:[s+bR,h], iconAnchor:[r,h], popupAnchor:[0,-h+2]
+  });
+}
+
 /* Where to place a trip's main pin: the average of its stops if it
    has any, otherwise the single lat/lng it was given. */
+/* A trip's representative point. For a multi-stop trip we take the FIRST
+   stop, not the average: averaging Cyprus and Naples put the pin in the
+   middle of the Aegean, and averaging a roadtrip across three countries
+   put it nowhere any of them. The first stop is where the trip began,
+   which is both meaningful and always on land. */
 function mainLatLng(t){
   if(Array.isArray(t.stops) && t.stops.length){
-    const lat = t.stops.reduce((s,p)=>s+p.lat,0) / t.stops.length;
-    const lng = t.stops.reduce((s,p)=>s+p.lng,0) / t.stops.length;
-    return [lat,lng];
+    const p = t.stops[0];
+    if(typeof p.lat === 'number' && typeof p.lng === 'number'){
+      return [p.lat, p.lng];
+    }
   }
   return [t.lat, t.lng];
 }
@@ -1638,8 +1720,87 @@ function showStops(t){
 
 /* The default view is the country wash — no pins. Pins are noise at
    world zoom and the fill already says "we've been here". They appear
-   when you pick a category filter, or when you tap a country to open it. */
-let pinsMode = null;   // null = none, 'filter' = category filter, 'country' = one country
+   when you pick a category filter, or when you tap a country to open it.
+
+   Turn the trip list into a list of map points. A trip with stops
+   contributes one point per stop (so Naples plots in Naples, not at the
+   average of Naples and Cyprus, which lands in the sea). A trip without
+   stops contributes its single coordinate. */
+function pointsFor(trips, isoFilter){
+  const pts = [];
+  trips.forEach(t=>{
+    if(Array.isArray(t.stops) && t.stops.length){
+      t.stops.forEach(p=>{
+        if(isoFilter && p.iso !== isoFilter) return;
+        if(typeof p.lat!=='number' || typeof p.lng!=='number') return;
+        pts.push({ trip:t, lat:p.lat, lng:p.lng, label:p.n });
+      });
+    } else {
+      if(isoFilter && !isosOf(t).includes(isoFilter)) return;
+      if(typeof t.lat!=='number' || typeof t.lng!=='number') return;
+      pts.push({ trip:t, lat:t.lat, lng:t.lng, label:null });
+    }
+  });
+  return pts;
+}
+
+/* Points within ~12km of each other are the same place. Katschberg three
+   winters running is one pin, not three stacked on top of each other —
+   and clicking it should offer all three trips, not silently pick one. */
+function clusterPoints(pts){
+  const clusters = [];
+  const near = (a,b)=>{
+    const dLat = (a.lat-b.lat) * 111;
+    const dLng = (a.lng-b.lng) * 111 * Math.cos(a.lat*Math.PI/180);
+    return Math.sqrt(dLat*dLat + dLng*dLng) < 12;
+  };
+  pts.forEach(p=>{
+    const hit = clusters.find(c=>near(c, p));
+    if(hit){
+      hit.items.push(p);
+      // keep the cluster centred on its members
+      hit.lat = hit.items.reduce((s,i)=>s+i.lat,0)/hit.items.length;
+      hit.lng = hit.items.reduce((s,i)=>s+i.lng,0)/hit.items.length;
+    } else {
+      clusters.push({ lat:p.lat, lng:p.lng, items:[p] });
+    }
+  });
+  return clusters;
+}
+
+function clusterPopup(c){
+  const uniq = [];
+  c.items.forEach(p=>{
+    if(!uniq.some(u=>u.trip.id === p.trip.id)) uniq.push(p);
+  });
+
+  // one trip here — show it directly
+  if(uniq.length === 1){
+    return previewHtml(uniq[0].trip, uniq[0].label);
+  }
+
+  // several trips at the same place — list them all
+  const title = c.items[0].label || nm(uniq[0].trip);
+  let h = '<div class="pop-name">'+esc(title)+'</div>'+
+    '<div class="pop-multi-lbl">'+
+      (lang==='sk' ? uniq.length+'× tu' : uniq.length+' trips here')+
+    '</div><div class="pop-list">';
+  uniq
+    .slice()
+    .sort((a,b)=>(b.trip.dateFrom||'').localeCompare(a.trip.dateFrom||''))
+    .forEach(p=>{
+      const t = p.trip;
+      h += '<button class="pop-item" onclick="tap();openModal('+t.id+')">'+
+        '<span class="pi-date">'+esc(fmt(t.dateFrom, t.dateTo))+'</span>'+
+        '<span class="pi-name">'+esc(nm(t))+'</span>'+
+        '<span class="pi-cat" style="'+CAT_TAG[t.cat]+'">'+esc(catLabel(t.cat))+'</span>'+
+      '</button>';
+    });
+  h += '</div>';
+  return h;
+}
+
+let pinsMode = null;
 
 function drawMarkers(){
   if(!mapOk || !map) return;
@@ -1648,39 +1809,44 @@ function drawMarkers(){
   clearSubMarkers();
   expandedId = null;
 
-  const trips = getT();
+  const trips = getT().filter(t=>t.cat!=='origin');
   const zoom = map.getZoom();
 
-  let shown = [];
+  let pts = [];
   if(curFilter !== 'all'){
     pinsMode = 'filter';
-    shown = trips.filter(t=>
-      typeof t.lat==='number' && typeof t.lng==='number' && t.cat===curFilter);
+    pts = pointsFor(trips.filter(t=>t.cat===curFilter), null);
   } else if(openCountry){
     pinsMode = 'country';
-    shown = trips.filter(t=>
-      typeof t.lat==='number' && typeof t.lng==='number' && isoOf(t)===openCountry);
+    pts = pointsFor(trips, openCountry);
   } else {
     pinsMode = null;
-    shown = [];   // clean map: just the coloured countries
+    pts = [];   // clean country map
   }
 
-  shown.forEach(t=>{
-    const ll = mainLatLng(t);
-    if(typeof ll[0] !== 'number' || typeof ll[1] !== 'number') return;
-    const m = L.marker(ll, {icon:mkPin(t.cat, zoom, false)}).addTo(map);
-    const hasStops = Array.isArray(t.stops) && t.stops.length > 1;
-    m.bindPopup(previewHtml(t, null));
-    if(hasStops){
-      m.on('click', ()=>{ setTimeout(()=>showStops(t), 180); });
-    }
+  const clusters = clusterPoints(pts);
+
+  clusters.forEach(c=>{
+    // colour by the most common category in the cluster
+    const catCount = {};
+    c.items.forEach(p=>{ catCount[p.trip.cat] = (catCount[p.trip.cat]||0)+1; });
+    const cat = Object.entries(catCount).sort((a,b)=>b[1]-a[1])[0][0];
+
+    const uniqTrips = new Set(c.items.map(p=>p.trip.id)).size;
+    const m = L.marker([c.lat, c.lng], {
+      icon: uniqTrips > 1
+        ? mkPinBadged(cat, zoom, uniqTrips)
+        : mkPin(cat, zoom, false)
+    }).addTo(map);
+    m._pinData = { cat, n: uniqTrips };   // so zoom changes can re-render it
+    m.bindPopup(clusterPopup(c), { maxHeight: 260 });
     markers.push(m);
   });
 
-  if(shown.length > 1){
-    map.fitBounds(L.latLngBounds(shown.map(mainLatLng)).pad(0.12));
-  } else if(shown.length === 1){
-    map.setView(mainLatLng(shown[0]), 8);
+  if(clusters.length > 1){
+    map.fitBounds(L.latLngBounds(clusters.map(c=>[c.lat,c.lng])).pad(0.15));
+  } else if(clusters.length === 1){
+    map.setView([clusters[0].lat, clusters[0].lng], 8);
   }
 
   safeMap(()=>{ drawCountryFill(); refreshCapitals(); });
@@ -1704,18 +1870,18 @@ function resetMap(){
 /* Re-draw pins at the right size when the zoom level crosses one of
    the pinSize() thresholds — cheap check, only redraws icons, never
    refetches data. */
+/* Markers are clusters now, so we can't map marker-index back to a trip.
+   Each marker carries the data it needs to redraw itself at a new zoom.
+   Note this only ever calls setIcon — never drawMarkers(), which would
+   fitBounds, change the zoom, and fire this handler again in a loop. */
 function refreshPinSizes(){
   if(!mapOk || !map) return;
   const zoom = map.getZoom();
-  const trips = getT();
-  markers.forEach((m,i)=>{
-    const t = trips[i];
-    if(t) m.setIcon(mkPin(t.cat, zoom, false));
+  markers.forEach(m=>{
+    const d = m._pinData;
+    if(!d) return;
+    m.setIcon(d.n > 1 ? mkPinBadged(d.cat, zoom, d.n) : mkPin(d.cat, zoom, false));
   });
-  if(expandedId != null){
-    const t = trips.find(x=>x.id===expandedId);
-    if(t) subMarkers.forEach(m=>m.setIcon(mkPin(t.cat, zoom, true)));
-  }
 }
 safeMap(()=>{ map.on('zoomend', refreshPinSizes); });
 
@@ -1753,8 +1919,10 @@ let openCountry = null;   // ISO of the country currently drilled into
 function visitCounts(){
   const counts = {};
   getT().filter(t=>t.cat!=='origin').forEach(t=>{
-    const iso = isoOf(t);
-    if(iso) counts[iso] = (counts[iso] || 0) + 1;
+    // a trip counts once for each country it visited
+    new Set(isosOf(t)).forEach(iso=>{
+      counts[iso] = (counts[iso] || 0) + 1;
+    });
   });
   return counts;
 }
@@ -2455,8 +2623,14 @@ function renderGallery(t){
     (lang==='sk' ? (pics.length===1?'fotka':pics.length<5?'fotky':'fotiek') : (pics.length===1?'photo':'photos'))+
     '</div><div class="gal">';
   pics.forEach((src,i)=>{
-    h += '<div class="gal-item">'+
+    // the first photo is the one the timeline card uses as its background
+    const isCover = i === 0;
+    h += '<div class="gal-item'+(isCover?' is-cover':'')+'">'+
       '<img src="'+src+'" alt="" onclick="openLb('+i+')">'+
+      (isCover
+        ? '<span class="gal-cover-tag">'+(lang==='sk'?'Hlavná':'Cover')+'</span>'
+        : '<button class="gal-cover-btn" onclick="setCover('+i+')" title="'+
+            (lang==='sk'?'Nastaviť ako hlavnú':'Set as cover')+'">&#9733;</button>')+
       '<button class="gal-del" onclick="delPhoto('+i+')" title="'+(lang==='sk'?'Vymazať':'Delete')+'">&#10005;</button>'+
     '</div>';
   });
@@ -2597,6 +2771,32 @@ async function delPhoto(i){
   renderGallery(t);
   refresh();
   showToast(lang==='sk' ? 'Vymazané' : 'Deleted');
+}
+
+/* The card in the timeline uses photos[0] as its background, so making a
+   photo the cover just means moving it to the front. */
+function setCover(i){
+  if(openId == null) return;
+  if(!isAdmin()){
+    showToast(lang==='sk' ? 'Najprv sa prihlás' : 'Sign in first');
+    return;
+  }
+  const trips = getT();
+  const t = trips.find(x=>x.id===openId);
+  if(!t) return;
+  const pics = photosOf(t);
+  if(i <= 0 || i >= pics.length) return;
+
+  const [chosen] = pics.splice(i, 1);
+  pics.unshift(chosen);
+  t.photos = pics;
+  delete t.photo;
+
+  saveT(trips);
+  renderGallery(t);
+  refresh();
+  tap();
+  showToast(lang==='sk' ? 'Hlavná fotka zmenená' : 'Cover photo set');
 }
 
 /* ═══════════ LIGHTBOX ═══════════ */
