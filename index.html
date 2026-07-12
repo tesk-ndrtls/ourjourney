@@ -2,7 +2,7 @@
 <html lang="sk">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Kari &#10084;&#65039; Luky">
@@ -103,7 +103,12 @@ input,textarea,select{font-family:var(--ff-b)}
 /* ══ TABBAR ══ */
 .tabbar{position:fixed;top:calc(var(--bh) + var(--safe-top));left:0;right:0;z-index:700;background:var(--b);border-bottom:2px solid var(--e);height:var(--th);display:flex}
 .tab{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.12rem;background:none;border:none;border-bottom:3px solid transparent;color:var(--gh);font-size:.56rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;padding:.35rem .2rem;transition:color .15s,border-color .15s,background .15s}
-.tab-ico{font-size:1.05rem;line-height:1}
+.tab-ico{
+  display:block;
+  width:21px;height:21px;
+  margin:0 auto .15rem;
+}
+.tab-ico svg{width:100%;height:100%;display:block}
 .tab.on{color:var(--s);border-bottom-color:var(--r);background:var(--e)}
 .tab:hover:not(.on){color:var(--sl)}
 
@@ -112,30 +117,77 @@ input,textarea,select{font-family:var(--ff-b)}
 .view.on{display:block}
 body.admin-mode .page-wrap{display:none}
 body.admin-mode #vadmin{display:block}
+/* the tab bar does nothing in admin mode and sits on top of the panel
+   header, so take it out of the layout entirely rather than disable it */
+body.admin-mode .tabbar{display:none}
+body.admin-mode #vadmin{padding-top:calc(var(--bh) + var(--safe-top))}
 
 /* ══ HERO ══ */
-.hero{background:var(--e);padding:1.4rem 1.1rem 0;border-bottom:3px solid var(--r)}
-.hero-title{font-family:var(--ff-d);font-size:clamp(1.8rem,7vw,2.9rem);font-weight:900;line-height:1;color:var(--s);letter-spacing:-.03em}
-.hero-title em{font-style:italic;font-weight:300;color:var(--go)}
-.hero-since{font-size:.6rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--gh);margin-top:.4rem}
-.hero-since strong{color:var(--go);font-family:var(--ff-d);font-style:italic;font-size:.8rem;font-weight:700;letter-spacing:0}
-.stats-row{display:flex;border-top:2px solid var(--b);margin:1.1rem -1.1rem 0}
-.sblock{flex:1;padding:.65rem .35rem;text-align:center;border-right:1px solid var(--b)}
-.sblock:last-child{border-right:none}
-.sn{font-family:var(--ff-d);font-size:1.45rem;font-weight:900;color:var(--s);display:block;line-height:1}
-.sl_{font-size:.5rem;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:var(--gh);display:block;margin-top:.15rem}
+/* Slim stats strip. The old hero had a headline, a subtitle and four
+   big number blocks stacked up — roughly 150px of chrome before you got
+   to the map. This says the same thing in one line. */
+.hero-slim{
+  display:flex;
+  background:var(--e);
+  border-bottom:2px solid var(--r);
+  padding:.4rem .5rem;
+  gap:.3rem;
+}
+.hs-stat{
+  flex:1;
+  display:flex;align-items:baseline;justify-content:center;
+  gap:.28rem;
+  min-width:0;
+}
+.hs-stat b{
+  font-family:var(--ff-d);
+  font-size:1rem;font-weight:900;
+  color:var(--go);
+  line-height:1;
+}
+.hs-stat span{
+  font-size:.55rem;font-weight:700;
+  letter-spacing:.06em;text-transform:uppercase;
+  color:var(--sl);opacity:.75;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
 
-/* ══ MAP ══ */
 .map-filters{background:var(--cd);border-bottom:2px solid var(--e);padding:.5rem .85rem;display:flex;gap:.32rem;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none}
 .map-filters::-webkit-scrollbar{display:none}
-.fchip{padding:.25rem .55rem;font-size:.58rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;border:2px solid var(--e);background:var(--w);color:var(--e);white-space:nowrap;transition:all .15s;flex-shrink:0}
+.fchip{padding:.3rem .58rem;font-size:.58rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;border:2px solid var(--e);background:var(--w);color:var(--e);white-space:nowrap;transition:all .15s;flex-shrink:0}
+
+/* Play sits at the head of the same rail as the filters — it's a map
+   control, so it belongs with the other map controls, not floating
+   over the canvas. */
+.play-chip{
+  display:flex;align-items:center;gap:.3rem;
+  background:var(--r);border-color:var(--r);color:var(--s);
+}
+.play-chip:hover{background:var(--rl);border-color:var(--rl)}
+.play-chip:disabled{opacity:.55;cursor:default}
+.play-chip.playing{background:var(--e);border-color:var(--go);color:var(--go)}
+.play-ico{font-size:.6rem;line-height:1}
+.fchip-sep{
+  width:2px;flex-shrink:0;
+  background:var(--s);
+  margin:0 .15rem;
+}
 .fchip.on{background:var(--e);color:var(--s)}
 .fchip[data-cat="holiday"].on{background:var(--r);border-color:var(--r);color:var(--w)}
 .fchip[data-cat="ski"].on{background:var(--f);border-color:var(--f);color:var(--w)}
 .fchip[data-cat="gig"].on{background:var(--go);border-color:var(--go);color:var(--e)}
 .fchip[data-cat="trip"].on{background:var(--bm);border-color:var(--bm);color:var(--w)}
 .fchip[data-cat="weekend"].on{background:var(--b);border-color:var(--b);color:var(--s)}
-#map{width:100%;height:calc(100vh - var(--bh) - var(--th) - 200px);min-height:300px;border-bottom:3px solid var(--e);background:var(--cd)}
+/* full height minus: topbar, tabs, safe area, the slim stats strip
+   (~34px), the filter rail (~40px) and the footer (~70px) */
+#map{
+  width:100%;
+  height:calc(100vh - var(--bh) - var(--th) - var(--safe-top) - 144px);
+  min-height:380px;
+  border-bottom:3px solid var(--e);
+  background:var(--cd);
+  position:relative;
+}
 .leaflet-popup-content-wrapper{background:var(--e);border:2px solid var(--r);border-radius:0;box-shadow:4px 4px 0 var(--b);color:var(--c)}
 .leaflet-popup-tip{background:var(--e)}
 .leaflet-popup-content{margin:.65rem .85rem}
@@ -156,7 +208,7 @@ body.admin-mode #vadmin{display:block}
 
 /* ══ TIMELINE ══ */
 .tl-search-bar{background:var(--cd);border-bottom:2px solid var(--e);padding:.6rem .9rem}
-.tl-search{width:100%;padding:.45rem .65rem;border:2px solid var(--s);background:var(--w);font-size:.82rem;color:var(--e);outline:none;border-radius:0;-webkit-appearance:none}
+.tl-search{width:100%;padding:.5rem .65rem;border:2px solid var(--s);background:var(--w);font-size:16px;color:var(--e);outline:none;border-radius:0;-webkit-appearance:none}
 .tl-search:focus{border-color:var(--r)}
 .tl-search::placeholder{color:var(--gh)}
 .tl-body{padding:.85rem .9rem 4rem;max-width:1180px;margin:0 auto}
@@ -476,7 +528,7 @@ body.admin-mode #vadmin{display:block}
 .fl2>*{flex:1;min-width:0}
 .fr{margin-bottom:.7rem}
 .flbl{display:block;font-size:.56rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--bm);margin-bottom:.22rem}
-.fi,.fta{width:100%;padding:.45rem .58rem;border:2px solid var(--s);background:var(--c);font-size:.8rem;color:var(--e);outline:none;border-radius:0;-webkit-appearance:none;transition:border-color .15s}
+.fi,.fta{width:100%;padding:.5rem .58rem;border:2px solid var(--s);background:var(--c);font-size:16px;color:var(--e);outline:none;border-radius:0;-webkit-appearance:none;transition:border-color .15s}
 .fi:focus,.fta:focus{border-color:var(--r)}
 .fta{resize:vertical;min-height:62px}
 select.fi{background-image:linear-gradient(45deg,transparent 50%,var(--bm) 50%),linear-gradient(135deg,var(--bm) 50%,transparent 50%);background-position:calc(100% - 14px) 52%,calc(100% - 9px) 52%;background-size:5px 5px,5px 5px;background-repeat:no-repeat}
@@ -522,7 +574,7 @@ select.fi{background-image:linear-gradient(45deg,transparent 50%,var(--bm) 50%),
 .elbl{display:block;font-size:.56rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--bm);margin-bottom:.25rem}
 .einput,.etext{
   width:100%;padding:.5rem .6rem;border:2px solid var(--s);background:var(--w);
-  font-size:.82rem;color:var(--e);outline:none;border-radius:0;-webkit-appearance:none;
+  font-size:16px;color:var(--e);outline:none;border-radius:0;-webkit-appearance:none;
   font-family:var(--ff-b);
 }
 .einput:focus,.etext:focus{border-color:var(--r)}
@@ -632,22 +684,58 @@ select.fi{background-image:linear-gradient(45deg,transparent 50%,var(--bm) 50%),
 }
 
 /* ══ PLAY OUR JOURNEY ══ */
+/* Sat at the bottom of the map it was easy to miss entirely — it now
+   rides at the top, over the map, where the eye lands first. */
 .play-btn{
   position:absolute;z-index:600;
-  left:.7rem;bottom:.7rem;
-  display:flex;align-items:center;gap:.4rem;
-  background:var(--e);color:var(--s);
-  border:2px solid var(--r);
-  box-shadow:3px 3px 0 rgba(0,0,0,.35);
-  padding:.5rem .8rem;
-  font-family:var(--ff-b);font-size:.62rem;font-weight:700;
-  letter-spacing:.09em;text-transform:uppercase;
-  cursor:pointer;
-  transition:transform .1s,box-shadow .1s;
+  left:50%;top:.75rem;
+  transform:translateX(-50%);
+  display:flex;align-items:center;gap:.45rem;
+  background:var(--r);color:var(--s);
+  border:2px solid var(--e);
+  box-shadow:3px 3px 0 rgba(26,15,5,.55);
+  padding:.55rem 1rem;
+  font-family:var(--ff-b);font-size:.66rem;font-weight:700;
+  letter-spacing:.1em;text-transform:uppercase;
+  cursor:pointer;white-space:nowrap;
+  transition:transform .1s,box-shadow .1s,background .15s;
 }
-.play-btn:hover{transform:translate(-1px,-1px);box-shadow:4px 4px 0 rgba(0,0,0,.35)}
-.play-btn:disabled{opacity:.55;cursor:default;transform:none}
-.play-ico{font-size:.8rem;line-height:1}
+.play-btn:hover{
+  background:var(--rl);
+  transform:translateX(-50%) translate(-1px,-1px);
+  box-shadow:5px 5px 0 rgba(26,15,5,.55);
+}
+.play-btn:active{ transform:translateX(-50%) translate(0,0); box-shadow:2px 2px 0 rgba(26,15,5,.55); }
+.play-btn:disabled{opacity:.6;cursor:default}
+.play-ico{font-size:.75rem;line-height:1}
+
+/* only shown once you've drilled into a country */
+.reset-btn{
+  position:absolute;z-index:600;
+  left:.7rem;top:.75rem;
+  display:none;
+  background:var(--e);color:var(--s);
+  border:2px solid var(--go);
+  box-shadow:2px 2px 0 rgba(26,15,5,.5);
+  padding:.45rem .7rem;
+  font-family:var(--ff-b);font-size:.58rem;font-weight:700;
+  letter-spacing:.08em;text-transform:uppercase;cursor:pointer;
+}
+.reset-btn.on{display:block}
+.reset-btn:hover{background:var(--bm)}
+
+/* country hover tooltip */
+.ctry-tip{
+  background:var(--e)!important;
+  border:1.5px solid var(--go)!important;
+  color:var(--s)!important;
+  font-family:var(--ff-b)!important;
+  font-size:.66rem!important;
+  border-radius:0!important;
+  box-shadow:2px 2px 0 rgba(0,0,0,.4)!important;
+  padding:.35rem .55rem!important;
+}
+.ctry-tip::before{display:none!important}
 
 .play-hud{
   position:absolute;z-index:600;
@@ -730,15 +818,47 @@ body:not(.is-admin) .gal-empty{display:none}
 
 <div class="tabbar">
   <button class="tab on" data-tab="map" onclick="showTab('map')">
-    <span class="tab-ico">&#128506;</span>
+    <span class="tab-ico">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"
+           stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M2.5 5.6 8.4 3.2v13.4L2.5 19V5.6Z"/>
+        <path d="M8.4 3.2 15.6 5.6v3.1"/>
+        <path d="M15.6 16.6 21.5 14V5.6"/>
+        <path d="M8.4 16.6 15.6 19"/>
+        <path d="M18 8.4c1.7 0 3 1.3 3 3 0 2.2-3 5.4-3 5.4s-3-3.2-3-5.4c0-1.7 1.3-3 3-3Z" fill="currentColor" fill-opacity=".15"/>
+        <circle cx="18" cy="11.4" r="1.05" fill="currentColor" stroke="none"/>
+      </svg>
+    </span>
     <span class="t-sk">Mapa</span><span class="t-en">Map</span>
   </button>
   <button class="tab" data-tab="tl" onclick="showTab('tl')">
-    <span class="tab-ico">&#128197;</span>
+    <span class="tab-ico">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"
+           stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M12 2.6v18.8"/>
+        <rect x="14.2" y="4.6" width="7.2" height="4.4" rx=".4" fill="currentColor" fill-opacity=".15"/>
+        <rect x="2.6" y="11.1" width="7.2" height="4.4" rx=".4" fill="currentColor" fill-opacity=".15"/>
+        <rect x="14.2" y="16.4" width="7.2" height="3.4" rx=".4" fill="currentColor" fill-opacity=".15"/>
+        <path d="M12 6.8h2.2M9.8 13.3H12M12 18.1h2.2"/>
+        <circle cx="12" cy="6.8" r="1.5" fill="var(--b)"/>
+        <circle cx="12" cy="13.3" r="1.5" fill="var(--b)"/>
+        <circle cx="12" cy="18.1" r="1.5" fill="var(--b)"/>
+      </svg>
+    </span>
     <span class="t-sk">Časová os</span><span class="t-en">Timeline</span>
   </button>
   <button class="tab" data-tab="stats" onclick="showTab('stats')">
-    <span class="tab-ico">&#128202;</span>
+    <span class="tab-ico">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"
+           stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M3.2 20.4h17.6"/>
+        <rect x="4.4" y="13.2" width="3.9" height="7.2" fill="currentColor" fill-opacity=".18"/>
+        <rect x="10.1" y="9.1" width="3.9" height="11.3" fill="currentColor" fill-opacity=".3"/>
+        <rect x="15.8" y="5.2" width="3.9" height="15.2" fill="currentColor" fill-opacity=".45"/>
+        <path d="m17.75 1.4.72 1.46 1.61.24-1.16 1.13.27 1.6-1.44-.75-1.44.75.28-1.6-1.17-1.13 1.62-.24.71-1.46Z"
+              fill="currentColor" stroke="none"/>
+      </svg>
+    </span>
     <span class="t-sk">Štatistiky</span><span class="t-en">Stats</span>
   </button>
 </div>
@@ -748,23 +868,23 @@ body:not(.is-admin) .gal-empty{display:none}
 
   <!-- MAP -->
   <div class="view on" id="vmap" style="position:relative">
-    <div class="hero">
-      <h1 class="hero-title">
-        <span class="t-sk">Každý výlet,<br><em>každý moment.</em></span>
-        <span class="t-en">Every trip,<br><em>every moment.</em></span>
-      </h1>
-      <p class="hero-since">
-        <span class="t-sk">Spolu od <strong>6. apríla 2018</strong></span>
-        <span class="t-en">Together since <strong>6 April 2018</strong></span>
-      </p>
-      <div class="stats-row">
-        <div class="sblock"><span class="sn" id="h-trips">–</span><span class="sl_"><span class="t-sk">výletov</span><span class="t-en">trips</span></span></div>
-        <div class="sblock"><span class="sn" id="h-ctrs">–</span><span class="sl_"><span class="t-sk">krajín</span><span class="t-en">countries</span></span></div>
-        <div class="sblock"><span class="sn" id="h-days">–</span><span class="sl_"><span class="t-sk">dní</span><span class="t-en">days</span></span></div>
-        <div class="sblock"><span class="sn" id="h-yrs">–</span><span class="sl_"><span class="t-sk">rokov</span><span class="t-en">years</span></span></div>
-      </div>
+    <!-- one slim strip: the numbers, nothing else. The headline and the
+         "together since" line were pretty but they were eating the map. -->
+    <div class="hero-slim">
+      <div class="hs-stat"><b id="h-trips">–</b><span class="t-sk">výletov</span><span class="t-en">trips</span></div>
+      <div class="hs-stat"><b id="h-ctrs">–</b><span class="t-sk">krajín</span><span class="t-en">countries</span></div>
+      <div class="hs-stat"><b id="h-days">–</b><span class="t-sk">dní</span><span class="t-en">days</span></div>
+      <div class="hs-stat"><b id="h-yrs">–</b><span class="t-sk">rokov</span><span class="t-en">years</span></div>
     </div>
+
+    <!-- filters and Play share one scrollable rail, so Play sits in the
+         controls instead of floating over the map -->
     <div class="map-filters">
+      <button class="fchip play-chip" id="play-btn" onclick="playJourney()">
+        <span class="play-ico">&#9654;</span>
+        <span class="t-sk">Prehrať</span><span class="t-en">Play</span>
+      </button>
+      <span class="fchip-sep"></span>
       <button class="fchip on" data-cat="all" onclick="filterMap('all')"><span class="t-sk">Všetko</span><span class="t-en">All</span></button>
       <button class="fchip" data-cat="holiday" onclick="filterMap('holiday')">&#127958;&#65039; <span class="t-sk">Dovolenka</span><span class="t-en">Holiday</span></button>
       <button class="fchip" data-cat="gig" onclick="filterMap('gig')">&#127925; <span class="t-sk">Koncert</span><span class="t-en">Gig</span></button>
@@ -775,9 +895,8 @@ body:not(.is-admin) .gal-empty{display:none}
     <div id="map">
       <div class="skel-map skel" id="map-skel"><span>Načítavam mapu…</span></div>
     </div>
-    <button class="play-btn" id="play-btn" onclick="playJourney()">
-      <span class="play-ico">&#9654;</span>
-      <span class="t-sk">Prehrať našu cestu</span><span class="t-en">Play our journey</span>
+    <button class="reset-btn" id="reset-btn" onclick="resetMap()">
+      <span class="t-sk">Späť na mapu</span><span class="t-en">Back to map</span>
     </button>
     <div class="play-hud" id="play-hud">
       <div class="hud-name" id="hud-name"></div>
@@ -1061,7 +1180,7 @@ const SEED = [
 /* ═══════════ VERSION ═══════════
    Bump this on every iteration that ships — shown in the topbar next
    to the app icon, same pattern as Kvašung. One place to update. */
-const APP_VERSION = 'v2.0.0';
+const APP_VERSION = 'v2.2.0';
 
 /* ═══════════ SUPABASE ═══════════ */
 const SB_URL  = 'https://vchxjbdrromujmzujduo.supabase.co';
@@ -1385,24 +1504,26 @@ function setLang(l){
 /* ═══════════ TABS ═══════════ */
 let curTab = 'map';
 function showTab(t){
+  tap();
   curTab = t;
   document.querySelectorAll('.view').forEach(v=>v.classList.remove('on'));
   document.querySelectorAll('.tab').forEach(b=>b.classList.remove('on'));
   document.getElementById('v'+t).classList.add('on');
-  document.querySelector('.tab[data-tab="'+t+'"]').classList.add('on');
+  const btn = document.querySelector('.tab[data-tab="'+t+'"]');
+  if(btn) btn.classList.add('on');
   if(t==='tl') buildTl();
   if(t==='stats') buildStats();
   if(t==='map') setTimeout(()=>safeMap(()=>map.invalidateSize()), 60);
+  // every view should open at its top, not wherever the last one was left
+  window.scrollTo(0,0);
 }
 
 /* ═══════════ ADMIN TOGGLE ═══════════ */
 function toggleAdmin(){
   const on = document.body.classList.toggle('admin-mode');
-  document.getElementById('abtn').innerHTML = on
-    ? (lang==='sk' ? '&larr; Späť' : '&larr; Back')
-    : 'Admin';
   if(on){ refreshAdmList(); }
   else { refresh(); setTimeout(()=>safeMap(()=>map.invalidateSize()),60); }
+  updateAdminUi();   // single place that owns the button label
   window.scrollTo(0,0);
 }
 
@@ -1473,6 +1594,7 @@ let curFilter = 'all';
 function filterMap(cat){
   tap();
   curFilter = cat;
+  openCountry = null;   // a category filter replaces any country drill-down
   document.querySelectorAll('.fchip').forEach(c=>c.classList.remove('on'));
   const btn = document.querySelector('.fchip[data-cat="'+cat+'"]');
   if(btn) btn.classList.add('on');
@@ -1514,6 +1636,11 @@ function showStops(t){
   map.fitBounds(bounds.pad(0.35));
 }
 
+/* The default view is the country wash — no pins. Pins are noise at
+   world zoom and the fill already says "we've been here". They appear
+   when you pick a category filter, or when you tap a country to open it. */
+let pinsMode = null;   // null = none, 'filter' = category filter, 'country' = one country
+
 function drawMarkers(){
   if(!mapOk || !map) return;
   markers.forEach(m=>map.removeLayer(m));
@@ -1522,12 +1649,25 @@ function drawMarkers(){
   expandedId = null;
 
   const trips = getT();
-  const shown = trips.filter(t => typeof t.lat==='number' && typeof t.lng==='number' && (curFilter==='all' || t.cat===curFilter));
   const zoom = map.getZoom();
+
+  let shown = [];
+  if(curFilter !== 'all'){
+    pinsMode = 'filter';
+    shown = trips.filter(t=>
+      typeof t.lat==='number' && typeof t.lng==='number' && t.cat===curFilter);
+  } else if(openCountry){
+    pinsMode = 'country';
+    shown = trips.filter(t=>
+      typeof t.lat==='number' && typeof t.lng==='number' && isoOf(t)===openCountry);
+  } else {
+    pinsMode = null;
+    shown = [];   // clean map: just the coloured countries
+  }
 
   shown.forEach(t=>{
     const ll = mainLatLng(t);
-    if(!ll[0] || !ll[1]) return;
+    if(typeof ll[0] !== 'number' || typeof ll[1] !== 'number') return;
     const m = L.marker(ll, {icon:mkPin(t.cat, zoom, false)}).addTo(map);
     const hasStops = Array.isArray(t.stops) && t.stops.length > 1;
     m.bindPopup(previewHtml(t, null));
@@ -1543,10 +1683,22 @@ function drawMarkers(){
     map.setView(mainLatLng(shown[0]), 8);
   }
 
-  // keep the country wash and capital dots in sync with the trip list —
-  // cheap no-op if nothing changed, since drawCountryFill re-fetches
-  // only the same small boundary file already cached by the browser
   safeMap(()=>{ drawCountryFill(); refreshCapitals(); });
+
+  const rb = document.getElementById('reset-btn');
+  if(rb) rb.classList.toggle('on', !!openCountry || curFilter !== 'all');
+}
+
+/* Clears any drill-down or filter and returns to the plain country map. */
+function resetMap(){
+  tap();
+  openCountry = null;
+  curFilter = 'all';
+  document.querySelectorAll('.fchip').forEach(c=>c.classList.remove('on'));
+  const allChip = document.querySelector('.fchip[data-cat="all"]');
+  if(allChip) allChip.classList.add('on');
+  drawMarkers();
+  safeMap(()=>map.setView([47,12], 4));
 }
 
 /* Re-draw pins at the right size when the zoom level crosses one of
@@ -1592,33 +1744,101 @@ const CAPITALS = {
 };
 
 let countryLayer = null;
+let openCountry = null;   // ISO of the country currently drilled into
+
+/* Visit counts drive the shade: the more often we've been somewhere, the
+   deeper the rust. Scaled against the most-visited country rather than a
+   fixed ceiling, so the gradient always spans the full range whatever the
+   data looks like. */
+function visitCounts(){
+  const counts = {};
+  getT().filter(t=>t.cat!=='origin').forEach(t=>{
+    const iso = isoOf(t);
+    if(iso) counts[iso] = (counts[iso] || 0) + 1;
+  });
+  return counts;
+}
+
+function shadeFor(n, max){
+  // 0.16 for a single visit up to 0.62 for the most-visited
+  const lo = 0.16, hi = 0.62;
+  if(max <= 1) return lo;
+  const t = (n - 1) / (max - 1);
+  return lo + (hi - lo) * t;
+}
+
 function drawCountryFill(){
   if(!mapOk || !map) return;
-  if(typeof window.topojson === 'undefined') return; // CDN blocked — skip, pins still work
-  const visited = new Set(getT().filter(t=>t.cat!=='origin').map(isoOf).filter(Boolean));
-  if(!visited.size) return;
+  if(typeof window.topojson === 'undefined') return;
+  const counts = visitCounts();
+  if(!Object.keys(counts).length) return;
+
+  if(TOPO_CACHE){ renderCountryFill(TOPO_CACHE, counts); return; }
 
   fetch(COUNTRY_LAYER_URL)
     .then(r => r.ok ? r.json() : Promise.reject(new Error('fetch failed')))
-    .then(topo => renderCountryFill(topo, visited))
-    .catch(()=>{ /* offline or blocked — plain map is still fully usable */ });
+    .then(topo => { TOPO_CACHE = topo; renderCountryFill(topo, counts); })
+    .catch(()=>{ /* offline — plain map still works */ });
 }
+let TOPO_CACHE = null;
 
-function renderCountryFill(topo, visited){
+function renderCountryFill(topo, counts){
   try{
     const geo = window.topojson.feature(topo, topo.objects.countries);
     if(countryLayer) map.removeLayer(countryLayer);
+
+    const max = Math.max(...Object.values(counts), 1);
+
     countryLayer = L.geoJSON(geo, {
       filter: f => {
-        const name = (f.properties && f.properties.name) || '';
-        return matchIsoByName(name) && visited.has(matchIsoByName(name));
+        const iso = matchIsoByName((f.properties && f.properties.name) || '');
+        return iso && counts[iso];
       },
-      style: { fillColor:'#C1440E', fillOpacity:0.16, color:'#8a4a1e', weight:1, opacity:.5 },
-      interactive:false
+      style: f => {
+        const iso = matchIsoByName(f.properties.name);
+        const n = counts[iso] || 0;
+        const isOpen = openCountry === iso;
+        return {
+          fillColor: '#B5350A',
+          fillOpacity: shadeFor(n, max),
+          color: isOpen ? '#1A0F05' : '#8a4a1e',
+          weight: isOpen ? 2.5 : 1,
+          opacity: isOpen ? 1 : .55
+        };
+      },
+      onEachFeature: (f, layer) => {
+        const iso = matchIsoByName(f.properties.name);
+        const n = counts[iso] || 0;
+        const label = f.properties.name;
+
+        layer.bindTooltip(
+          '<b>'+esc(label)+'</b><br>'+n+'× '+(lang==='sk'?'navštívené':'visited'),
+          { sticky:true, className:'ctry-tip' }
+        );
+
+        layer.on('click', ()=>{
+          tap();
+          // tapping the open country again closes it back to the clean map
+          openCountry = (openCountry === iso) ? null : iso;
+          drawMarkers();
+          if(!openCountry){
+            map.setView([47,12], 4);
+          }
+        });
+
+        layer.on('mouseover', ()=>layer.setStyle({ weight:2, opacity:.9 }));
+        layer.on('mouseout',  ()=>{
+          const isOpen = openCountry === iso;
+          layer.setStyle({
+            weight: isOpen ? 2.5 : 1,
+            opacity: isOpen ? 1 : .55
+          });
+        });
+      }
     });
     countryLayer.addTo(map);
     countryLayer.bringToBack();
-  }catch(e){ /* boundary data shape unexpected — skip the fill, keep the pins */ }
+  }catch(e){ /* unexpected shape — skip the fill, keep the map usable */ }
 }
 
 // world-atlas country names -> our ISO codes (only the ones we need)
@@ -1680,8 +1900,11 @@ function clearPlay(){
   playing = false;
   document.getElementById('play-hud').classList.remove('on');
   const btn = document.getElementById('play-btn');
-  if(btn) btn.disabled = false;
-  drawMarkers();   // restore the normal pins
+  if(btn){
+    btn.classList.remove('playing');
+    btn.disabled = false;
+  }
+  drawMarkers();   // back to whatever the current view should be
 }
 
 /* a gentle great-circle-ish arc between two points, as a polyline */
@@ -1715,7 +1938,8 @@ function playJourney(){
 
   playing = true;
   tap(12);
-  document.getElementById('play-btn').disabled = true;
+  const pb = document.getElementById('play-btn');
+  if(pb) pb.classList.add('playing');   // tapping again stops it
   document.getElementById('play-hud').classList.add('on');
 
   // start from a clean map
