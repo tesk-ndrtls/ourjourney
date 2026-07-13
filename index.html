@@ -130,25 +130,28 @@ body.admin-mode #vadmin{padding-top:calc(var(--bh) + var(--safe-top))}
   display:flex;
   background:var(--e);
   border-bottom:2px solid var(--r);
-  padding:.4rem .5rem;
+  padding:.55rem .5rem;
   gap:.3rem;
 }
 .hs-stat{
   flex:1;
-  display:flex;align-items:baseline;justify-content:center;
-  gap:.28rem;
+  display:flex;flex-direction:column;align-items:center;
+  gap:.1rem;
   min-width:0;
 }
+/* the numbers are the point of this strip — they earn the space */
 .hs-stat b{
   font-family:var(--ff-d);
-  font-size:1rem;font-weight:900;
+  font-size:1.5rem;font-weight:900;
   color:var(--go);
   line-height:1;
+  letter-spacing:-.02em;
 }
+@media(min-width:600px){ .hs-stat b{font-size:1.75rem} }
 .hs-stat span{
   font-size:.55rem;font-weight:700;
-  letter-spacing:.06em;text-transform:uppercase;
-  color:var(--sl);opacity:.75;
+  letter-spacing:.09em;text-transform:uppercase;
+  color:var(--sl);opacity:.7;
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
 }
 
@@ -182,7 +185,7 @@ body.admin-mode #vadmin{padding-top:calc(var(--bh) + var(--safe-top))}
    (~34px), the filter rail (~40px) and the footer (~70px) */
 #map{
   width:100%;
-  height:calc(100vh - var(--bh) - var(--th) - var(--safe-top) - 144px);
+  height:calc(100vh - var(--bh) - var(--th) - var(--safe-top) - 168px);
   min-height:380px;
   border-bottom:3px solid var(--e);
   background:var(--cd);
@@ -495,63 +498,293 @@ body.admin-mode #vadmin{padding-top:calc(var(--bh) + var(--safe-top))}
 .map-offline::after{content:'Mapa sa načíta až po nasadení na web / Map loads once deployed online'}
 
 /* ══ MODAL ══ */
-.modal-bg{display:none;position:fixed;inset:0;z-index:1000;background:rgba(20,10,2,.88);padding:1rem}
-.modal-bg.on{display:flex;align-items:center;justify-content:center}
-.modal-inner{background:var(--c);max-width:640px;width:100%;max-height:88vh;border:3px solid var(--e);box-shadow:8px 8px 0 var(--b);display:flex;flex-direction:column;overflow:hidden}
-.modal-hdr{background:var(--e);border-bottom:3px solid var(--r);padding:.85rem .95rem;display:flex;align-items:flex-start;justify-content:space-between;gap:.6rem;flex-shrink:0}
-.modal-close{background:none;border:1.5px solid var(--bm);color:var(--gh);font-size:.8rem;padding:.18rem .55rem;flex-shrink:0;transition:all .15s}
-.modal-close:hover{border-color:var(--s);color:var(--s)}
-.modal-title{font-family:var(--ff-d);font-size:1.15rem;font-weight:900;color:var(--s);line-height:1.2}
-.modal-meta{display:flex;gap:.3rem;flex-wrap:wrap;margin-top:.35rem}
-.mchip{font-size:.56rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;padding:.16rem .45rem}
-.mc-rust{background:var(--r);color:var(--w)}
-.mc-forest{background:var(--f);color:var(--w)}
-.mc-bark{background:var(--bm);color:var(--w)}
-.mc-gold{background:var(--go);color:var(--e)}
-.modal-body{padding:1rem .95rem 1.8rem;overflow-y:auto;-webkit-overflow-scrolling:touch}
-.modal-img{width:100%;max-height:300px;object-fit:cover;border:3px solid var(--e);box-shadow:5px 5px 0 var(--b);display:block;margin-bottom:1rem}
-.modal-img-ph{background:var(--cd);border:3px solid var(--e);box-shadow:5px 5px 0 var(--b);height:110px;display:flex;align-items:center;justify-content:center;color:var(--gh);font-size:.68rem;letter-spacing:.08em;text-transform:uppercase;margin-bottom:1rem;text-align:center;padding:0 1rem}
-.modal-quote{background:var(--b);border-left:5px solid var(--r);padding:.95rem 1.1rem;margin-bottom:.85rem}
-.modal-quote blockquote{font-family:var(--ff-d);font-size:.95rem;font-style:italic;font-weight:300;line-height:1.65;color:var(--sl)}
-.modal-places{font-size:.76rem;color:var(--bm);font-weight:500;line-height:1.6}
 
-/* ══ ADMIN ══ */
-#vadmin{display:none;padding-top:calc(var(--bh) + var(--safe-top));min-height:100vh;background:var(--c)}
-.adm-hdr{background:var(--b);border-bottom:3px solid var(--e);padding:1.1rem}
-.adm-hdr h1{font-family:var(--ff-d);font-size:1.35rem;font-weight:900;color:var(--s)}
-.adm-hdr p{font-size:.7rem;color:var(--s);opacity:.6;margin-top:.2rem}
-.adm-cols{max-width:960px;margin:0 auto;padding:1rem;display:grid;grid-template-columns:1fr 1fr;gap:1.1rem}
-@media(max-width:660px){.adm-cols{grid-template-columns:1fr}}
-.adm-panel{background:var(--w);border:2px solid var(--e);box-shadow:4px 4px 0 var(--s);padding:1rem;height:fit-content}
-.adm-panel h2{font-family:var(--ff-d);font-size:1rem;font-weight:700;color:var(--e);padding-bottom:.42rem;border-bottom:2px solid var(--s);margin-bottom:.85rem}
-.fl2{display:flex;gap:.5rem}
-.fl2>*{flex:1;min-width:0}
-.fr{margin-bottom:.7rem}
-.flbl{display:block;font-size:.56rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--bm);margin-bottom:.22rem}
-.fi,.fta{width:100%;padding:.5rem .58rem;border:2px solid var(--s);background:var(--c);font-size:16px;color:var(--e);outline:none;border-radius:0;-webkit-appearance:none;transition:border-color .15s}
-.fi:focus,.fta:focus{border-color:var(--r)}
-.fta{resize:vertical;min-height:62px}
-select.fi{background-image:linear-gradient(45deg,transparent 50%,var(--bm) 50%),linear-gradient(135deg,var(--bm) 50%,transparent 50%);background-position:calc(100% - 14px) 52%,calc(100% - 9px) 52%;background-size:5px 5px,5px 5px;background-repeat:no-repeat}
-.upz{border:2px dashed var(--s);background:var(--c);padding:.85rem;text-align:center;cursor:pointer;transition:border-color .15s}
-.upz:hover{border-color:var(--r)}
-.upz input{display:none}
-.upz-ico{font-size:1.15rem}
-.upz-txt{font-size:.68rem;color:var(--gh);margin-top:.18rem}
-#photo-prev{display:none;width:100%;max-height:125px;object-fit:cover;border:2px solid var(--e);margin-top:.42rem}
-.btn-save{width:100%;padding:.55rem;margin-top:.25rem;background:var(--r);color:var(--w);border:2px solid var(--r);box-shadow:3px 3px 0 var(--b);font-size:.68rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;transition:transform .1s,box-shadow .1s}
-.btn-save:hover{transform:translate(-1px,-1px);box-shadow:4px 4px 0 var(--b)}
-.btn-save:active{transform:translate(1px,1px);box-shadow:2px 2px 0 var(--b)}
-.adm-item{display:flex;align-items:center;justify-content:space-between;gap:.4rem;padding:.45rem 0;border-bottom:1px solid var(--cd)}
-.adm-item:last-of-type{border-bottom:none}
-.adm-iname{font-weight:600;font-size:.75rem;line-height:1.3}
-.adm-idate{font-size:.6rem;color:var(--gh)}
-.btn-del{background:none;border:1.5px solid var(--r);color:var(--r);font-size:.62rem;font-weight:700;padding:.16rem .4rem;transition:all .15s;flex-shrink:0}
-.btn-del:hover{background:var(--r);color:var(--w)}
-.adm-list-scroll{max-height:460px;overflow-y:auto;-webkit-overflow-scrolling:touch}
-.adm-empty{text-align:center;font-style:italic;font-size:.74rem;color:var(--gh);padding:1rem 0}
-.btn-reset{width:100%;padding:.34rem;margin-top:.75rem;background:none;border:1.5px solid var(--gh);color:var(--gh);font-size:.58rem;font-weight:700;letter-spacing:.07em;text-transform:uppercase;transition:all .15s}
-.btn-reset:hover{border-color:var(--r);color:var(--r)}
+/* ══ DIALOG (login) ══
+   The trip detail is fullscreen now, but the sign-in box is still a
+   proper little dialog — it's a single task, not a thing to browse. */
+.modal-bg{
+  position:fixed;inset:0;z-index:2500;
+  background:rgba(12,7,2,.86);
+  display:none;
+  align-items:center;justify-content:center;
+  padding:1rem;
+  backdrop-filter:blur(3px);
+  -webkit-backdrop-filter:blur(3px);
+}
+.modal-bg.on{display:flex}
+.modal-inner{
+  background:var(--c);
+  border:2px solid var(--e);
+  box-shadow:6px 6px 0 var(--b);
+  width:100%;max-width:420px;
+  max-height:88vh;overflow-y:auto;
+}
+.modal-hdr{
+  display:flex;align-items:flex-start;justify-content:space-between;
+  gap:.8rem;
+  padding:.9rem 1rem;
+  background:var(--e);
+  border-bottom:2px solid var(--r);
+}
+.modal-title{
+  font-family:var(--ff-d);font-size:1.05rem;font-weight:900;
+  color:var(--s);line-height:1.2;
+}
+.modal-meta{
+  font-size:.62rem;color:var(--gh);
+  margin-top:.15rem;
+}
+.modal-close{
+  background:none;border:1.5px solid var(--gh);
+  color:var(--sl);
+  width:26px;height:26px;flex-shrink:0;
+  font-size:.75rem;line-height:1;
+  display:flex;align-items:center;justify-content:center;
+  cursor:pointer;
+}
+.modal-close:hover{border-color:var(--r);color:var(--r)}
+.modal-body{padding:1rem}
 
+/* ══ TRIP SHEET (fullscreen detail) ══
+   Not a dialog floating over the app — it takes the whole screen, the
+   way a photo does. The cover image is the top half, the title sits on
+   it, and everything else scrolls up underneath. */
+.trip-sheet{
+  position:fixed;inset:0;z-index:2000;
+  background:var(--c);
+  display:none;
+  overflow:hidden;
+}
+.trip-sheet.on{display:block}
+.ts-inner{
+  height:100%;
+  overflow-y:auto;
+  -webkit-overflow-scrolling:touch;
+  overscroll-behavior:contain;
+}
+
+/* floating controls */
+.ts-close{
+  position:fixed;z-index:2100;
+  top:calc(var(--safe-top) + .7rem);
+  right:.8rem;
+  width:38px;height:38px;
+  display:flex;align-items:center;justify-content:center;
+  background:rgba(26,15,5,.72);
+  color:var(--s);
+  border:2px solid rgba(226,207,160,.35);
+  backdrop-filter:blur(6px);
+  -webkit-backdrop-filter:blur(6px);
+  font-size:.95rem;
+  cursor:pointer;
+  transition:background .15s,border-color .15s,transform .1s;
+}
+.ts-close:hover{background:var(--r);border-color:var(--s)}
+.ts-close:active{transform:scale(.93)}
+
+/* ── page dots ──
+   53 trips is far too many dots to show at once, so we show a window of
+   them: the current one is wide and gold, its neighbours are full-size,
+   and the ones further out shrink away to nothing. Same trick iOS uses
+   on the home screen. Swipe is the real control; the dots just say where
+   you are and how much is left. */
+.ts-dots{
+  position:fixed;z-index:2100;
+  left:50%;bottom:calc(env(safe-area-inset-bottom, 0px) + 1rem);
+  transform:translateX(-50%);
+  display:flex;align-items:center;justify-content:center;
+  gap:6px;
+  padding:.5rem .85rem;
+  background:rgba(26,15,5,.72);
+  border:1px solid rgba(226,207,160,.28);
+  backdrop-filter:blur(8px);
+  -webkit-backdrop-filter:blur(8px);
+  max-width:calc(100vw - 2.5rem);
+  pointer-events:auto;
+}
+.ts-dot{
+  width:7px;height:7px;
+  border-radius:50%;
+  background:var(--sl);
+  opacity:.4;
+  flex-shrink:0;
+  padding:0;border:none;
+  cursor:pointer;
+  transition:width .22s cubic-bezier(.22,1,.36,1),
+             height .22s cubic-bezier(.22,1,.36,1),
+             opacity .22s, background .22s;
+}
+.ts-dot:hover{opacity:.75}
+.ts-dot.on{
+  width:22px;
+  border-radius:4px;
+  background:var(--go);
+  opacity:1;
+}
+/* the further from the current trip, the smaller — this is what keeps
+   50-odd dots from overflowing the screen */
+.ts-dot.near{width:6px;height:6px;opacity:.35}
+.ts-dot.far{width:4px;height:4px;opacity:.2}
+.ts-dot.edge{width:3px;height:3px;opacity:.12}
+
+.ts-dots-pos{
+  font-size:.55rem;font-weight:700;letter-spacing:.08em;
+  color:var(--sl);opacity:.55;
+  margin-left:.35rem;padding-left:.5rem;
+  border-left:1px solid rgba(226,207,160,.2);
+  white-space:nowrap;
+  font-variant-numeric:tabular-nums;
+}
+
+/* a one-off nudge that swiping is how you move around */
+.ts-hint{
+  position:fixed;z-index:2100;
+  left:50%;bottom:calc(env(safe-area-inset-bottom, 0px) + 4.2rem);
+  transform:translateX(-50%);
+  background:rgba(26,15,5,.82);
+  border:1px solid rgba(226,207,160,.3);
+  backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);
+  color:var(--sl);
+  font-size:.6rem;font-weight:600;letter-spacing:.06em;
+  padding:.35rem .7rem;
+  white-space:nowrap;
+  opacity:0;
+  transition:opacity .4s;
+  pointer-events:none;
+}
+.ts-hint.on{opacity:1}
+
+/* ── hero ── */
+.ts-hero{
+  position:relative;
+  width:100%;
+  height:58vh;
+  min-height:320px;
+  background:var(--e);
+  overflow:hidden;
+}
+.ts-hero-img{
+  position:absolute;inset:0;
+  background-size:cover;
+  background-position:center;
+  transform:scale(1.02);
+}
+/* no photo yet: fall back to the flag, dimmed right down */
+.ts-hero.no-photo .ts-hero-img{ opacity:.3; }
+.ts-hero-scrim{
+  position:absolute;inset:0;
+  background:linear-gradient(to top,
+    rgba(26,15,5,.97) 0%,
+    rgba(26,15,5,.82) 22%,
+    rgba(26,15,5,.35) 55%,
+    rgba(26,15,5,.15) 100%);
+}
+.ts-hero-txt{
+  position:absolute;left:0;right:0;bottom:0;
+  padding:1.2rem 1.1rem 1.3rem;
+}
+.ts-tri{
+  display:flex;width:44px;height:5px;
+  border:1px solid rgba(26,15,5,.6);
+  margin-bottom:.7rem;
+}
+.ts-tri i{flex:1;display:block}
+.ts-title{
+  font-family:var(--ff-d);
+  font-size:2rem;font-weight:900;
+  color:var(--s);
+  line-height:1.05;
+  letter-spacing:-.02em;
+  margin-bottom:.35rem;
+  text-shadow:0 2px 12px rgba(0,0,0,.5);
+}
+@media(min-width:700px){ .ts-title{font-size:2.6rem} }
+.ts-date{
+  font-family:var(--ff-b);
+  font-size:.88rem;font-weight:700;
+  color:var(--go);
+  letter-spacing:.02em;
+  margin-bottom:.6rem;
+}
+.ts-chips{display:flex;flex-wrap:wrap;gap:.3rem}
+.ts-count{
+  position:absolute;top:calc(var(--safe-top) + .8rem);left:.9rem;
+  background:rgba(26,15,5,.72);
+  backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);
+  border:1px solid rgba(226,207,160,.3);
+  color:var(--sl);
+  font-size:.58rem;font-weight:700;letter-spacing:.1em;
+  padding:.25rem .5rem;
+}
+
+/* ── body ── */
+.ts-body{
+  padding:1.1rem 1rem 4rem;
+  max-width:820px;margin:0 auto;
+}
+.ts-actions{display:flex;gap:.45rem;flex-wrap:wrap;margin-bottom:1.1rem}
+body:not(.is-admin) .ts-actions .mbtn:not(:last-child){display:none}
+
+.ts-sec-ttl{
+  font-size:.56rem;font-weight:700;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--bm);margin-bottom:.5rem;
+  padding-bottom:.3rem;border-bottom:2px solid var(--cd);
+}
+.ts-map-wrap{margin-top:1.4rem}
+.ts-map{
+  width:100%;height:220px;
+  border:2px solid var(--e);
+  box-shadow:3px 3px 0 var(--s);
+  background:var(--cd);
+}
+.ts-stops{
+  display:flex;flex-wrap:wrap;gap:.3rem;
+  margin-top:.6rem;
+}
+.ts-stop{
+  font-size:.62rem;font-weight:600;
+  background:var(--w);border:1.5px solid var(--s);
+  padding:.2rem .45rem;color:var(--bm);
+}
+
+/* the chips carried over from the old modal header */
+.mchip{
+  display:inline-block;
+  font-size:.55rem;font-weight:700;letter-spacing:.07em;text-transform:uppercase;
+  padding:.2rem .45rem;
+  border:1px solid;
+}
+.mc-rust{background:var(--r);border-color:var(--r);color:var(--s)}
+.mc-bark{background:transparent;border-color:var(--sl);color:var(--sl)}
+.mc-forest{background:var(--f);border-color:var(--f);color:var(--s)}
+.mc-gold{background:var(--go);border-color:var(--go);color:var(--e)}
+
+.modal-quote{
+  border-left:4px solid var(--go);
+  padding:.1rem 0 .1rem .85rem;
+  margin-bottom:1rem;
+}
+.modal-quote blockquote{
+  font-family:var(--ff-d);
+  font-size:1.02rem;font-style:italic;
+  color:var(--e);line-height:1.6;
+}
+.modal-places{
+  font-size:.76rem;color:var(--bm);
+  line-height:1.5;margin-bottom:1.1rem;
+}
+
+/* the edit panel keeps working, it just lives inside the sheet now */
+.ts-inner.editing .view-wrap{display:none}
+.ts-inner.editing .edit-wrap{display:block}
+.trip-sheet.editing .ts-dots,
+.trip-sheet.editing .ts-hint{display:none}
+.edit-wrap{
+  display:none;
+  padding:calc(var(--safe-top) + 3.6rem) 1rem 4rem;
+  max-width:640px;margin:0 auto;
+}
+.modal-inner:not(.editing) .edit-wrap{display:none}
 
 /* ══ EDIT / GALLERY ══ */
 .modal-actions{display:flex;gap:.45rem;margin-bottom:1rem;flex-wrap:wrap}
@@ -828,6 +1061,17 @@ body:not(.is-admin) .gal-empty{display:none}
   padding:.08rem .25rem;border:1px solid;margin-top:.1rem;
 }
 
+
+/* fields the gazetteer fills in for you */
+.auto-tag{
+  display:inline-block;
+  font-size:.44rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;
+  background:var(--go);color:var(--e);
+  padding:.05rem .22rem;
+  margin-left:.25rem;
+  vertical-align:middle;
+}
+
 /* ══ TOAST ══ */
 .toast{position:fixed;bottom:1.3rem;left:50%;z-index:2000;transform:translateX(-50%) translateY(55px);background:var(--f);color:var(--c);border:2px solid var(--fl);padding:.52rem 1.1rem;font-size:.7rem;font-weight:600;letter-spacing:.04em;white-space:nowrap;transition:transform .28s cubic-bezier(.22,1,.36,1)}
 .toast.on{transform:translateX(-50%) translateY(0)}
@@ -968,9 +1212,6 @@ body:not(.is-admin) .gal-empty{display:none}
     <h1><span class="t-sk">Pridať výlet</span><span class="t-en">Add a trip</span></h1>
     <p id="adm-sub"></p>
     <div class="adm-cloud">
-      <button class="mbtn" onclick="migrateSeed()">
-        &#9729; <span class="t-sk">Nahrať 54 výletov do Supabase</span><span class="t-en">Upload 54 trips to Supabase</span>
-      </button>
       <button class="mbtn ghost" onclick="doLogout()">
         <span class="t-sk">Odhlásiť</span><span class="t-en">Sign out</span>
       </button>
@@ -980,20 +1221,27 @@ body:not(.is-admin) .gal-empty{display:none}
     <div class="adm-panel">
       <h2><span class="t-sk">Nový výlet</span><span class="t-en">New trip</span></h2>
       <div class="fl2">
-        <div class="fr"><label class="flbl">Názov SK</label><input class="fi" id="f-nsk" placeholder="Maroko"></div>
-        <div class="fr"><label class="flbl">Name EN</label><input class="fi" id="f-nen" placeholder="Morocco"></div>
+        <div class="fr">
+          <label class="flbl">Názov SK</label>
+          <input class="fi" id="f-nsk" placeholder="Barcelona" autocomplete="off">
+        </div>
+        <div class="fr">
+          <label class="flbl">Name EN</label>
+          <input class="fi" id="f-nen" placeholder="Barcelona" autocomplete="off">
+        </div>
+        <datalist id="f-places-list"></datalist>
       </div>
       <div class="fl2">
-        <div class="fr"><label class="flbl">Krajina SK</label><input class="fi" id="f-csk" placeholder="Maroko"></div>
-        <div class="fr"><label class="flbl">Country EN</label><input class="fi" id="f-cen" placeholder="Morocco"></div>
+        <div class="fr"><label class="flbl">Krajina SK <span class="auto-tag">auto</span></label><input class="fi" id="f-csk" placeholder="doplní sa"></div>
+        <div class="fr"><label class="flbl">Country EN <span class="auto-tag">auto</span></label><input class="fi" id="f-cen" placeholder="filled in"></div>
       </div>
       <div class="fl2">
         <div class="fr"><label class="flbl">Od / From</label><input class="fi" id="f-d1" type="date"></div>
         <div class="fr"><label class="flbl">Do / To</label><input class="fi" id="f-d2" type="date"></div>
       </div>
       <div class="fl2">
-        <div class="fr"><label class="flbl">Lat</label><input class="fi" id="f-lat" type="number" step="0.0001" placeholder="30.4278"></div>
-        <div class="fr"><label class="flbl">Lng</label><input class="fi" id="f-lng" type="number" step="0.0001" placeholder="-9.5981"></div>
+        <div class="fr"><label class="flbl">Lat <span class="auto-tag">auto</span></label><input class="fi" id="f-lat" type="number" step="0.0001" placeholder="doplní sa"></div>
+        <div class="fr"><label class="flbl">Lng <span class="auto-tag">auto</span></label><input class="fi" id="f-lng" type="number" step="0.0001" placeholder="doplní sa"></div>
       </div>
       <div class="fr" style="margin-top:-.35rem">
         <small style="font-size:.6rem;color:var(--gh)">GPS: <a href="https://maps.google.com" target="_blank" rel="noopener" style="color:var(--r)">maps.google.com</a> &rarr; <span class="t-sk">pravý klik na miesto</span><span class="t-en">right-click a place</span></small>
@@ -1009,7 +1257,7 @@ body:not(.is-admin) .gal-empty{display:none}
             <option value="trip">Výlet / Trip</option>
           </select>
         </div>
-        <div class="fr"><label class="flbl"><span class="t-sk">Vlajka</span><span class="t-en">Flag</span></label><input class="fi" id="f-flag" placeholder="&#127474;&#127462;" maxlength="8" style="font-size:1.05rem"></div>
+        <div class="fr"><label class="flbl"><span class="t-sk">Vlajka</span><span class="t-en">Flag</span> <span class="auto-tag">auto</span></label><input class="fi" id="f-flag" maxlength="8" style="font-size:1.05rem"></div>
       </div>
       <div class="fr"><label class="flbl">Poznámka SK</label><textarea class="fta" id="f-nsk2" placeholder="Krátka spomienka…"></textarea></div>
       <div class="fr"><label class="flbl">Note EN</label><textarea class="fta" id="f-nen2" placeholder="Short memory…"></textarea></div>
@@ -1028,26 +1276,40 @@ body:not(.is-admin) .gal-empty{display:none}
     <div class="adm-panel">
       <h2><span class="t-sk">Uložené</span><span class="t-en">Saved</span> (<span id="adm-cnt">0</span>)</h2>
       <div class="adm-list-scroll" id="adm-list"></div>
-      <button class="btn-reset" onclick="resetSeed()">&#8635; <span class="t-sk">Obnoviť pôvodné dáta</span><span class="t-en">Restore original data</span></button>
     </div>
   </div>
 </div>
 
 <!-- MODAL -->
-<div class="modal-bg" id="modal">
-  <div class="modal-inner" id="modal-inner">
-    <div class="modal-hdr">
-      <div>
-        <div class="modal-title" id="m-title"></div>
-        <div class="modal-meta" id="m-meta"></div>
-      </div>
-      <button class="modal-close" onclick="closeModal()">&#10005;</button>
-    </div>
-    <div class="modal-body">
+<!-- TRIP DETAIL (fullscreen) -->
+<div class="trip-sheet" id="modal">
+  <div class="ts-inner" id="modal-inner">
 
-      <!-- VIEW MODE -->
-      <div class="view-wrap" id="m-view">
-        <div class="modal-actions">
+    <!-- floating controls, always on top of the photo -->
+    <button class="ts-close" onclick="closeModal()" aria-label="Close">&#10005;</button>
+
+    <!-- page dots, iOS-style: swipe to move, dots show where you are -->
+    <div class="ts-dots" id="ts-dots"></div>
+    <div class="ts-hint" id="ts-hint"></div>
+
+    <!-- VIEW MODE -->
+    <div class="view-wrap" id="m-view">
+
+      <!-- hero: cover photo, title laid over it -->
+      <div class="ts-hero" id="ts-hero">
+        <div class="ts-hero-img" id="ts-hero-img"></div>
+        <div class="ts-hero-scrim"></div>
+        <div class="ts-hero-txt">
+          <div class="ts-tri" id="ts-tri"></div>
+          <h2 class="ts-title" id="m-title"></h2>
+          <div class="ts-date" id="ts-date"></div>
+          <div class="ts-chips" id="m-meta"></div>
+        </div>
+        <div class="ts-count" id="ts-count"></div>
+      </div>
+
+      <div class="ts-body">
+        <div class="ts-actions" id="ts-actions">
           <button class="mbtn primary" onclick="startEdit()">
             &#9998; <span class="t-sk">Upraviť</span><span class="t-en">Edit</span>
           </button>
@@ -1059,15 +1321,25 @@ body:not(.is-admin) .gal-empty{display:none}
           </button>
         </div>
         <input type="file" id="gal-input" accept="image/*" multiple style="display:none" onchange="addPhotos(event)">
-        <div id="m-gallery"></div>
+
         <div id="m-body"></div>
+        <div id="m-gallery"></div>
+
+        <!-- where it was -->
+        <div class="ts-map-wrap" id="ts-map-wrap">
+          <div class="ts-sec-ttl"><span class="t-sk">Kde to bolo</span><span class="t-en">Where it was</span></div>
+          <div class="ts-map" id="ts-map"></div>
+          <div class="ts-stops" id="ts-stops"></div>
+        </div>
       </div>
+    </div>
 
       <!-- EDIT MODE -->
       <div class="edit-wrap" id="m-edit">
         <div class="erow">
-          <div class="efield"><label class="elbl">Názov SK</label><input class="einput" id="e-nsk"></div>
-          <div class="efield"><label class="elbl">Name EN</label><input class="einput" id="e-nen"></div>
+          <div class="efield"><label class="elbl">Názov SK</label><input class="einput" id="e-nsk" autocomplete="off"></div>
+          <div class="efield"><label class="elbl">Name EN</label><input class="einput" id="e-nen" autocomplete="off"></div>
+          <datalist id="e-places-list"></datalist>
         </div>
         <div class="erow">
           <div class="efield"><label class="elbl">Krajina SK</label><input class="einput" id="e-csk"></div>
@@ -1218,7 +1490,36 @@ const SEED = [
 /* ═══════════ VERSION ═══════════
    Bump this on every iteration that ships — shown in the topbar next
    to the app icon, same pattern as Kvašung. One place to update. */
-const APP_VERSION = 'v2.3.0';
+const APP_VERSION = 'v2.6.0';
+
+/* ═══════════ PLURALS ═══════════
+   Slovak splits nouns three ways by count: 1 takes the singular, 2–4 take
+   one plural form, 5+ take another (1 krajina / 2 krajiny / 5 krajín).
+   The app was using the 5+ form everywhere, so "4 krajín" read wrong.
+   English only needs one/many. */
+const PLURALS = {
+  trip:    { sk:['výlet','výlety','výletov'],       en:['trip','trips'] },
+  day:     { sk:['deň','dni','dní'],                en:['day','days'] },
+  country: { sk:['krajina','krajiny','krajín'],     en:['country','countries'] },
+  year:    { sk:['rok','roky','rokov'],             en:['year','years'] },
+  photo:   { sk:['fotka','fotky','fotiek'],         en:['photo','photos'] },
+  gig:     { sk:['koncert','koncerty','koncertov'], en:['gig','gigs'] }
+};
+
+function plural(n, key){
+  const p = PLURALS[key];
+  if(!p) return '';
+  if(lang === 'sk'){
+    const abs = Math.abs(n);
+    if(abs === 1) return p.sk[0];
+    if(abs >= 2 && abs <= 4) return p.sk[1];
+    return p.sk[2];
+  }
+  return Math.abs(n) === 1 ? p.en[0] : p.en[1];
+}
+
+/* number + correctly-inflected noun */
+function qty(n, key){ return n + ' ' + plural(n, key); }
 
 /* ═══════════ SUPABASE ═══════════ */
 const SB_URL  = 'https://vchxjbdrromujmzujduo.supabase.co';
@@ -1395,52 +1696,290 @@ function adminBtnClick(){
   toggleAdmin();
 }
 
-/* ═══════════ ONE-TIME MIGRATION ═══════════
-   Pushes the 54 seed trips into an empty journeys table. Refuses to run
-   if the table already has rows, so it can't be fired twice by accident. */
-async function migrateSeed(){
-  if(!sb || !isAdmin()){
-    showToast(lang==='sk' ? 'Najprv sa prihlás' : 'Sign in first');
-    return;
-  }
-  const { count, error: cErr } = await sb
-    .from('journeys')
-    .select('*', { count:'exact', head:true });
-  if(cErr){
-    showToast(lang==='sk' ? 'Chyba pripojenia' : 'Connection error');
-    return;
-  }
-  if(count > 0){
-    showToast(lang==='sk'
-      ? 'V databáze už sú dáta ('+count+' výletov)'
-      : 'Database already has '+count+' trips');
-    return;
-  }
-  const msg = lang==='sk'
-    ? 'Nahrať 54 výletov do Supabase?'
-    : 'Upload 54 trips to Supabase?';
-  if(!confirm(msg)) return;
+/* ═══════════ GAZETTEER ═══════════
+   Type a place in either language and the app fills in the rest:
+   the other language, the country in both, the flag and the GPS.
+   It's a local table, not a geocoding service — no API key, no
+   network call, works offline, and it already knows every place
+   we've actually been. */
+const GAZ = [
+  {sk:"Bratislava",en:"Bratislava",lat:48.1486,lng:17.1077,iso:"sk"},
+  {sk:"Košice",en:"Košice",lat:48.7164,lng:21.2611,iso:"sk"},
+  {sk:"Žilina",en:"Žilina",lat:49.2231,lng:18.7394,iso:"sk"},
+  {sk:"Banská Bystrica",en:"Banská Bystrica",lat:48.7395,lng:19.1534,iso:"sk"},
+  {sk:"Poprad",en:"Poprad",lat:49.0559,lng:20.2976,iso:"sk"},
+  {sk:"Tatranská Lomnica",en:"Tatranská Lomnica",lat:49.1653,lng:20.2794,iso:"sk"},
+  {sk:"Štrbské Pleso",en:"Štrbské Pleso",lat:49.1211,lng:20.0625,iso:"sk"},
+  {sk:"Ždiar",en:"Ždiar",lat:49.2568,lng:20.2192,iso:"sk"},
+  {sk:"Terchová",en:"Terchová",lat:49.2569,lng:19.0289,iso:"sk"},
+  {sk:"Turček",en:"Turček",lat:48.7833,lng:18.8667,iso:"sk"},
+  {sk:"Krahule",en:"Krahule",lat:48.7167,lng:18.85,iso:"sk"},
+  {sk:"Čičmany",en:"Čičmany",lat:49.0333,lng:18.6167,iso:"sk"},
+  {sk:"Kostolná Ves",en:"Kostolná Ves",lat:48.7833,lng:18.5333,iso:"sk"},
+  {sk:"Podhorie",en:"Podhorie",lat:48.5667,lng:18.7833,iso:"sk"},
+  {sk:"Trenčín",en:"Trenčín",lat:48.8945,lng:18.0444,iso:"sk"},
+  {sk:"Nitra",en:"Nitra",lat:48.3061,lng:18.0764,iso:"sk"},
+  {sk:"Štúrovo",en:"Štúrovo",lat:47.7957,lng:18.7161,iso:"sk"},
+  {sk:"Piešťany",en:"Piešťany",lat:48.5919,lng:17.8267,iso:"sk"},
+  {sk:"Liptovský Mikuláš",en:"Liptovský Mikuláš",lat:49.0806,lng:19.6203,iso:"sk"},
+  {sk:"Oravský hrad",en:"Orava Castle",lat:49.2536,lng:19.34,iso:"sk"},
+  {sk:"Spišský hrad",en:"Spiš Castle",lat:48.9917,lng:20.7642,iso:"sk"},
+  {sk:"Vysoké Tatry",en:"High Tatras",lat:49.1667,lng:20.1333,iso:"sk"},
+  {sk:"Slovenský raj",en:"Slovak Paradise",lat:48.9333,lng:20.3833,iso:"sk"},
+  {sk:"Viedeň",en:"Vienna",lat:48.2082,lng:16.3738,iso:"at"},
+  {sk:"Salzburg",en:"Salzburg",lat:47.8095,lng:13.055,iso:"at"},
+  {sk:"Graz",en:"Graz",lat:47.0707,lng:15.4395,iso:"at"},
+  {sk:"Innsbruck",en:"Innsbruck",lat:47.2692,lng:11.4041,iso:"at"},
+  {sk:"Katschberg",en:"Katschberg",lat:47.0583,lng:13.625,iso:"at"},
+  {sk:"Hochkar",en:"Hochkar",lat:47.7167,lng:15.05,iso:"at"},
+  {sk:"Neziderské jazero",en:"Lake Neusiedl",lat:47.8417,lng:16.75,iso:"at"},
+  {sk:"Hallstatt",en:"Hallstatt",lat:47.5622,lng:13.6493,iso:"at"},
+  {sk:"Praha",en:"Prague",lat:50.0755,lng:14.4378,iso:"cz"},
+  {sk:"Brno",en:"Brno",lat:49.1951,lng:16.6068,iso:"cz"},
+  {sk:"Tábor",en:"Tábor",lat:49.4144,lng:14.6578,iso:"cz"},
+  {sk:"Dvůr Králové",en:"Dvůr Králové",lat:50.4326,lng:15.8181,iso:"cz"},
+  {sk:"Český Krumlov",en:"Český Krumlov",lat:48.8109,lng:14.3175,iso:"cz"},
+  {sk:"Ostrava",en:"Ostrava",lat:49.8209,lng:18.2625,iso:"cz"},
+  {sk:"Budapešť",en:"Budapest",lat:47.4979,lng:19.0402,iso:"hu"},
+  {sk:"Ostrihom",en:"Esztergom",lat:47.793,lng:18.7395,iso:"hu"},
+  {sk:"Balaton",en:"Lake Balaton",lat:46.8333,lng:17.7333,iso:"hu"},
+  {sk:"Debrecín",en:"Debrecen",lat:47.5316,lng:21.6273,iso:"hu"},
+  {sk:"Senj",en:"Senj",lat:44.9894,lng:14.9058,iso:"hr"},
+  {sk:"Záhreb",en:"Zagreb",lat:45.815,lng:15.9819,iso:"hr"},
+  {sk:"Split",en:"Split",lat:43.5081,lng:16.4402,iso:"hr"},
+  {sk:"Dubrovník",en:"Dubrovnik",lat:42.6507,lng:18.0944,iso:"hr"},
+  {sk:"Zadar",en:"Zadar",lat:44.1194,lng:15.2314,iso:"hr"},
+  {sk:"Rijeka",en:"Rijeka",lat:45.3271,lng:14.4422,iso:"hr"},
+  {sk:"Pula",en:"Pula",lat:44.8666,lng:13.8496,iso:"hr"},
+  {sk:"Novigrad",en:"Novigrad",lat:45.3167,lng:13.5667,iso:"hr"},
+  {sk:"Novi Vinodolski",en:"Novi Vinodolski",lat:45.1333,lng:14.7833,iso:"hr"},
+  {sk:"Plitvice",en:"Plitvice Lakes",lat:44.8654,lng:15.582,iso:"hr"},
+  {sk:"Krk",en:"Krk",lat:45.0272,lng:14.5747,iso:"hr"},
+  {sk:"Hvar",en:"Hvar",lat:43.1729,lng:16.4411,iso:"hr"},
+  {sk:"Rím",en:"Rome",lat:41.9028,lng:12.4964,iso:"it"},
+  {sk:"Benátky",en:"Venice",lat:45.4408,lng:12.3155,iso:"it"},
+  {sk:"Miláno",en:"Milan",lat:45.4642,lng:9.19,iso:"it"},
+  {sk:"Florencia",en:"Florence",lat:43.7696,lng:11.2558,iso:"it"},
+  {sk:"Neapol",en:"Naples",lat:40.8518,lng:14.2681,iso:"it"},
+  {sk:"Sardínia",en:"Sardinia",lat:40.1209,lng:9.0129,iso:"it"},
+  {sk:"Sicília",en:"Sicily",lat:37.5999,lng:14.0154,iso:"it"},
+  {sk:"Turín",en:"Turin",lat:45.0703,lng:7.6869,iso:"it"},
+  {sk:"Bologna",en:"Bologna",lat:44.4949,lng:11.3426,iso:"it"},
+  {sk:"Verona",en:"Verona",lat:45.4384,lng:10.9916,iso:"it"},
+  {sk:"Barcelona",en:"Barcelona",lat:41.3874,lng:2.1686,iso:"es"},
+  {sk:"Madrid",en:"Madrid",lat:40.4168,lng:-3.7038,iso:"es"},
+  {sk:"Valencia",en:"Valencia",lat:39.4699,lng:-0.3763,iso:"es"},
+  {sk:"Sevilla",en:"Seville",lat:37.3891,lng:-5.9845,iso:"es"},
+  {sk:"Malaga",en:"Malaga",lat:36.7213,lng:-4.4213,iso:"es"},
+  {sk:"Tarragona",en:"Tarragona",lat:41.1189,lng:1.2445,iso:"es"},
+  {sk:"Tenerife",en:"Tenerife",lat:28.2916,lng:-16.6291,iso:"es"},
+  {sk:"Gran Canaria",en:"Gran Canaria",lat:27.9202,lng:-15.5474,iso:"es"},
+  {sk:"Mallorca",en:"Mallorca",lat:39.6953,lng:3.0176,iso:"es"},
+  {sk:"Bilbao",en:"Bilbao",lat:43.263,lng:-2.935,iso:"es"},
+  {sk:"Berlín",en:"Berlin",lat:52.52,lng:13.405,iso:"de"},
+  {sk:"Mníchov",en:"Munich",lat:48.1351,lng:11.582,iso:"de"},
+  {sk:"Drážďany",en:"Dresden",lat:51.0504,lng:13.7373,iso:"de"},
+  {sk:"Lipsko",en:"Leipzig",lat:51.3397,lng:12.3731,iso:"de"},
+  {sk:"Hamburg",en:"Hamburg",lat:53.5511,lng:9.9937,iso:"de"},
+  {sk:"Kolín nad Rýnom",en:"Cologne",lat:50.9375,lng:6.9603,iso:"de"},
+  {sk:"Frankfurt",en:"Frankfurt",lat:50.1109,lng:8.6821,iso:"de"},
+  {sk:"Atény",en:"Athens",lat:37.9838,lng:23.7275,iso:"gr"},
+  {sk:"Solún",en:"Thessaloniki",lat:40.6401,lng:22.9444,iso:"gr"},
+  {sk:"Kréta",en:"Crete",lat:35.2401,lng:24.8093,iso:"gr"},
+  {sk:"Santorini",en:"Santorini",lat:36.3932,lng:25.4615,iso:"gr"},
+  {sk:"Rodos",en:"Rhodes",lat:36.4341,lng:28.2176,iso:"gr"},
+  {sk:"Korfu",en:"Corfu",lat:39.6243,lng:19.9217,iso:"gr"},
+  {sk:"Mykonos",en:"Mykonos",lat:37.4467,lng:25.3289,iso:"gr"},
+  {sk:"Londýn",en:"London",lat:51.5074,lng:-0.1278,iso:"gb"},
+  {sk:"Edinburgh",en:"Edinburgh",lat:55.9533,lng:-3.1883,iso:"gb"},
+  {sk:"Manchester",en:"Manchester",lat:53.4808,lng:-2.2426,iso:"gb"},
+  {sk:"Glasgow",en:"Glasgow",lat:55.8642,lng:-4.2518,iso:"gb"},
+  {sk:"Liverpool",en:"Liverpool",lat:53.4084,lng:-2.9916,iso:"gb"},
+  {sk:"Oslo",en:"Oslo",lat:59.9139,lng:10.7522,iso:"no"},
+  {sk:"Bergen",en:"Bergen",lat:60.3913,lng:5.3221,iso:"no"},
+  {sk:"Štokholm",en:"Stockholm",lat:59.3293,lng:18.0686,iso:"se"},
+  {sk:"Kodaň",en:"Copenhagen",lat:55.6761,lng:12.5683,iso:"dk"},
+  {sk:"Helsinki",en:"Helsinki",lat:60.1699,lng:24.9384,iso:"fi"},
+  {sk:"Reykjavík",en:"Reykjavik",lat:64.1466,lng:-21.9426,iso:"is"},
+  {sk:"Paríž",en:"Paris",lat:48.8566,lng:2.3522,iso:"fr"},
+  {sk:"Nice",en:"Nice",lat:43.7102,lng:7.262,iso:"fr"},
+  {sk:"Lyon",en:"Lyon",lat:45.764,lng:4.8357,iso:"fr"},
+  {sk:"Amsterdam",en:"Amsterdam",lat:52.3676,lng:4.9041,iso:"nl"},
+  {sk:"Brusel",en:"Brussels",lat:50.8503,lng:4.3517,iso:"be"},
+  {sk:"Lisabon",en:"Lisbon",lat:38.7223,lng:-9.1393,iso:"pt"},
+  {sk:"Porto",en:"Porto",lat:41.1579,lng:-8.6291,iso:"pt"},
+  {sk:"Varšava",en:"Warsaw",lat:52.2297,lng:21.0122,iso:"pl"},
+  {sk:"Krakov",en:"Krakow",lat:50.0647,lng:19.945,iso:"pl"},
+  {sk:"Zakopane",en:"Zakopane",lat:49.2992,lng:19.9496,iso:"pl"},
+  {sk:"Ľubľana",en:"Ljubljana",lat:46.0569,lng:14.5058,iso:"si"},
+  {sk:"Bled",en:"Lake Bled",lat:46.3683,lng:14.1146,iso:"si"},
+  {sk:"Bukurešť",en:"Bucharest",lat:44.4268,lng:26.1025,iso:"ro"},
+  {sk:"Transfăgărășan",en:"Transfăgărășan",lat:45.6,lng:24.6167,iso:"ro"},
+  {sk:"Sofia",en:"Sofia",lat:42.6977,lng:23.3219,iso:"bg"},
+  {sk:"Belehrad",en:"Belgrade",lat:44.7866,lng:20.4489,iso:"rs"},
+  {sk:"Zürich",en:"Zurich",lat:47.3769,lng:8.5417,iso:"ch"},
+  {sk:"Ženeva",en:"Geneva",lat:46.2044,lng:6.1432,iso:"ch"},
+  {sk:"Dublin",en:"Dublin",lat:53.3498,lng:-6.2603,iso:"ie"},
+  {sk:"Tirana",en:"Tirana",lat:41.3275,lng:19.8187,iso:"al"},
+  {sk:"Kotor",en:"Kotor",lat:42.4247,lng:18.7712,iso:"me"},
+  {sk:"Sarajevo",en:"Sarajevo",lat:43.8563,lng:18.4131,iso:"ba"},
+  {sk:"Istanbul",en:"Istanbul",lat:41.0082,lng:28.9784,iso:"tr"},
+  {sk:"Cyprus",en:"Cyprus",lat:35.1264,lng:33.4299,iso:"cy"},
+  {sk:"Larnaka",en:"Larnaca",lat:34.9182,lng:33.6233,iso:"cy"},
+  {sk:"Ayia Napa",en:"Ayia Napa",lat:34.9885,lng:34.0,iso:"cy"},
+  {sk:"Pafos",en:"Paphos",lat:34.772,lng:32.4297,iso:"cy"},
+  {sk:"Limassol",en:"Limassol",lat:34.7071,lng:33.0226,iso:"cy"},
+  {sk:"Pomos",en:"Pomos",lat:35.0333,lng:32.4167,iso:"cy"},
+  {sk:"Pissouri",en:"Pissouri",lat:34.67,lng:32.705,iso:"cy"},
+  {sk:"Maroko",en:"Morocco",lat:31.7917,lng:-7.0926,iso:"ma"},
+  {sk:"Marrákeš",en:"Marrakesh",lat:31.6295,lng:-7.9811,iso:"ma"},
+  {sk:"Agadir",en:"Agadir",lat:30.4278,lng:-9.5981,iso:"ma"},
+  {sk:"Kostarika",en:"Costa Rica",lat:9.7489,lng:-83.7534,iso:"cr"},
+  {sk:"Los Angeles",en:"Los Angeles",lat:34.0522,lng:-118.2437,iso:"us"},
+  {sk:"San Francisco",en:"San Francisco",lat:37.7749,lng:-122.4194,iso:"us"},
+  {sk:"New York",en:"New York",lat:40.7128,lng:-74.006,iso:"us"},
+  {sk:"Las Vegas",en:"Las Vegas",lat:36.1699,lng:-115.1398,iso:"us"},
+  {sk:"San Diego",en:"San Diego",lat:32.7157,lng:-117.1611,iso:"us"},
+  {sk:"Miami",en:"Miami",lat:25.7617,lng:-80.1918,iso:"us"},
+  {sk:"Tokio",en:"Tokyo",lat:35.6762,lng:139.6503,iso:"jp"},
+  {sk:"Bangkok",en:"Bangkok",lat:13.7563,lng:100.5018,iso:"th"},
+  {sk:"Dubaj",en:"Dubai",lat:25.2048,lng:55.2708,iso:"ae"},
+];
 
-  showToast(lang==='sk' ? 'Nahrávam…' : 'Uploading…');
-  const rows = SEED.map(toRow);
-  const { error } = await sb.from('journeys').insert(rows);
-  if(error){
-    showToast(lang==='sk' ? 'Nepodarilo sa: '+error.message : 'Failed: '+error.message);
-    return;
-  }
-  await boot();
-  showToast(lang==='sk' ? 'Hotovo — 54 výletov v cloude' : 'Done — 54 trips in the cloud');
+const COUNTRY_INFO = {
+  sk:{sk:"Slovensko",en:"Slovakia",flag:"🇸🇰"},
+  at:{sk:"Rakúsko",en:"Austria",flag:"🇦🇹"},
+  cz:{sk:"Česko",en:"Czech Republic",flag:"🇨🇿"},
+  hu:{sk:"Maďarsko",en:"Hungary",flag:"🇭🇺"},
+  hr:{sk:"Chorvátsko",en:"Croatia",flag:"🇭🇷"},
+  it:{sk:"Taliansko",en:"Italy",flag:"🇮🇹"},
+  es:{sk:"Španielsko",en:"Spain",flag:"🇪🇸"},
+  de:{sk:"Nemecko",en:"Germany",flag:"🇩🇪"},
+  gr:{sk:"Grécko",en:"Greece",flag:"🇬🇷"},
+  gb:{sk:"Veľká Británia",en:"United Kingdom",flag:"🇬🇧"},
+  no:{sk:"Nórsko",en:"Norway",flag:"🇳🇴"},
+  se:{sk:"Švédsko",en:"Sweden",flag:"🇸🇪"},
+  dk:{sk:"Dánsko",en:"Denmark",flag:"🇩🇰"},
+  fi:{sk:"Fínsko",en:"Finland",flag:"🇫🇮"},
+  is:{sk:"Island",en:"Iceland",flag:"🇮🇸"},
+  fr:{sk:"Francúzsko",en:"France",flag:"🇫🇷"},
+  nl:{sk:"Holandsko",en:"Netherlands",flag:"🇳🇱"},
+  be:{sk:"Belgicko",en:"Belgium",flag:"🇧🇪"},
+  pt:{sk:"Portugalsko",en:"Portugal",flag:"🇵🇹"},
+  pl:{sk:"Poľsko",en:"Poland",flag:"🇵🇱"},
+  si:{sk:"Slovinsko",en:"Slovenia",flag:"🇸🇮"},
+  ro:{sk:"Rumunsko",en:"Romania",flag:"🇷🇴"},
+  bg:{sk:"Bulharsko",en:"Bulgaria",flag:"🇧🇬"},
+  rs:{sk:"Srbsko",en:"Serbia",flag:"🇷🇸"},
+  ch:{sk:"Švajčiarsko",en:"Switzerland",flag:"🇨🇭"},
+  ie:{sk:"Írsko",en:"Ireland",flag:"🇮🇪"},
+  al:{sk:"Albánsko",en:"Albania",flag:"🇦🇱"},
+  me:{sk:"Čierna Hora",en:"Montenegro",flag:"🇲🇪"},
+  ba:{sk:"Bosna a Hercegovina",en:"Bosnia and Herzegovina",flag:"🇧🇦"},
+  tr:{sk:"Turecko",en:"Turkey",flag:"🇹🇷"},
+  cy:{sk:"Cyprus",en:"Cyprus",flag:"🇨🇾"},
+  ma:{sk:"Maroko",en:"Morocco",flag:"🇲🇦"},
+  cr:{sk:"Kostarika",en:"Costa Rica",flag:"🇨🇷"},
+  us:{sk:"USA",en:"USA",flag:"🇺🇸"},
+  jp:{sk:"Japonsko",en:"Japan",flag:"🇯🇵"},
+  th:{sk:"Thajsko",en:"Thailand",flag:"🇹🇭"},
+  ae:{sk:"SAE",en:"UAE",flag:"🇦🇪"},
+};
+
+/* strip accents so "Kosice" finds "Košice" and "Marrakes" finds "Marrákeš" */
+function norm(str){
+  return (str||'')
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g,'')
+    .trim();
 }
 
-function resetSeed(){
-  const msg = lang==='sk'
-    ? 'Toto vráti pôvodných 54 výletov (len lokálne, cloud zostane). Pokračovať?'
-    : 'This restores the original 54 trips locally. Continue?';
-  if(!confirm(msg)) return;
-  CACHE = SEED.slice();
-  mirror();
-  refreshAdmList(); refresh();
-  showToast(lang==='sk'?'Obnovené':'Restored');
+/* Look a place up by either language. Exact match wins; failing that we
+   accept a clear prefix match, so you don't have to finish typing. */
+function findPlace(q){
+  const n = norm(q);
+  if(!n) return null;
+  let hit = GAZ.find(g => norm(g.sk) === n || norm(g.en) === n);
+  if(hit) return hit;
+  const starts = GAZ.filter(g => norm(g.sk).startsWith(n) || norm(g.en).startsWith(n));
+  return starts.length === 1 ? starts[0] : null;
+}
+
+/* Suggestions for the datalist under the name field. */
+function suggestPlaces(q, max){
+  const n = norm(q);
+  if(!n) return [];
+  const out = [];
+  GAZ.forEach(g=>{
+    if(out.length >= (max||8)) return;
+    if(norm(g.sk).startsWith(n) || norm(g.en).startsWith(n)) out.push(g);
+  });
+  return out;
+}
+
+/* Fill in whatever the person left blank, from whichever field they did
+   fill. Never overwrites something they typed themselves — an empty field
+   is an invitation, a filled one is a decision. */
+function autofillTrip(prefix){
+  const $ = id => document.getElementById(prefix + id);
+  const get = id => ($(id) ? $(id).value.trim() : '');
+  const setIfBlank = (id, val)=>{
+    const el = $(id);
+    if(el && !el.value.trim() && val) el.value = val;
+  };
+
+  // resolve from whichever name field has something in it
+  const hit = findPlace(get('nsk')) || findPlace(get('nen'));
+  if(!hit) return false;
+
+  setIfBlank('nsk', hit.sk);
+  setIfBlank('nen', hit.en);
+
+  const c = COUNTRY_INFO[hit.iso];
+  if(c){
+    setIfBlank('csk', c.sk);
+    setIfBlank('cen', c.en);
+    setIfBlank('flag', c.flag);
+  }
+  setIfBlank('lat', String(hit.lat));
+  setIfBlank('lng', String(hit.lng));
+  return true;
+}
+
+/* Wire a name field so it offers suggestions and fills the rest in on blur. */
+function wireAutofill(prefix, listId){
+  const nsk = document.getElementById(prefix + 'nsk');
+  const nen = document.getElementById(prefix + 'nen');
+  const list = document.getElementById(listId);
+  if(!list) return;
+
+  const refresh = (e)=>{
+    const q = e.target.value;
+    list.innerHTML = suggestPlaces(q, 8)
+      .map(g=>{
+        const label = (lang === 'sk') ? g.sk : g.en;
+        const other = (lang === 'sk') ? g.en : g.sk;
+        const c = COUNTRY_INFO[g.iso];
+        const hint = [other !== label ? other : null, c ? c[lang === 'sk' ? 'sk' : 'en'] : null]
+          .filter(Boolean).join(' · ');
+        return '<option value="'+esc(label)+'">'+esc(hint)+'</option>';
+      })
+      .join('');
+  };
+
+  [nsk, nen].forEach(el=>{
+    if(!el) return;
+    el.setAttribute('list', listId);
+    el.addEventListener('input', refresh);
+    el.addEventListener('change', ()=>{
+      if(autofillTrip(prefix)) {
+        tap();
+        showToast(lang==='sk' ? 'Doplnené' : 'Filled in');
+      }
+    });
+    el.addEventListener('blur', ()=>autofillTrip(prefix));
+  });
 }
 
 /* ═══════════ CATEGORIES ═══════════ */
@@ -2166,9 +2705,7 @@ function countdownHtml(){
   const sk = lang === 'sk';
   const ms = new Date(t.dateFrom+'T00:00:00') - new Date();
   const d = Math.max(0, Math.ceil(ms / 86400000));
-  const unit = sk
-    ? (d === 1 ? 'deň' : (d < 5 ? 'dni' : 'dní'))
-    : (d === 1 ? 'day' : 'days');
+  const unit = plural(d, 'day');
   return '<div class="countdown" onclick="tap();openModal('+t.id+')">'+
     '<div class="cd-l">'+
       '<div class="cd-lbl">'+(sk ? 'Najbližší výlet' : 'Next trip')+'</div>'+
@@ -2269,7 +2806,7 @@ function buildTl(){
     real.forEach(t=>(t.countryEn||'').split(' / ').forEach(c=>c.trim()&&yCtrs.add(c.trim())));
 
     const meta = real.length
-      ? real.length+' '+(lang==='sk'?'výletov':'trips')+' &middot; '+yDays+' '+(lang==='sk'?'dní':'days')+' &middot; '+yCtrs.size+' '+(lang==='sk'?'krajín':'countries')
+      ? qty(real.length,'trip')+' &middot; '+qty(yDays,'day')+' &middot; '+qty(yCtrs.size,'country')
       : '';
 
     const hdr = document.createElement('div');
@@ -2319,7 +2856,7 @@ function buildTl(){
         '<div class="tc-body">'+
           '<div class="tc-name">'+esc(nm(t))+'</div>'+
           '<div class="tc-date">'+esc(fmt(t.dateFrom,t.dateTo))+
-            (d>1 ? ' &middot; '+d+' '+(lang==='sk'?'dní':'days') : '')+'</div>'+
+            (d>1 ? ' &middot; '+qty(d,'day') : '')+'</div>'+
           (t.places ? '<div class="tc-places">'+esc(t.places)+'</div>' : '')+
           (nt(t) ? '<div class="tc-note">'+esc(nt(t))+'</div>' : '')+
         '</div>';
@@ -2539,11 +3076,11 @@ function buildStats(){
   const skiSeasons = new Set(trips.filter(t=>t.cat==='ski').map(t=>(t.dateFrom||'').slice(0,4))).size;
 
   if(sk){
-    h += '<strong>Spolu</strong> — '+daysTogether.toLocaleString(loc)+' dní, z toho '+totalDays+' na cestách ('+pctTravelling+' %).<br>';
-    h += '<strong>Najdlhší výlet</strong> — '+esc(nm(longest))+' ('+esc(ct(longest))+'), '+days(longest)+' dní.<br>';
-    h += '<strong>Najbohatší rok</strong> — '+bestYear+' ('+ymap[bestYear].d+' dní), <strong>najrušnejší</strong> '+busiestYear+' ('+ymap[busiestYear].n+' výletov).<br>';
-    h += '<strong>Doma vs. vonku</strong> — '+home+' výletov po Slovensku, '+abroad+' do zahraničia.<br>';
-    if(cat.ski.d) h += '<strong>'+cat.ski.d+' dní na lyžiach</strong> počas '+skiSeasons+' sezón.<br>';
+    h += '<strong>Spolu</strong> — '+daysTogether.toLocaleString(loc)+' '+plural(daysTogether,'day')+', z toho '+totalDays+' na cestách ('+pctTravelling+' %).<br>';
+    h += '<strong>Najdlhší výlet</strong> — '+esc(nm(longest))+' ('+esc(ct(longest))+'), '+qty(days(longest),'day')+'.<br>';
+    h += '<strong>Najbohatší rok</strong> — '+bestYear+' ('+qty(ymap[bestYear].d,'day')+'), <strong>najrušnejší</strong> '+busiestYear+' ('+qty(ymap[busiestYear].n,'trip')+').<br>';
+    h += '<strong>Doma vs. vonku</strong> — '+qty(home,'trip')+' po Slovensku, '+abroad+' do zahraničia.<br>';
+    if(cat.ski.d) h += '<strong>'+qty(cat.ski.d,'day')+' na lyžiach</strong> počas '+skiSeasons+' '+(skiSeasons===1?'sezóny':(skiSeasons<5?'sezón':'sezón'))+'.<br>';
     if(repeats.length) h += '<strong>Kam sa vraciame</strong> — '+repeats.slice(0,3).map(([p,n])=>esc(p)+' ('+n+'× spolu)').join(', ')+'.<br>';
     if(farthest) h += '<strong>Najďalej</strong> — '+esc(nm(farthest))+' ('+esc(ct(farthest))+'), '+farthest._dist.toLocaleString(loc)+' km vzdušnou čiarou.<br>';
     if(nearest)  h += '<strong>Najbližšie v zahraničí</strong> — '+esc(nm(nearest))+' ('+esc(ct(nearest))+'), '+nearest._dist+' km.<br>';
@@ -2581,29 +3118,347 @@ function photosOf(t){
   return [];
 }
 
+/* The order the sheet navigates in: newest first, matching the timeline.
+   Built fresh each time it opens so an edit or a new trip is reflected. */
+function tripOrder(){
+  return getT()
+    .filter(t=>t.cat!=='origin')
+    .slice()
+    .sort((a,b)=>(b.dateFrom||'').localeCompare(a.dateFrom||''));
+}
+
+let tsMap = null;   // the little map inside the sheet
+
 function openModal(id){
   const t = getT().find(x=>x.id===id);
   if(!t) return;
   openId = id;
+
+  const inner = document.getElementById('modal-inner');
+  inner.classList.remove('editing');
+
+  const pics = photosOf(t);
   const d = days(t);
 
-  document.getElementById('modal-inner').classList.remove('editing');
-  document.getElementById('m-title').textContent = (t.flag?t.flag+' ':'') + nm(t);
+  /* hero */
+  const hero = document.getElementById('ts-hero');
+  const img  = document.getElementById('ts-hero-img');
+  const fUrl = flagUrl(t);
+  if(pics.length){
+    hero.classList.remove('no-photo');
+    img.style.backgroundImage = 'url('+pics[0]+')';
+  } else {
+    hero.classList.add('no-photo');
+    img.style.backgroundImage = fUrl ? 'url('+fUrl+')' : 'none';
+  }
+
+  document.getElementById('ts-tri').innerHTML = triInner(t);
+  document.getElementById('m-title').textContent = nm(t);
+  document.getElementById('ts-date').textContent = fmt(t.dateFrom, t.dateTo);
+
   document.getElementById('m-meta').innerHTML =
-    '<span class="mchip mc-rust">'+esc(fmt(t.dateFrom,t.dateTo))+'</span>'+
-    (d>1 ? '<span class="mchip mc-bark">'+d+' '+(lang==='sk'?'dní':'days')+'</span>' : '')+
+    (d>1 ? '<span class="mchip mc-rust">'+qty(d,'day')+'</span>' : '')+
     (ct(t) ? '<span class="mchip mc-forest">'+esc(ct(t))+'</span>' : '')+
     '<span class="mchip mc-gold">'+esc(catLabel(t.cat))+'</span>';
 
-  renderGallery(t);
+  document.getElementById('ts-count').textContent = pics.length
+    ? '\uD83D\uDCF7 ' + qty(pics.length, 'photo')
+    : (lang==='sk' ? 'Bez fotiek' : 'No photos');
 
+  /* body */
   let body = '';
   if(nt(t)) body += '<div class="modal-quote"><blockquote>'+esc(nt(t))+'</blockquote></div>';
   if(t.places) body += '<div class="modal-places">&#128205; '+esc(t.places)+'</div>';
   document.getElementById('m-body').innerHTML = body;
 
+  renderGallery(t);
+  renderTripMap(t);
+  updateNav();
+
   document.getElementById('modal').classList.add('on');
   document.body.style.overflow = 'hidden';
+  // each trip opens at the top, not wherever the last one was scrolled to
+  inner.scrollTop = 0;
+  maybeHint();
+}
+
+/* just the three colour bars, without the wrapper span */
+function triInner(t){
+  const c = FLAG_TRI[isoOf(t)];
+  if(!c) return '';
+  return c.map(col=>'<i style="background:'+col+'"></i>').join('');
+}
+
+/* A small map showing just this trip — every stop it had, fitted to
+   them. Built lazily and reused, since spinning up a Leaflet instance
+   per trip would leak them. */
+function renderTripMap(t){
+  const wrap = document.getElementById('ts-map-wrap');
+  const pts = (Array.isArray(t.stops) && t.stops.length)
+    ? t.stops.filter(p=>typeof p.lat==='number' && typeof p.lng==='number')
+    : (typeof t.lat==='number' && typeof t.lng==='number'
+        ? [{n:t.places || nm(t), lat:t.lat, lng:t.lng}]
+        : []);
+
+  if(!pts.length || typeof L === 'undefined'){
+    wrap.style.display = 'none';
+    return;
+  }
+  wrap.style.display = 'block';
+
+  document.getElementById('ts-stops').innerHTML =
+    pts.map(p=>'<span class="ts-stop">&#128205; '+esc(p.n)+'</span>').join('');
+
+  try{
+    if(!tsMap){
+      tsMap = L.map('ts-map', {
+        zoomControl:false, scrollWheelZoom:false, dragging:false,
+        doubleClickZoom:false, boxZoom:false, keyboard:false, attributionControl:false
+      });
+      L.tileLayer('https://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}{r}.png',
+        { subdomains:'abcd', maxZoom:19 }).addTo(tsMap);
+    }
+    // clear previous trip's markers
+    tsMap.eachLayer(l=>{ if(l instanceof L.Marker) tsMap.removeLayer(l); });
+
+    pts.forEach(p=>{
+      L.marker([p.lat,p.lng], {icon: mkPin(t.cat, 8, false)}).addTo(tsMap);
+    });
+
+    if(pts.length > 1){
+      tsMap.fitBounds(L.latLngBounds(pts.map(p=>[p.lat,p.lng])).pad(0.3));
+    } else {
+      tsMap.setView([pts[0].lat, pts[0].lng], 8);
+    }
+    setTimeout(()=>{ try{ tsMap.invalidateSize(); }catch(e){} }, 60);
+  }catch(e){
+    wrap.style.display = 'none';
+  }
+}
+
+/* Step to the previous/next trip in timeline order. */
+
+
+/* Draw the dot strip. With 50+ trips we can't show a dot per trip at full
+   size, so dots taper with distance from the current one: active is a wide
+   gold pill, the two either side are full dots, then they shrink away. The
+   whole strip stays a fixed width no matter how many trips exist. */
+function updateNav(){
+  const box = document.getElementById('ts-dots');
+  if(!box) return;
+
+  const order = tripOrder();
+  const i = order.findIndex(t=>t.id === openId);
+  if(i === -1){ box.innerHTML = ''; return; }
+
+  const WINDOW = 9;   // how many dots are drawn either side before we stop
+  let html = '';
+
+  order.forEach((t, idx)=>{
+    const dist = Math.abs(idx - i);
+    if(dist > WINDOW) return;   // outside the window entirely
+
+    let cls = 'ts-dot';
+    if(idx === i)      cls += ' on';
+    else if(dist <= 2) cls += ' near';
+    else if(dist <= 5) cls += ' far';
+    else               cls += ' edge';
+
+    html += '<button class="'+cls+'" onclick="jumpTrip('+idx+')" '+
+            'aria-label="'+esc(nm(t))+'"></button>';
+  });
+
+  // a plain "12 / 53" so you always know where you are in the whole run
+  html += '<span class="ts-dots-pos">'+(i+1)+' / '+order.length+'</span>';
+  box.innerHTML = html;
+}
+
+/* Jump straight to a trip by its position in the order. */
+function jumpTrip(idx){
+  const order = tripOrder();
+  const t = order[idx];
+  if(!t || t.id === openId) return;
+  tap();
+  openModal(t.id);
+}
+
+/* Shown once, the first time the sheet is opened, then never again. */
+let hintShown = false;
+function maybeHint(){
+  if(hintShown) return;
+  hintShown = true;
+  const el = document.getElementById('ts-hint');
+  if(!el) return;
+  el.textContent = lang === 'sk'
+    ? '\u2190 Potiahni prstom medzi výletmi \u2192'
+    : '\u2190 Swipe between trips \u2192';
+  el.classList.add('on');
+  setTimeout(()=>el.classList.remove('on'), 2600);
+}
+
+function closeModal(){
+  document.getElementById('modal').classList.remove('on');
+  document.getElementById('modal').classList.remove('editing');
+  document.getElementById('modal-inner').classList.remove('editing');
+  document.body.style.overflow = '';
+  openId = null;
+}
+
+/* ═══════════ SWIPE ═══════════
+   The sheet tracks the finger: drag and the whole thing slides with you,
+   revealing a hint of the trip either side. Let go past the threshold and
+   it completes the throw, then the next trip springs in from the opposite
+   edge. Let go short of it and it snaps back.
+
+   Vertical scrolling has to keep working, so the first few pixels decide
+   the gesture's axis and it commits to that for the rest of the drag. */
+(function(){
+  const sheet = document.getElementById('modal');
+  const inner = document.getElementById('modal-inner');
+  if(!sheet || !inner) return;
+
+  let x0 = 0, y0 = 0;
+  let dx = 0;
+  let axis = null;        // null until decided, then 'x' or 'y'
+  let dragging = false;
+  let canPrev = false, canNext = false;
+
+  const THRESHOLD = 70;   // px past which the drag becomes a page turn
+  const RESIST    = 0.32; // how much a drag toward a non-existent trip gives
+
+  function edges(){
+    const order = tripOrder();
+    const i = order.findIndex(t=>t.id === openId);
+    canPrev = i > 0;
+    canNext = i > -1 && i < order.length - 1;
+  }
+
+  sheet.addEventListener('touchstart', e=>{
+    if(sheet.classList.contains('editing')) return;
+    if(document.getElementById('lightbox').classList.contains('on')) return;
+    if(e.touches.length !== 1) return;
+    x0 = e.touches[0].clientX;
+    y0 = e.touches[0].clientY;
+    dx = 0;
+    axis = null;
+    dragging = true;
+    edges();
+    inner.style.transition = 'none';
+  }, {passive:true});
+
+  sheet.addEventListener('touchmove', e=>{
+    if(!dragging) return;
+    const t = e.touches[0];
+    const mx = t.clientX - x0;
+    const my = t.clientY - y0;
+
+    // decide once, early, which way this gesture is going
+    if(axis === null){
+      if(Math.abs(mx) < 8 && Math.abs(my) < 8) return;
+      axis = (Math.abs(mx) > Math.abs(my) * 1.25) ? 'x' : 'y';
+      if(axis === 'y'){ dragging = false; return; }   // hand it back to the scroller
+    }
+
+    dx = mx;
+    // pull against a wall when there's nothing to swipe to
+    if((dx > 0 && !canPrev) || (dx < 0 && !canNext)) dx *= RESIST;
+
+    inner.style.transform = 'translateX(' + dx + 'px)';
+    // the further you pull, the more the current trip fades out
+    inner.style.opacity = String(1 - Math.min(Math.abs(dx) / 400, 0.35));
+  }, {passive:true});
+
+  sheet.addEventListener('touchend', ()=>{
+    if(!dragging){ return; }
+    dragging = false;
+    if(axis !== 'x'){ reset(); return; }
+
+    const passed = Math.abs(dx) > THRESHOLD;
+    const dir = dx < 0 ? 1 : -1;          // dragging left = go to next
+    const allowed = dir === 1 ? canNext : canPrev;
+
+    if(passed && allowed){
+      throwTo(dir);
+    } else {
+      reset();
+    }
+  }, {passive:true});
+
+  /* Snap back to centre — the drag didn't earn a page turn. */
+  function reset(){
+    inner.style.transition = 'transform .28s cubic-bezier(.22,1,.36,1), opacity .28s';
+    inner.style.transform = 'translateX(0)';
+    inner.style.opacity = '1';
+    setTimeout(()=>{ inner.style.transition = ''; }, 300);
+  }
+
+  /* Finish the throw off-screen, swap the content, then bring the new trip
+     in from the far side. Two frames of setTimeout: one to let the exit
+     animation play, one to let the browser apply the off-screen start
+     position before we animate back from it. */
+  function throwTo(dir){
+    const w = window.innerWidth || 400;
+    inner.style.transition = 'transform .2s ease-out, opacity .2s ease-out';
+    inner.style.transform = 'translateX(' + (dir === 1 ? -w : w) + 'px)';
+    inner.style.opacity = '0';
+    tap(12);
+
+    setTimeout(()=>{
+      const order = tripOrder();
+      const i = order.findIndex(t=>t.id === openId);
+      const next = order[i + dir];
+      if(!next){ reset(); return; }
+
+      openModal(next.id);   // repaints the sheet with the new trip
+
+      // start the incoming trip off-screen on the opposite side...
+      inner.style.transition = 'none';
+      inner.style.transform = 'translateX(' + (dir === 1 ? w : -w) + 'px)';
+      inner.style.opacity = '0';
+
+      requestAnimationFrame(()=>{
+        requestAnimationFrame(()=>{
+          inner.style.transition = 'transform .32s cubic-bezier(.22,1,.36,1), opacity .32s';
+          inner.style.transform = 'translateX(0)';
+          inner.style.opacity = '1';
+          setTimeout(()=>{ inner.style.transition = ''; }, 340);
+        });
+      });
+    }, 190);
+  }
+})();
+
+/* Buttons and keys reuse the same animation, so every route between trips
+   feels the same. */
+function navTrip(dir){
+  const order = tripOrder();
+  const i = order.findIndex(t=>t.id === openId);
+  if(i === -1) return;
+  const next = order[i + dir];
+  if(!next) return;
+
+  const inner = document.getElementById('modal-inner');
+  const w = window.innerWidth || 400;
+  tap();
+
+  inner.style.transition = 'transform .18s ease-out, opacity .18s ease-out';
+  inner.style.transform = 'translateX(' + (dir === 1 ? -w * 0.35 : w * 0.35) + 'px)';
+  inner.style.opacity = '0';
+
+  setTimeout(()=>{
+    openModal(next.id);
+    inner.style.transition = 'none';
+    inner.style.transform = 'translateX(' + (dir === 1 ? w * 0.35 : -w * 0.35) + 'px)';
+    inner.style.opacity = '0';
+    requestAnimationFrame(()=>{
+      requestAnimationFrame(()=>{
+        inner.style.transition = 'transform .3s cubic-bezier(.22,1,.36,1), opacity .3s';
+        inner.style.transform = 'translateX(0)';
+        inner.style.opacity = '1';
+        setTimeout(()=>{ inner.style.transition = ''; }, 320);
+      });
+    });
+  }, 170);
 }
 
 function renderGallery(t){
@@ -2611,19 +3466,21 @@ function renderGallery(t){
   const pics = photosOf(t);
 
   if(!pics.length){
-    box.innerHTML =
-      '<div class="gal-empty" onclick="document.getElementById(\'gal-input\').click()">'+
-        '<div style="font-size:1.4rem">&#128247;</div>'+
-        (lang==='sk' ? 'Zatiaľ žiadne fotky — klikni a pridaj' : 'No photos yet — tap to add')+
-      '</div>';
+    box.innerHTML = isAdmin()
+      ? '<div class="gal-empty" onclick="document.getElementById(\'gal-input\').click()">'+
+          '<div style="font-size:1.4rem">&#128247;</div>'+
+          (lang==='sk' ? 'Zatiaľ žiadne fotky — klikni a pridaj' : 'No photos yet — tap to add')+
+        '</div>'
+      : '';
     return;
   }
 
-  let h = '<div class="gal-count">'+pics.length+' '+
-    (lang==='sk' ? (pics.length===1?'fotka':pics.length<5?'fotky':'fotiek') : (pics.length===1?'photo':'photos'))+
+  let h = '<div class="ts-sec-ttl">'+
+    (lang==='sk' ? 'Fotky' : 'Photos')+' · '+pics.length+
     '</div><div class="gal">';
+
   pics.forEach((src,i)=>{
-    // the first photo is the one the timeline card uses as its background
+    // photos[0] is what the timeline card and the hero use as cover
     const isCover = i === 0;
     h += '<div class="gal-item'+(isCover?' is-cover':'')+'">'+
       '<img src="'+src+'" alt="" onclick="openLb('+i+')">'+
@@ -2631,9 +3488,11 @@ function renderGallery(t){
         ? '<span class="gal-cover-tag">'+(lang==='sk'?'Hlavná':'Cover')+'</span>'
         : '<button class="gal-cover-btn" onclick="setCover('+i+')" title="'+
             (lang==='sk'?'Nastaviť ako hlavnú':'Set as cover')+'">&#9733;</button>')+
-      '<button class="gal-del" onclick="delPhoto('+i+')" title="'+(lang==='sk'?'Vymazať':'Delete')+'">&#10005;</button>'+
+      '<button class="gal-del" onclick="delPhoto('+i+')" title="'+
+        (lang==='sk'?'Vymazať':'Delete')+'">&#10005;</button>'+
     '</div>';
   });
+
   h += '<label class="gal-add">'+
         '<span class="gal-add-ico">+</span>'+
         '<span class="gal-add-txt">'+(lang==='sk'?'Pridať':'Add')+'</span>'+
@@ -2641,13 +3500,6 @@ function renderGallery(t){
        '</label>';
   h += '</div>';
   box.innerHTML = h;
-}
-
-function closeModal(){
-  document.getElementById('modal').classList.remove('on');
-  document.getElementById('modal-inner').classList.remove('editing');
-  document.body.style.overflow = '';
-  openId = null;
 }
 
 /* ═══════════ PHOTOS ═══════════
@@ -2692,7 +3544,7 @@ async function addPhotos(e){
   const box = document.getElementById('m-gallery');
   box.classList.add('uploading');
   showToast(lang==='sk'
-    ? 'Nahrávam '+files.length+' '+(files.length===1?'fotku…':'fotiek…')
+    ? 'Nahrávam '+files.length+' '+(files.length===1?'fotku':plural(files.length,'photo'))+'…'
     : 'Uploading '+files.length+'…');
 
   const urls = [];
@@ -2824,10 +3676,12 @@ function startEdit(){
   set('e-nsk2', t.noteSk);     set('e-nen2', t.noteEn);
   document.getElementById('e-cat').value = t.cat || 'trip';
   document.getElementById('modal-inner').classList.add('editing');
+  document.getElementById('modal').classList.add('editing');
 }
 
 function cancelEdit(){
   document.getElementById('modal-inner').classList.remove('editing');
+  document.getElementById('modal').classList.remove('editing');
 }
 
 function saveEdit(){
@@ -2863,10 +3717,22 @@ document.getElementById('modal').addEventListener('click', e=>{
   if(e.target === e.currentTarget) closeModal();
 });
 document.addEventListener('keydown', e=>{
-  if(e.key !== 'Escape') return;
   const lb = document.getElementById('lightbox');
-  if(lb && lb.classList.contains('on')) closeLb();
-  else closeModal();
+  const sheetOpen = document.getElementById('modal').classList.contains('on');
+  const editing = document.getElementById('modal-inner').classList.contains('editing');
+
+  if(e.key === 'Escape'){
+    if(lb && lb.classList.contains('on')) closeLb();
+    else if(editing) cancelEdit();
+    else closeModal();
+    return;
+  }
+
+  // arrow keys page through trips, but not while typing in the edit form
+  if(!sheetOpen || editing) return;
+  if(lb && lb.classList.contains('on')) return;
+  if(e.key === 'ArrowLeft')  navTrip(-1);
+  if(e.key === 'ArrowRight') navTrip(1);
 });
 
 /* ═══════════ ADMIN ═══════════ */
@@ -3092,7 +3958,7 @@ async function shareTrip(id){
   const d = days(t);
   c.fillStyle = '#E2CFA0';
   c.font = '400 34px Georgia, serif';
-  const sub = [ct(t), d>1 ? d+' '+(lang==='sk'?'dní':'days') : null]
+  const sub = [ct(t), d>1 ? qty(d,'day') : null]
     .filter(Boolean).join('  ·  ');
   c.fillText(sub, 80, Math.round(H*0.83));
 
@@ -3123,6 +3989,37 @@ async function shareTrip(id){
   showToast(lang==='sk' ? 'Uložené' : 'Saved');
 }
 
+/* ═══════════ DATE FLOW ═══════════
+   Picking a start date almost always means you're about to pick an end
+   date, so we walk you straight there: seed "to" with the same day (most
+   trips are one day) and pop the picker. showPicker() isn't supported
+   everywhere, so we fall back to a focus, which at least puts the cursor
+   in the right place. */
+function wireDates(prefix){
+  const d1 = document.getElementById(prefix + 'd1');
+  const d2 = document.getElementById(prefix + 'd2');
+  if(!d1 || !d2) return;
+
+  d1.addEventListener('change', ()=>{
+    if(!d1.value) return;
+
+    // an end date before the start date is never what was meant
+    d2.min = d1.value;
+    if(d2.value && d2.value < d1.value) d2.value = '';
+
+    if(!d2.value){
+      d2.value = d1.value;   // a single-day trip is the common case
+      tap();
+      setTimeout(()=>{
+        try{
+          if(typeof d2.showPicker === 'function') d2.showPicker();
+          else d2.focus();
+        }catch(e){ d2.focus(); }
+      }, 120);
+    }
+  });
+}
+
 /* ═══════════ INIT ═══════════ */
 /* Version is shown in the footer of every view, same as the band app.
    Bump APP_VERSION at the top of this file and it updates everywhere. */
@@ -3135,6 +4032,12 @@ async function shareTrip(id){
    reconcile with Supabase when it answers. */
 refresh();
 updateAdminUi();
+
+// the add form and the edit form both get place autofill and date flow
+wireAutofill('f-', 'f-places-list');
+wireAutofill('e-', 'e-places-list');
+wireDates('f-');
+wireDates('e-');
 
 async function boot(){
   const sub = document.getElementById('adm-sub');
