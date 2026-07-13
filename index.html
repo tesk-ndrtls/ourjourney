@@ -7,6 +7,12 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Kari &#10084;&#65039; Luky">
 <meta name="theme-color" content="#1A0F05">
+<!-- The palette is hand-built and always light (cream paper, rust ink).
+     Without this, Safari in dark mode overrides the page background with
+     its own grey, which is what turned the timeline and stats views dark
+     while the map — which paints its own background — stayed correct. -->
+<meta name="color-scheme" content="light only">
+<meta name="supported-color-schemes" content="light">
 <title>Kari &#10084;&#65039; Luky</title>
 
 <!-- home-screen icon (old-school tattoo heart), embedded so the app stays one file -->
@@ -21,6 +27,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 :root{
+  color-scheme:light only;
   --e:#1A0F05;   /* espresso */
   --b:#3D2208;   /* dark bark */
   --bm:#5C3410;  /* mid bark */
@@ -43,7 +50,17 @@
 }
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 html{scroll-behavior:smooth;-webkit-text-size-adjust:100%}
-body{font-family:var(--ff-b);background:var(--c);color:var(--e);min-height:100vh;overflow-x:hidden;-webkit-font-smoothing:antialiased}
+body{
+  font-family:var(--ff-b);
+  background:var(--c);            /* cream — never let the UA repaint this */
+  color:var(--e);
+  min-height:100vh;
+  overflow-x:hidden;
+  -webkit-font-smoothing:antialiased;
+}
+/* the two views that were rendering grey in dark mode */
+.tl-body,.stats-body{background:var(--c)}
+.view{background:var(--c)}
 button{font-family:var(--ff-b);cursor:pointer}
 input,textarea,select{font-family:var(--ff-b)}
 :focus-visible{outline:3px solid var(--r);outline-offset:2px}
@@ -115,8 +132,17 @@ input,textarea,select{font-family:var(--ff-b)}
 .page-wrap{padding-top:calc(var(--bh) + var(--th) + var(--safe-top));min-height:100vh}
 .view{display:none}
 .view.on{display:block}
+/* The admin panel is hidden by default and shown only when BOTH are
+   true: you're signed in, and you've opened admin mode. It has no base
+   rule of its own, which is how it ended up rendering underneath the map
+   for signed-out visitors — it was never told to hide. */
+#vadmin{display:none}
 body.admin-mode .page-wrap{display:none}
-body.admin-mode #vadmin{display:block}
+body.is-admin.admin-mode #vadmin{display:block}
+
+/* Belt and braces: even if admin-mode were somehow set without a session,
+   there is nothing to see and nothing to submit. */
+body:not(.is-admin) #vadmin{display:none !important}
 /* the tab bar does nothing in admin mode and sits on top of the panel
    header, so take it out of the layout entirely rather than disable it */
 body.admin-mode .tabbar{display:none}
@@ -217,9 +243,7 @@ body.admin-mode #vadmin{padding-top:calc(var(--bh) + var(--safe-top))}
 .tl-body{padding:.85rem .9rem 4rem;max-width:1180px;margin:0 auto}
 .year-grp{margin-bottom:2rem}
 .year-hdr{display:flex;align-items:center;gap:.5rem;margin-bottom:.75rem}
-.year-num{background:var(--e);color:var(--s);font-family:var(--ff-d);font-size:1.1rem;font-weight:900;padding:.18rem .7rem;letter-spacing:-.02em;flex-shrink:0}
 .year-meta{font-size:.58rem;color:var(--gh);font-weight:600;letter-spacing:.05em;text-transform:uppercase;white-space:nowrap}
-.year-line{flex:1;height:2px;background:var(--e);min-width:12px}
 
 /* card grid — 1 column on phones, 2 from tablet width, 3 on wide desktop */
 /* ══ TIMELINE: a real vertical spine ══
@@ -1072,6 +1096,216 @@ body:not(.is-admin) .gal-empty{display:none}
   vertical-align:middle;
 }
 
+
+/* Leaflet drops its attribution top-right by default here, where it
+   collided with the logo. Put it back at the foot of the map. */
+.leaflet-control-attribution{
+  font-size:.5rem !important;
+  background:rgba(246,237,216,.85) !important;
+  color:var(--gh) !important;
+  padding:.1rem .3rem !important;
+}
+.leaflet-control-attribution a{color:var(--bm) !important}
+.leaflet-top.leaflet-right{ top:auto !important; bottom:0 !important; }
+
+
+/* ══════════ ADMIN PANEL ══════════
+   This had no styles at all — the block was lost in an earlier rewrite,
+   which is why it rendered as raw HTML: labels inheriting heading sizes,
+   native inputs, a system Save button. Rebuilt here to match the rest of
+   the app. Labels sit ABOVE their fields; side-by-side labels were what
+   made the form look shattered on a narrow screen. */
+.adm-hdr{
+  padding:1.1rem 1rem .9rem;
+  background:var(--e);
+  border-bottom:3px solid var(--r);
+}
+.adm-hdr h1{
+  font-family:var(--ff-d);
+  font-size:1.5rem;font-weight:900;
+  color:var(--s);line-height:1.1;
+  margin-bottom:.3rem;
+}
+.adm-hdr p{
+  font-size:.68rem;
+  color:var(--sl);opacity:.8;
+  line-height:1.4;
+}
+.adm-cloud{display:flex;gap:.45rem;flex-wrap:wrap;margin-top:.8rem}
+
+.adm-cols{
+  display:grid;
+  grid-template-columns:1fr;
+  gap:1.1rem;
+  padding:1.1rem 1rem 4rem;
+  max-width:1100px;margin:0 auto;
+}
+@media(min-width:900px){
+  .adm-cols{grid-template-columns:1.15fr .85fr; gap:1.4rem;}
+}
+
+.adm-panel{
+  background:var(--w);
+  border:2px solid var(--e);
+  box-shadow:4px 4px 0 var(--s);
+  padding:1rem;
+}
+.adm-panel h2{
+  font-family:var(--ff-d);
+  font-size:1.05rem;font-weight:900;
+  color:var(--e);
+  margin-bottom:.9rem;
+  padding-bottom:.45rem;
+  border-bottom:2px solid var(--cd);
+}
+
+/* ── form ── */
+.fr{margin-bottom:.85rem}
+.fl2{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:.6rem;
+}
+@media(max-width:420px){
+  .fl2{grid-template-columns:1fr}
+}
+.flbl{
+  display:block;                    /* above the field, not beside it */
+  font-size:.56rem;font-weight:700;
+  letter-spacing:.11em;text-transform:uppercase;
+  color:var(--bm);
+  margin-bottom:.28rem;
+}
+.fi,.fta{
+  width:100%;
+  padding:.55rem .6rem;
+  border:2px solid var(--s);
+  background:var(--c);
+  font-family:var(--ff-b);
+  font-size:16px;                   /* under 16px and iOS force-zooms */
+  color:var(--e);
+  outline:none;
+  border-radius:0;
+  -webkit-appearance:none;
+  appearance:none;
+  transition:border-color .15s;
+  box-sizing:border-box;
+}
+.fi:focus,.fta:focus{border-color:var(--r)}
+.fi::placeholder,.fta::placeholder{color:var(--gh);opacity:.6}
+.fta{resize:vertical;min-height:70px;line-height:1.5}
+select.fi{
+  background-image:url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%235C3410' stroke-width='3'%3e%3cpath d='M6 9l6 6 6-6'/%3e%3c/svg%3e");
+  background-repeat:no-repeat;
+  background-position:right .5rem center;
+  background-size:14px;
+  padding-right:1.8rem;
+}
+.fhint{
+  font-size:.58rem;color:var(--gh);
+  margin-top:-.5rem;margin-bottom:.85rem;
+  line-height:1.4;
+}
+.fhint a{color:var(--r);text-decoration:underline}
+
+/* photo picker */
+.upz{
+  border:2px dashed var(--s);
+  background:var(--cd);
+  padding:1rem;
+  text-align:center;
+  cursor:pointer;
+  transition:border-color .15s,color .15s;
+  display:block;
+}
+.upz:hover{border-color:var(--r)}
+.upz input{display:none}
+.upz-ico{font-size:1.3rem;display:block;margin-bottom:.2rem}
+.upz-txt{
+  font-size:.66rem;font-weight:600;
+  color:var(--gh);
+}
+.upz img{max-width:100%;max-height:140px;display:block;margin:0 auto}
+
+/* preview of the photo chosen for a new trip */
+#photo-prev{
+  display:none;
+  width:100%;
+  max-height:180px;
+  object-fit:cover;
+  margin-top:.5rem;
+  border:2px solid var(--e);
+}
+#photo-prev.on{display:block}
+
+.btn-save{
+  width:100%;
+  margin-top:.4rem;
+  padding:.7rem;
+  background:var(--r);
+  color:var(--s);
+  border:2px solid var(--e);
+  box-shadow:3px 3px 0 var(--e);
+  font-family:var(--ff-b);
+  font-size:.72rem;font-weight:700;
+  letter-spacing:.1em;text-transform:uppercase;
+  cursor:pointer;
+  transition:transform .1s,box-shadow .1s,background .15s;
+}
+.btn-save:hover{
+  background:var(--rl);
+  transform:translate(-1px,-1px);
+  box-shadow:5px 5px 0 var(--e);
+}
+.btn-save:active{transform:translate(0,0);box-shadow:2px 2px 0 var(--e)}
+
+/* ── saved trips list ── */
+.adm-list-scroll{
+  max-height:60vh;
+  overflow-y:auto;
+  -webkit-overflow-scrolling:touch;
+}
+.adm-item{
+  display:flex;align-items:center;gap:.6rem;
+  padding:.55rem .3rem;
+  border-bottom:1px solid var(--cd);
+}
+.adm-item:last-child{border-bottom:none}
+.adm-item:hover{background:var(--sl)}
+.adm-flag{font-size:1rem;flex-shrink:0;line-height:1}
+.adm-info{flex:1;min-width:0}
+.adm-name{
+  font-family:var(--ff-d);
+  font-size:.85rem;font-weight:700;
+  color:var(--e);
+  line-height:1.2;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+.adm-meta{
+  font-size:.6rem;color:var(--gh);
+  margin-top:.1rem;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+.adm-del{
+  flex-shrink:0;
+  width:26px;height:26px;
+  padding:0;line-height:1;
+  border:1.5px solid var(--s);
+  background:var(--w);
+  color:var(--gh);
+  font-size:.7rem;
+  display:flex;align-items:center;justify-content:center;
+  cursor:pointer;
+  transition:all .12s;
+}
+.adm-del:hover{background:var(--r);color:var(--w);border-color:var(--r)}
+.adm-empty{
+  padding:1.5rem 1rem;
+  text-align:center;
+  color:var(--gh);
+  font-size:.72rem;
+}
+
 /* ══ TOAST ══ */
 .toast{position:fixed;bottom:1.3rem;left:50%;z-index:2000;transform:translateX(-50%) translateY(55px);background:var(--f);color:var(--c);border:2px solid var(--fl);padding:.52rem 1.1rem;font-size:.7rem;font-weight:600;letter-spacing:.04em;white-space:nowrap;transition:transform .28s cubic-bezier(.22,1,.36,1)}
 .toast.on{transform:translateX(-50%) translateY(0)}
@@ -1244,7 +1478,10 @@ body:not(.is-admin) .gal-empty{display:none}
         <div class="fr"><label class="flbl">Lng <span class="auto-tag">auto</span></label><input class="fi" id="f-lng" type="number" step="0.0001" placeholder="doplní sa"></div>
       </div>
       <div class="fr" style="margin-top:-.35rem">
-        <small style="font-size:.6rem;color:var(--gh)">GPS: <a href="https://maps.google.com" target="_blank" rel="noopener" style="color:var(--r)">maps.google.com</a> &rarr; <span class="t-sk">pravý klik na miesto</span><span class="t-en">right-click a place</span></small>
+        <div class="fhint">
+          <span class="t-sk">Doplní sa samo podľa názvu. Ak miesto nepoznáme, súradnice nájdeš na <a href="https://maps.google.com" target="_blank" rel="noopener">maps.google.com</a> (pravý klik na miesto).</span>
+          <span class="t-en">Filled in from the name. If we don't know the place, get coordinates from <a href="https://maps.google.com" target="_blank" rel="noopener">maps.google.com</a> (right-click a spot).</span>
+        </div>
       </div>
       <div class="fr"><label class="flbl"><span class="t-sk">Miesta</span><span class="t-en">Places</span></label><input class="fi" id="f-places" placeholder="Agadir, Taghazout, Marrakesh"></div>
       <div class="fl2">
@@ -1490,7 +1727,7 @@ const SEED = [
 /* ═══════════ VERSION ═══════════
    Bump this on every iteration that ships — shown in the topbar next
    to the app icon, same pattern as Kvašung. One place to update. */
-const APP_VERSION = 'v2.6.0';
+const APP_VERSION = 'v2.7.1';
 
 /* ═══════════ PLURALS ═══════════
    Slovak splits nouns three ways by count: 1 takes the singular, 2–4 take
@@ -1593,13 +1830,39 @@ function mirror(){
   try{ localStorage.setItem(KEY, JSON.stringify(CACHE)); }catch(e){}
 }
 
+/* Discard the in-memory copy and re-read the last persisted one. Used to
+   undo a mutation made by a caller who wasn't allowed to make it. */
+function reloadCache(){
+  try{
+    const raw = localStorage.getItem(KEY);
+    if(raw){
+      const parsed = JSON.parse(raw);
+      if(Array.isArray(parsed) && parsed.length){ CACHE = parsed; return; }
+    }
+  }catch(e){}
+  CACHE = SEED.slice();
+}
+
 /* Writes go to the cache first so the UI updates instantly, then to
    Supabase. A failed sync warns but never rolls the UI back — the local
    mirror still holds the change and the next successful write resolves it. */
 function saveT(arr){
+  // A signed-out visitor has nothing to save: their write can never reach
+  // Supabase (RLS rejects the anon key), so persisting it would only create
+  // a phantom copy that silently disagrees with everyone else's.
+  //
+  // Note the reload rather than a bare return. getT() hands out the live
+  // CACHE array, so a caller that did `const t = getT(); t.push(x)` has
+  // ALREADY mutated it by the time we get here — refusing to persist isn't
+  // enough, the in-memory copy is dirty too. Reloading from the mirror
+  // throws that mutation away.
+  if(!isAdmin()){
+    reloadCache();
+    return;
+  }
   CACHE = arr;
   mirror();
-  if(!sb || !isAdmin()) return;
+  if(!sb) return;
   syncAll().catch(()=>{
     showToast(lang==='sk' ? 'Nepodarilo sa uložiť do cloudu' : 'Cloud save failed');
   });
@@ -1694,6 +1957,18 @@ function adminBtnClick(){
   tap();
   if(!isAdmin()){ openLogin(); return; }
   toggleAdmin();
+}
+
+/* Every write goes through here first. Hiding a button is presentation,
+   not protection — someone with the console open can unhide anything. The
+   real guarantee is Supabase's RLS (writes require an authenticated JWT,
+   and the anon key has none), but we should fail honestly here rather than
+   let someone fill in a form that was never going to save. */
+function requireAdmin(){
+  if(isAdmin()) return true;
+  showToast(lang==='sk' ? 'Najprv sa prihlás' : 'Sign in first');
+  openLogin();
+  return false;
 }
 
 /* ═══════════ GAZETTEER ═══════════
@@ -2109,6 +2384,8 @@ function showTab(t){
 
 /* ═══════════ ADMIN TOGGLE ═══════════ */
 function toggleAdmin(){
+  // can't enter admin mode without a session, whatever the DOM says
+  if(!document.body.classList.contains('admin-mode') && !requireAdmin()) return;
   const on = document.body.classList.toggle('admin-mode');
   if(on){ refreshAdmList(); }
   else { refresh(); setTimeout(()=>safeMap(()=>map.invalidateSize()),60); }
@@ -3666,6 +3943,7 @@ function closeLb(){
 
 /* ═══════════ EDIT ═══════════ */
 function startEdit(){
+  if(!requireAdmin()) return;
   const t = getT().find(x=>x.id===openId);
   if(!t) return;
   const set = (id,v)=>{ document.getElementById(id).value = v || ''; };
@@ -3685,6 +3963,7 @@ function cancelEdit(){
 }
 
 function saveEdit(){
+  if(!requireAdmin()) return;
   const g = id => document.getElementById(id).value.trim();
   const nameSk = g('e-nsk');
   const d1 = g('e-d1');
@@ -3736,32 +4015,70 @@ document.addEventListener('keydown', e=>{
 });
 
 /* ═══════════ ADMIN ═══════════ */
-let photoData = null;
+let photoFile = null;
+/* Keep the File itself, not a data URL. The old code stashed base64 and
+   saved it straight into the record, which meant a trip added here got a
+   photo stored differently from every other trip in the app — inline blob
+   instead of a Storage URL. Now it goes through the same upload path. */
 function prevPhoto(e){
   const f = e.target.files[0];
   if(!f) return;
+  photoFile = f;
   const r = new FileReader();
   r.onload = ev=>{
-    photoData = ev.target.result;
     const img = document.getElementById('photo-prev');
-    img.src = photoData;
-    img.style.display = 'block';
+    img.src = ev.target.result;      // preview only
+    img.classList.add('on');
   };
   r.readAsDataURL(f);
 }
 function gv(id){ return document.getElementById(id).value.trim(); }
 
-function saveTrip(){
+async function saveTrip(){
+  if(!requireAdmin()) return;
+
   const nameSk = gv('f-nsk');
   const d1 = gv('f-d1');
   if(!nameSk || !d1){
     showToast(lang==='sk' ? 'Chýba názov alebo dátum' : 'Name or date is missing');
     return;
   }
+
+  // one last go at the gazetteer, in case the field was pasted rather than
+  // typed and never fired a blur
+  autofillTrip('f-');
+
+  const btn = document.querySelector('.btn-save');
+  if(btn) btn.disabled = true;
+
   const trips = getT();
   const maxId = trips.reduce((m,t)=>Math.max(m, t.id||0), 0);
+  const id = maxId + 1;
+
+  /* The photo takes the same road as every other photo in the app: shrink
+     it, push it to Storage, keep the URL. Storing base64 in the record
+     would have made this trip's photo the odd one out. */
+  const photos = [];
+  if(photoFile && sb){
+    showToast(lang==='sk' ? 'Nahrávam fotku…' : 'Uploading photo…');
+    try{
+      const blob = await compress(photoFile, 1600, 0.8);
+      const name = id + '/' + Date.now() + '-' +
+                   Math.random().toString(36).slice(2,8) + '.jpg';
+      const { error } = await sb.storage
+        .from(BUCKET)
+        .upload(name, blob, { contentType:'image/jpeg', upsert:false });
+      if(error) throw error;
+      const { data } = sb.storage.from(BUCKET).getPublicUrl(name);
+      if(data && data.publicUrl) photos.push(data.publicUrl);
+    }catch(err){
+      showToast(lang==='sk' ? 'Fotka sa nenahrala' : 'Photo upload failed');
+      // the trip is still worth saving without its picture
+    }
+  }
+
   trips.push({
-    id: maxId+1,
+    id: id,
     nameSk: nameSk,
     nameEn: gv('f-nen') || nameSk,
     countrySk: gv('f-csk'),
@@ -3775,22 +4092,28 @@ function saveTrip(){
     flag: gv('f-flag'),
     noteSk: gv('f-nsk2'),
     noteEn: gv('f-nen2') || gv('f-nsk2'),
-    photo: photoData || null
+    photos: photos
   });
   saveT(trips);
 
   ['f-nsk','f-nen','f-csk','f-cen','f-d1','f-d2','f-lat','f-lng','f-places','f-flag','f-nsk2','f-nen2']
     .forEach(id=>{ document.getElementById(id).value=''; });
+  document.getElementById('f-cat').value = 'holiday';
   document.getElementById('fphoto').value = '';
-  document.getElementById('photo-prev').style.display = 'none';
-  photoData = null;
+  const prev = document.getElementById('photo-prev');
+  prev.classList.remove('on');
+  prev.src = '';
+  photoFile = null;
+  if(btn) btn.disabled = false;
 
   refreshAdmList();
   refresh();
+  window.scrollTo(0,0);
   showToast(lang==='sk' ? 'Výlet pridaný' : 'Trip added');
 }
 
 function delTrip(id){
+  if(!requireAdmin()) return;
   const trips = getT();
   const i = trips.findIndex(t=>t.id===id);
   if(i < 0) return;
@@ -3812,13 +4135,18 @@ function refreshAdmList(){
     box.innerHTML = '<div class="adm-empty">'+(lang==='sk'?'Zatiaľ nič.':'Nothing yet.')+'</div>';
     return;
   }
-  box.innerHTML = trips.map(t=>
-    '<div class="adm-item">'+
-      '<div><div class="adm-iname">'+esc(t.flag||'')+' '+esc(t.nameSk)+'</div>'+
-      '<div class="adm-idate">'+esc(t.dateFrom)+' &middot; '+esc(t.countrySk||'')+'</div></div>'+
-      '<button class="btn-del" onclick="delTrip('+t.id+')">&#10005;</button>'+
-    '</div>'
-  ).join('');
+  box.innerHTML = trips.map(t=>{
+    const meta = [fmt(t.dateFrom, t.dateTo), ct(t)].filter(Boolean).join(' · ');
+    return '<div class="adm-item">'+
+      '<span class="adm-flag">'+esc(t.flag||'')+'</span>'+
+      '<div class="adm-info">'+
+        '<div class="adm-name">'+esc(nm(t))+'</div>'+
+        '<div class="adm-meta">'+esc(meta)+'</div>'+
+      '</div>'+
+      '<button class="adm-del" onclick="delTrip('+t.id+')" '+
+        'title="'+(lang==='sk'?'Vymazať':'Delete')+'">&#10005;</button>'+
+    '</div>';
+  }).join('');
 }
 
 /* ═══════════ TOAST ═══════════ */
