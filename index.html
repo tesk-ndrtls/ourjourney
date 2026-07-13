@@ -913,8 +913,27 @@ body:not(.is-admin) .ts-actions .mbtn:not(:last-child){display:none}
 .lb{display:none;position:fixed;inset:0;z-index:3000;background:rgba(12,7,2,.94);align-items:center;justify-content:center;padding:1.5rem}
 .lb.on{display:flex}
 .lb img{max-width:100%;max-height:88vh;object-fit:contain;border:3px solid var(--s)}
-.lb-close{position:absolute;top:1rem;right:1rem;background:none;border:1.5px solid var(--gh);color:var(--s);padding:.3rem .7rem;font-size:.8rem}
-.lb-close:hover{border-color:var(--s)}
+/* Sat at top:1rem it was behind the Dynamic Island and effectively untappable.
+   It now clears the safe area, and it's a proper 40px target rather than a
+   thin outline. */
+.lb-close{
+  position:absolute;
+  top:calc(var(--safe-top) + .8rem);
+  right:.9rem;
+  z-index:20;
+  width:40px;height:40px;
+  display:flex;align-items:center;justify-content:center;
+  background:rgba(26,15,5,.7);
+  border:2px solid rgba(226,207,160,.4);
+  backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);
+  color:var(--s);
+  font-size:1rem;
+  padding:0;
+  cursor:pointer;
+  transition:background .15s,transform .1s;
+}
+.lb-close:hover{background:var(--r);border-color:var(--s)}
+.lb-close:active{transform:scale(.92)}
 
 /* uploading spinner */
 .uploading{opacity:.5;pointer-events:none}
@@ -1456,12 +1475,18 @@ select.fi{
 .lb-stage{
   display:flex;align-items:center;justify-content:center;
   width:100%;height:100%;
-  touch-action:pan-y pinch-zoom;
+  touch-action:none;      /* we handle both axes ourselves */
 }
+/* the backdrop dims as you drag the photo away, so the gesture reads as
+   "putting it down" rather than "moving it sideways" */
+.lb{transition:background .18s ease}
+.lb.dismissing{background:rgba(12,7,2,.55)}
 .lb.swiping{touch-action:none}
 .lb-count{
   display:none;
-  position:absolute;top:1rem;left:1rem;
+  position:absolute;
+  top:calc(var(--safe-top) + .9rem);
+  left:.9rem;
   background:rgba(26,15,5,.75);
   border:1px solid rgba(226,207,160,.3);
   backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);
@@ -1492,6 +1517,38 @@ select.fi{
   transition:width .2s,opacity .2s,background .2s;
 }
 .lb-dot.on{width:20px;border-radius:4px;background:var(--go);opacity:1}
+
+
+/* ══ MAP PICKER ══ */
+.picker-inner{max-width:560px;width:100%}
+#picker-map{
+  width:100%;height:340px;
+  border-top:2px solid var(--e);
+  border-bottom:2px solid var(--e);
+  background:var(--cd);
+  cursor:crosshair;
+}
+.picker-foot{
+  display:flex;align-items:center;justify-content:space-between;
+  gap:.7rem;padding:.8rem 1rem;
+}
+.picker-coords{
+  font-size:.68rem;font-weight:700;
+  color:var(--bm);
+  font-variant-numeric:tabular-nums;
+}
+.stop-pick-btn{
+  flex-shrink:0;
+  width:44px;
+  border:2px solid var(--e);
+  background:var(--f);color:var(--s);
+  font-size:.9rem;
+  cursor:pointer;
+  box-shadow:2px 2px 0 var(--e);
+  transition:transform .1s,box-shadow .1s;
+}
+.stop-pick-btn:hover{background:var(--fl);transform:translate(-1px,-1px);box-shadow:3px 3px 0 var(--e)}
+.stop-pick-btn:active{transform:translate(0,0);box-shadow:1px 1px 0 var(--e)}
 
 /* ══ TOAST ══ */
 .toast{position:fixed;bottom:1.3rem;left:50%;z-index:2000;transform:translateX(-50%) translateY(55px);background:var(--f);color:var(--c);border:2px solid var(--fl);padding:.52rem 1.1rem;font-size:.7rem;font-weight:600;letter-spacing:.04em;white-space:nowrap;transition:transform .28s cubic-bezier(.22,1,.36,1)}
@@ -1692,6 +1749,7 @@ select.fi{
                    type="number" step="0.0001" placeholder="lat">
             <input class="fi stop-in-co" id="f-stop-lng"
                    type="number" step="0.0001" placeholder="lng">
+            <button class="stop-pick-btn" onclick="openPicker('f-')" title="Vybrať na mape">&#128506;</button>
             <button class="stop-add-btn" onclick="addStop('f-')">+</button>
           </div>
         </div>
@@ -1823,6 +1881,7 @@ select.fi{
                    type="number" step="0.0001" placeholder="lat">
             <input class="einput stop-in-co" id="e-stop-lng"
                    type="number" step="0.0001" placeholder="lng">
+            <button class="stop-pick-btn" onclick="openPicker('e-')" title="Vybrať na mape">&#128506;</button>
             <button class="stop-add-btn" onclick="addStop('e-')">+</button>
           </div>
         </div>
@@ -1893,6 +1952,29 @@ select.fi{
       <div class="li-err" id="li-err"></div>
       <button class="mbtn primary li-btn" id="li-btn" onclick="doLogin()">
         <span class="t-sk">Prihlásiť</span><span class="t-en">Sign in</span>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- MAP PICKER -->
+<div class="modal-bg" id="picker-modal">
+  <div class="modal-inner picker-inner">
+    <div class="modal-hdr">
+      <div>
+        <div class="modal-title" id="picker-label"></div>
+        <div class="modal-meta">
+          <span class="t-sk">Klikni presne tam, kde to bolo</span>
+          <span class="t-en">Tap exactly where it was</span>
+        </div>
+      </div>
+      <button class="modal-close" onclick="closePicker()">&#10005;</button>
+    </div>
+    <div id="picker-map"></div>
+    <div class="picker-foot">
+      <span class="picker-coords" id="picker-coords"></span>
+      <button class="mbtn primary" id="picker-ok" onclick="confirmPicker()" disabled>
+        <span class="t-sk">Použiť</span><span class="t-en">Use this</span>
       </button>
     </div>
   </div>
@@ -1973,7 +2055,7 @@ const SEED = [
 /* ═══════════ VERSION ═══════════
    Bump this on every iteration that ships — shown in the topbar next
    to the app icon, same pattern as Kvašung. One place to update. */
-const APP_VERSION = 'v2.11.0';
+const APP_VERSION = 'v2.12.0';
 
 /* ═══════════ PLURALS ═══════════
    Slovak splits nouns three ways by count: 1 takes the singular, 2–4 take
@@ -2031,8 +2113,34 @@ const KEY = 'oj_v5';
 let CACHE = null;
 
 /* db row (snake_case) -> app object (camelCase) */
+/* Stops didn't always carry an iso. The rows in Supabase were written before
+   that field existed, so a stop loaded from the database may have only a name
+   and a coordinate — and the country filter keys off iso. Left alone, that
+   silently emptied the drill-down: Italy showed Sardinia and nothing else,
+   because Venice and Naples are stops whose iso was missing.
+
+   Rather than depend on a one-off backfill, we heal the record on read. The
+   coordinate is the source of truth; the iso is derived from it. */
+function healStops(stops, trip){
+  if(!Array.isArray(stops)) return undefined;
+  return stops.map(p=>{
+    if(p.iso) return p;
+    if(typeof p.lat !== 'number' || typeof p.lng !== 'number') return p;
+
+    // nearest known place, generously — we only want the country, not the town
+    const near = nearestPlace(p.lat, p.lng, 400);
+    if(near) return Object.assign({}, p, { iso: near.place.iso });
+
+    // nothing close: if the trip only touched one country, it must be that one
+    const only = trip ? isosOf(trip) : [];
+    if(only.length === 1) return Object.assign({}, p, { iso: only[0] });
+
+    return p;
+  });
+}
+
 function fromRow(r){
-  return {
+  const t = {
     id: r.trip_id,
     nameSk: r.name_sk, nameEn: r.name_en,
     countrySk: r.country_sk, countryEn: r.country_en,
@@ -2040,9 +2148,11 @@ function fromRow(r){
     lat: r.lat, lng: r.lng,
     places: r.places, cat: r.cat, flag: r.flag,
     noteSk: r.note_sk, noteEn: r.note_en,
-    stops: r.stops || undefined,
+    stops: undefined,
     photos: Array.isArray(r.photos) ? r.photos : []
   };
+  t.stops = healStops(r.stops, t);
+  return t;
 }
 function toRow(t){
   return {
@@ -2365,6 +2475,23 @@ const GAZ = [
   {sk:"Tokio",en:"Tokyo",lat:35.6762,lng:139.6503,iso:"jp"},
   {sk:"Bangkok",en:"Bangkok",lat:13.7563,lng:100.5018,iso:"th"},
   {sk:"Dubaj",en:"Dubai",lat:25.2048,lng:55.2708,iso:"ae"},
+  // ── venues, not towns ──
+  // Typing "Futurum" used to return nothing at all: the gazetteer knew 141
+  // towns and zero venues. These are the ones our own trips reference.
+  {sk:"Futurum, Praha",en:"Futurum, Prague",lat:50.0999,lng:14.4416,iso:"cz"},
+  {sk:"Lucerna, Praha",en:"Lucerna, Prague",lat:50.0813,lng:14.4262,iso:"cz"},
+  {sk:"Club Lucia, Viedeň",en:"Club Lucia, Vienna",lat:48.1889,lng:16.3395,iso:"at"},
+  {sk:"Hellraiser, Lipsko",en:"Hellraiser, Leipzig",lat:51.3272,lng:12.3450,iso:"de"},
+  {sk:"100 Club, Londýn",en:"100 Club, London",lat:51.5150,lng:-0.1400,iso:"gb"},
+  {sk:"Haus des Meeres, Viedeň",en:"Haus des Meeres, Vienna",lat:48.1936,lng:16.3517,iso:"at"},
+  {sk:"Prírodovedné múzeum, Viedeň",en:"Natural History Museum, Vienna",lat:48.2053,lng:16.3595,iso:"at"},
+  {sk:"ZOO Dvůr Králové",en:"Dvůr Králové ZOO",lat:50.4326,lng:15.8181,iso:"cz"},
+  {sk:"Ondrej Nepela Aréna",en:"Ondrej Nepela Arena",lat:48.1636,lng:17.1372,iso:"sk"},
+  {sk:"Tipos Aréna, Bratislava",en:"Tipos Arena, Bratislava",lat:48.1636,lng:17.1372,iso:"sk"},
+  {sk:"Winterhalle, Viedeň",en:"Winterhalle, Vienna",lat:48.2100,lng:16.3900,iso:"at"},
+  {sk:"Randal Club, Bratislava",en:"Randal Club, Bratislava",lat:48.1553,lng:17.1442,iso:"sk"},
+  {sk:"Majestic Music Club",en:"Majestic Music Club",lat:48.1489,lng:17.1200,iso:"sk"},
+  {sk:"Refinery Gallery",en:"Refinery Gallery",lat:48.1497,lng:17.1594,iso:"sk"},
 ];
 
 const COUNTRY_INFO = {
@@ -2753,6 +2880,90 @@ function wireStopSuggest(prefix){
   });
 }
 
+/* ═══════════ MAP PICKER ═══════════
+   No local list can hold every club, beach and cabin on earth, and a public
+   geocoding service isn't ours to lean on for this. So for anything the
+   gazetteer doesn't know, you point at it: open a map, tap the spot, done.
+   For a venue that's more accurate than a name lookup anyway. */
+let pickerMap = null;
+let pickerMarker = null;
+let pickerTarget = null;   // which form asked for the coordinates
+
+function openPicker(prefix){
+  pickerTarget = prefix;
+  const modal = document.getElementById('picker-modal');
+  modal.classList.add('on');
+  document.body.style.overflow = 'hidden';
+
+  const nameEl = document.getElementById(prefix + 'stop-name');
+  const label = document.getElementById('picker-label');
+  const typed = nameEl ? nameEl.value.trim() : '';
+  label.textContent = typed
+    ? (lang === 'sk' ? 'Kde presne je „' + typed + '"?' : 'Where exactly is "' + typed + '"?')
+    : (lang === 'sk' ? 'Klikni na miesto' : 'Tap the spot');
+
+  document.getElementById('picker-coords').textContent = '';
+  document.getElementById('picker-ok').disabled = true;
+
+  setTimeout(()=>{
+    try{
+      if(!pickerMap){
+        pickerMap = L.map('picker-map', { zoomControl:true, attributionControl:false });
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
+          { subdomains:'abcd', maxZoom:20 }).addTo(pickerMap);
+
+        pickerMap.on('click', e=>{
+          const { lat, lng } = e.latlng;
+          if(pickerMarker) pickerMap.removeLayer(pickerMarker);
+          pickerMarker = L.marker([lat, lng], { icon: mkPin('trip', 14, false) }).addTo(pickerMap);
+          document.getElementById('picker-coords').textContent =
+            lat.toFixed(4) + ', ' + lng.toFixed(4);
+          document.getElementById('picker-ok').disabled = false;
+          tap();
+        });
+      }
+
+      /* Start somewhere useful: the town already typed into the trip, the
+         country we're in, or home. Dropping the user in the mid-Atlantic and
+         asking them to find their club would be a poor joke. */
+      let start = [48.1486, 17.1077], zoom = 12;
+      const tripName = document.getElementById(prefix + 'nsk');
+      const hit = tripName ? findPlace(tripName.value) : null;
+      if(hit){ start = [hit.lat, hit.lng]; zoom = 13; }
+      else if(typed){
+        const g = findPlace(typed);
+        if(g){ start = [g.lat, g.lng]; zoom = 15; }
+      }
+      pickerMap.setView(start, zoom);
+      pickerMap.invalidateSize();
+    }catch(e){
+      showToast(lang === 'sk' ? 'Mapa sa nenačítala' : 'Map failed to load');
+    }
+  }, 80);
+}
+
+function closePicker(){
+  document.getElementById('picker-modal').classList.remove('on');
+  document.body.style.overflow = '';
+  if(pickerMarker && pickerMap){
+    pickerMap.removeLayer(pickerMarker);
+    pickerMarker = null;
+  }
+}
+
+/* Hand the chosen point back to whichever form opened the picker. */
+function confirmPicker(){
+  if(!pickerMarker || !pickerTarget) return;
+  const ll = pickerMarker.getLatLng();
+  const latEl = document.getElementById(pickerTarget + 'stop-lat');
+  const lngEl = document.getElementById(pickerTarget + 'stop-lng');
+  if(latEl) latEl.value = ll.lat.toFixed(4);
+  if(lngEl) lngEl.value = ll.lng.toFixed(4);
+  closePicker();
+  tap(12);
+  showToast(lang === 'sk' ? 'Miesto vybrané' : 'Location set');
+}
+
 /* ═══════════ CATEGORIES ═══════════ */
 const CAT_FILL = {holiday:'#B5350A', ski:'#2A4420', gig:'#C49020', trip:'#5C3410', weekend:'#3D2208', origin:'#C49020'};
 const CAT_VAR  = {holiday:'var(--r)', ski:'var(--f)', gig:'var(--go)', trip:'var(--bm)', weekend:'var(--b)', origin:'var(--go)'};
@@ -2772,12 +2983,34 @@ function catLabel(c){ return lang==='sk' ? CAT_SK[c] : CAT_EN[c]; }
    card. So each trip also resolves to an ISO code, and we render the
    real flag as an SVG background from a CDN. Multi-country trips use
    the first country. */
-const ISO = {
-  'Slovakia':'sk','Hungary':'hu','Morocco':'ma','Cyprus':'cy','USA':'us',
-  'Slovenia':'si','Croatia':'hr','Spain':'es','Austria':'at','Germany':'de',
-  'Greece':'gr','Czech Republic':'cz','Italy':'it','Romania':'ro',
-  'United Kingdom':'gb','Norway':'no','Costa Rica':'cr'
+/* Country name -> ISO code. This used to be a hand-written list of the 17
+   countries we'd been to, maintained separately from COUNTRY_INFO's 37. They
+   drifted, of course: autofill would set a new trip's country to "Switzerland"
+   from COUNTRY_INFO, then isoOf() wouldn't recognise it, and the card lost its
+   flag. It's now derived from COUNTRY_INFO, so the two can't disagree.
+
+   Aliases cover the same country written more than one way — "Czech Republic"
+   in the old seed, "Czechia" in COUNTRY_INFO. */
+const ISO_ALIASES = {
+  'Czech Republic':'cz', 'Czechia':'cz',
+  'USA':'us', 'United States':'us', 'United States of America':'us',
+  'UK':'gb', 'United Kingdom':'gb', 'Great Britain':'gb',
+  'UAE':'ae',
+  'Bosnia and Herzegovina':'ba',
+  'Costa Rica':'cr'
 };
+
+const ISO = (function(){
+  const map = {};
+  // every English name COUNTRY_INFO knows about
+  Object.entries(COUNTRY_INFO).forEach(([code, info])=>{
+    map[info.en] = code;
+    map[info.sk] = code;   // and the Slovak one, so either field resolves
+  });
+  // then the aliases, which win where they overlap
+  Object.entries(ISO_ALIASES).forEach(([name, code])=>{ map[name] = code; });
+  return map;
+})();
 /* Primary country — used for the flag and the tricolour rail, where a
    single answer is needed. */
 function isoOf(t){
@@ -3061,17 +3294,38 @@ function showStops(t){
 function pointsFor(trips, isoFilter){
   const pts = [];
   trips.forEach(t=>{
-    if(Array.isArray(t.stops) && t.stops.length){
-      t.stops.forEach(p=>{
-        if(isoFilter && p.iso !== isoFilter) return;
-        if(typeof p.lat!=='number' || typeof p.lng!=='number') return;
-        pts.push({ trip:t, lat:p.lat, lng:p.lng, label:p.n });
+    const hasStops = Array.isArray(t.stops) && t.stops.length;
+
+    if(hasStops){
+      const tripIsos = isosOf(t);
+      const matching = t.stops.filter(p=>{
+        if(typeof p.lat !== 'number' || typeof p.lng !== 'number') return false;
+        if(!isoFilter) return true;
+        if(p.iso) return p.iso === isoFilter;
+        /* A stop with no iso we couldn't derive. Don't drop it — if the trip
+           only visited this country, the stop is obviously in it. Dropping it
+           is what made Italy show a single pin. */
+        return tripIsos.length === 1 && tripIsos[0] === isoFilter;
       });
-    } else {
-      if(isoFilter && !isosOf(t).includes(isoFilter)) return;
-      if(typeof t.lat!=='number' || typeof t.lng!=='number') return;
-      pts.push({ trip:t, lat:t.lat, lng:t.lng, label:null });
+
+      if(matching.length){
+        matching.forEach(p=>pts.push({ trip:t, lat:p.lat, lng:p.lng, label:p.n }));
+        return;
+      }
+
+      /* The trip claims this country but no stop could be tied to it. Fall
+         back to the trip's own coordinate rather than showing nothing at
+         all — a pin in roughly the right place beats a blank map. */
+      if(isoFilter && isosOf(t).includes(isoFilter) &&
+         typeof t.lat === 'number' && typeof t.lng === 'number'){
+        pts.push({ trip:t, lat:t.lat, lng:t.lng, label:null });
+      }
+      return;
     }
+
+    if(isoFilter && !isosOf(t).includes(isoFilter)) return;
+    if(typeof t.lat !== 'number' || typeof t.lng !== 'number') return;
+    pts.push({ trip:t, lat:t.lat, lng:t.lng, label:null });
   });
   return pts;
 }
@@ -3264,7 +3518,10 @@ safeMap(()=>{ map.on('zoomend', refreshPinSizes); });
    simplified world outline) and only the countries in our ISO list
    are drawn. If the fetch fails — offline, CDN down — the app simply
    falls back to the plain tile map; nothing else breaks. */
-const COUNTRY_LAYER_URL = 'https://unpkg.com/world-atlas@2/countries-110m.json';
+/* 110m is world-atlas's coarsest cut — meant for thumbnails, which is why the
+   borders came out jagged. 50m carries about five times the detail and still
+   weighs only a few hundred KB, cached by the browser after the first load. */
+const COUNTRY_LAYER_URL = 'https://unpkg.com/world-atlas@2/countries-50m.json';
 
 /* Rough capital-city dots for geographic context, independent of the
    trip data. These are just visual anchors (small dots + label at
@@ -3345,7 +3602,11 @@ function renderCountryFill(topo, counts){
           fillOpacity: shadeFor(n, max),
           color: isOpen ? '#1A0F05' : '#8a4a1e',
           weight: isOpen ? 2.5 : 1,
-          opacity: isOpen ? 1 : .55
+          opacity: isOpen ? 1 : .55,
+          // round the joins so the remaining vertices don't read as corners
+          lineJoin: 'round',
+          lineCap: 'round',
+          smoothFactor: 0.4      // less aggressive simplification than the 1.0 default
         };
       },
       onEachFeature: (f, layer) => {
@@ -3385,13 +3646,19 @@ function renderCountryFill(topo, counts){
   }catch(e){ /* unexpected shape — skip the fill, keep the map usable */ }
 }
 
-// world-atlas country names -> our ISO codes (only the ones we need)
-const NAME_TO_ISO = {
-  'Slovakia':'sk','Hungary':'hu','Morocco':'ma','Cyprus':'cy','United States of America':'us',
-  'Slovenia':'si','Croatia':'hr','Spain':'es','Austria':'at','Germany':'de','Greece':'gr',
-  'Czechia':'cz','Italy':'it','Romania':'ro','United Kingdom':'gb','Norway':'no','Costa Rica':'cr'
+/* world-atlas uses its own country names. Rather than keep a third list in
+   sync by hand, we resolve through ISO — which is itself derived from
+   COUNTRY_INFO — and only spell out the names that genuinely differ. */
+const ATLAS_ALIASES = {
+  'United States of America':'us',
+  'Czechia':'cz',
+  'Bosnia and Herz.':'ba',
+  'Dominican Rep.':'do'
 };
-function matchIsoByName(name){ return NAME_TO_ISO[name] || null; }
+function matchIsoByName(name){
+  if(!name) return null;
+  return ISO[name] || ATLAS_ALIASES[name] || null;
+}
 
 let capitalMarkers = [];
 function refreshCapitals(){
@@ -4584,7 +4851,7 @@ function renderLb(){
 
   img.src = pics[lbIndex] || '';
   stage.style.transition = 'none';
-  stage.style.transform = 'translateX(0)';
+  stage.style.transform = 'translateX(0) translateY(0) scale(1)';
   stage.style.opacity = '1';
 
   const count = document.getElementById('lb-count');
@@ -4633,24 +4900,31 @@ function closeLb(){
   }
 }
 
-/* Swipe between photos. Bound to the stage, not the backdrop, so a tap on the
-   dark area still closes — and a drag never does. */
+/* Two gestures on one surface. The first few pixels decide which:
+
+     sideways -> page between photos
+     downward -> dismiss the whole viewer
+
+   Committing to an axis early and sticking to it is what keeps them from
+   interfering. Bound to the stage rather than the backdrop, so a tap on the
+   dark area still closes and a drag never does. */
 (function(){
   const lb = document.getElementById('lightbox');
   const stage = document.getElementById('lb-stage');
   if(!lb || !stage) return;
 
-  let x0 = 0, y0 = 0, dx = 0;
+  let x0 = 0, y0 = 0, dx = 0, dy = 0;
   let axis = null, dragging = false, moved = false;
 
-  const THRESHOLD = 60;
+  const PAGE_THRESHOLD    = 60;    // px sideways before it turns the page
+  const DISMISS_THRESHOLD = 110;   // px down before it lets go
   const RESIST = 0.3;
 
   stage.addEventListener('touchstart', e=>{
     if(e.touches.length !== 1) return;
     x0 = e.touches[0].clientX;
     y0 = e.touches[0].clientY;
-    dx = 0;
+    dx = dy = 0;
     axis = null;
     dragging = true;
     moved = false;
@@ -4664,38 +4938,75 @@ function closeLb(){
 
     if(axis === null){
       if(Math.abs(mx) < 8 && Math.abs(my) < 8) return;
-      axis = (Math.abs(mx) > Math.abs(my) * 1.25) ? 'x' : 'y';
-      if(axis === 'y'){ dragging = false; return; }
+      if(Math.abs(mx) > Math.abs(my) * 1.2){
+        axis = 'x';
+      } else if(my > 0){
+        axis = 'y';                 // only downward dismisses; up does nothing
+      } else {
+        dragging = false;           // an upward drag isn't a gesture we own
+        return;
+      }
       lb.classList.add('swiping');
     }
-    if(axis !== 'x') return;
-    e.preventDefault();          // stops the page scrolling under the photo
+
+    e.preventDefault();
     moved = true;
 
-    const pics = lbPics();
-    dx = mx;
-    const atStart = lbIndex === 0;
-    const atEnd = lbIndex === pics.length - 1;
-    if((dx > 0 && atStart) || (dx < 0 && atEnd)) dx *= RESIST;
+    if(axis === 'x'){
+      const pics = lbPics();
+      dx = mx;
+      const atStart = lbIndex === 0;
+      const atEnd = lbIndex === pics.length - 1;
+      if((dx > 0 && atStart) || (dx < 0 && atEnd)) dx *= RESIST;
 
-    stage.style.transform = 'translateX(' + dx + 'px)';
-    stage.style.opacity = String(1 - Math.min(Math.abs(dx) / 500, 0.3));
+      stage.style.transform = 'translateX(' + dx + 'px)';
+      stage.style.opacity = String(1 - Math.min(Math.abs(dx) / 500, 0.3));
+    } else {
+      dy = Math.max(0, my);
+      // the photo shrinks slightly as it's pulled down, like it's receding
+      const scale = 1 - Math.min(dy / 1400, 0.12);
+      stage.style.transform = 'translateY(' + dy + 'px) scale(' + scale + ')';
+      stage.style.opacity = String(1 - Math.min(dy / 600, 0.5));
+      lb.classList.toggle('dismissing', dy > DISMISS_THRESHOLD * 0.5);
+    }
   }, {passive:false});
 
   stage.addEventListener('touchend', ()=>{
     lb.classList.remove('swiping');
     if(!dragging) return;
     dragging = false;
+
+    if(axis === 'y'){
+      lb.classList.remove('dismissing');
+      if(dy > DISMISS_THRESHOLD){
+        // let it fall the rest of the way, then close
+        const h = window.innerHeight || 800;
+        stage.style.transition = 'transform .22s ease-in, opacity .22s ease-in';
+        stage.style.transform = 'translateY(' + h + 'px) scale(.85)';
+        stage.style.opacity = '0';
+        tap(12);
+        setTimeout(()=>{
+          closeLb();
+          stage.style.transition = 'none';
+          stage.style.transform = 'translateY(0) scale(1)';
+          stage.style.opacity = '1';
+        }, 200);
+      } else {
+        snapBack();
+      }
+      return;
+    }
+
     if(axis !== 'x'){ snapBack(); return; }
 
-    if(Math.abs(dx) > THRESHOLD){
+    if(Math.abs(dx) > PAGE_THRESHOLD){
       const dir = dx < 0 ? 1 : -1;
       const w = window.innerWidth || 400;
       stage.style.transition = 'transform .18s ease-out, opacity .18s ease-out';
       stage.style.transform = 'translateX(' + (dir === 1 ? -w : w) + 'px)';
       stage.style.opacity = '0';
       setTimeout(()=>{
-        if(!navLb(dir)){ snapBack(); return; }   // nothing there — spring back
+        if(!navLb(dir)){ snapBack(); return; }
         stage.style.transition = 'none';
         stage.style.transform = 'translateX(' + (dir === 1 ? w : -w) + 'px)';
         stage.style.opacity = '0';
@@ -4712,14 +5023,19 @@ function closeLb(){
     }
   }, {passive:true});
 
+  stage.addEventListener('touchcancel', ()=>{
+    lb.classList.remove('swiping', 'dismissing');
+    if(dragging){ dragging = false; snapBack(); }
+  }, {passive:true});
+
   function snapBack(){
     stage.style.transition = 'transform .25s cubic-bezier(.22,1,.36,1), opacity .25s';
-    stage.style.transform = 'translateX(0)';
+    stage.style.transform = 'translateX(0) translateY(0) scale(1)';
     stage.style.opacity = '1';
   }
 
-  /* Tap the dark backdrop to close — but only a tap. Without the `moved`
-     check, every swipe would end by closing the lightbox. */
+  /* A tap on the dark backdrop closes. The `moved` guard matters: without it
+     every swipe would end in a click event and close the viewer. */
   lb.addEventListener('click', e=>{
     if(moved){ moved = false; return; }
     if(e.target === lb) closeLb();
