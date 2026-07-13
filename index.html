@@ -1862,6 +1862,68 @@ select.fi{
   font-size:.82rem;
 }
 
+
+/* ══ STOP SUGGESTIONS FROM PHOTOS ══ */
+.stop-suggest{display:none;margin-bottom:1rem}
+.stop-suggest.on{display:block}
+.ss-ttl{
+  font-size:.6rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--e);
+  background:var(--go);
+  padding:.35rem .6rem;
+  border:2px solid var(--e);
+  border-bottom:none;
+}
+.ss-row{
+  display:flex;align-items:center;gap:.5rem;
+  background:var(--w);
+  border:2px solid var(--e);
+  border-top:none;
+  padding:.5rem .6rem;
+}
+.ss-body{flex:1;min-width:0}
+.ss-name{
+  font-family:var(--ff-d);
+  font-size:.85rem;font-weight:700;
+  color:var(--e);
+  line-height:1.2;
+}
+.ss-name i{
+  font-style:normal;font-weight:400;
+  font-size:.65rem;color:var(--gh);
+}
+.ss-unknown{color:var(--gh);font-style:italic;font-weight:400}
+.ss-meta{
+  font-size:.58rem;color:var(--gh);
+  margin-top:.1rem;
+  font-variant-numeric:tabular-nums;
+}
+.ss-add,.ss-skip{
+  flex-shrink:0;
+  width:28px;height:28px;
+  padding:0;line-height:1;
+  border:2px solid var(--e);
+  font-size:.75rem;font-weight:700;
+  display:flex;align-items:center;justify-content:center;
+  cursor:pointer;
+}
+.ss-add{background:var(--f);color:var(--s)}
+.ss-add:hover{background:var(--fl)}
+.ss-skip{background:var(--w);color:var(--gh)}
+.ss-skip:hover{background:var(--r);color:var(--w);border-color:var(--r)}
+.ss-all{
+  width:100%;
+  padding:.45rem;
+  background:var(--e);color:var(--s);
+  border:2px solid var(--e);
+  border-top:none;
+  font-family:var(--ff-b);
+  font-size:.62rem;font-weight:700;
+  letter-spacing:.09em;text-transform:uppercase;
+  cursor:pointer;
+}
+.ss-all:hover{background:var(--r)}
+
 /* ══ TOAST ══ */
 .toast{position:fixed;bottom:1.3rem;left:50%;z-index:2000;transform:translateX(-50%) translateY(55px);background:var(--f);color:var(--c);border:2px solid var(--fl);padding:.52rem 1.1rem;font-size:.7rem;font-weight:600;letter-spacing:.04em;white-space:nowrap;transition:transform .28s cubic-bezier(.22,1,.36,1)}
 .toast.on{transform:translateX(-50%) translateY(0)}
@@ -2163,6 +2225,7 @@ select.fi{
         <input type="file" id="gal-input" accept="image/*" multiple style="display:none" onchange="addPhotos(event)">
 
         <div id="m-body"></div>
+        <div class="stop-suggest" id="stop-suggest"></div>
         <div id="m-gallery"></div>
 
         <!-- where it was -->
@@ -2396,7 +2459,7 @@ const SEED = [
 /* ═══════════ VERSION ═══════════
    Bump this on every iteration that ships — shown in the topbar next
    to the app icon, same pattern as Kvašung. One place to update. */
-const APP_VERSION = 'v2.16.0';
+const APP_VERSION = 'v2.17.0';
 
 /* ═══════════ PLURALS ═══════════
    Slovak splits nouns three ways by count: 1 takes the singular, 2–4 take
@@ -2409,7 +2472,9 @@ const PLURALS = {
   country: { sk:['krajina','krajiny','krajín'],     en:['country','countries'] },
   year:    { sk:['rok','roky','rokov'],             en:['year','years'] },
   photo:   { sk:['fotka','fotky','fotiek'],         en:['photo','photos'] },
-  gig:     { sk:['koncert','koncerty','koncertov'], en:['gig','gigs'] }
+  gig:     { sk:['koncert','koncerty','koncertov'], en:['gig','gigs'] },
+  place:   { sk:['miesto','miesta','miest'],        en:['place','places'] },
+  stop:    { sk:['zastávka','zastávky','zastávok'], en:['stop','stops'] }
 };
 
 function plural(n, key){
@@ -2576,16 +2641,54 @@ function saveT(arr){
  *
  * So we also have to say what's gone. We diff the trip_ids in the database
  * against the ones we hold, and delete the difference. */
+/* Columns the table might not have. out_mode was added to the app after the
+   table was created, and Postgres rejects the whole write if you send a column
+   it doesn't know — so a single missing column silently broke every save, not
+   just the transport mode. We detect that once and drop the field thereafter,
+   rather than letting the app quietly stop persisting anything. */
+let missingCols = new Set();
+
+function stripUnknown(row){
+  if(!missingCols.size) return row;
+  const out = Object.assign({}, row);
+  missingCols.forEach(c => delete out[c]);
+  return out;
+}
+
 async function syncAll(){
   if(!sb || !isAdmin()) return;
 
-  const rows = CACHE.map(toRow);
+  let rows = CACHE.map(toRow).map(stripUnknown);
   const keepIds = rows.map(r=>r.trip_id);
 
   // write everything we have
-  const { error: upErr } = await sb
+  let { error: upErr } = await sb
     .from('journeys')
     .upsert(rows, { onConflict: 'trip_id' });
+
+  /* Postgres names the offending column in the error. If it's one we can live
+     without, note it, drop it, and try once more — the trip data matters more
+     than the field the schema hasn't caught up with yet. */
+  if(upErr){
+    const m = /column "?([a-z_]+)"? of relation|Could not find the '([a-z_]+)' column/i.exec(upErr.message || '');
+    const col = m && (m[1] || m[2]);
+    const OPTIONAL = ['out_mode'];
+    if(col && OPTIONAL.includes(col) && !missingCols.has(col)){
+      missingCols.add(col);
+      showToast(lang === 'sk'
+        ? 'Chýba stĺpec „' + col + '" v databáze — pozri konzolu'
+        : 'Database is missing the "' + col + '" column — see the console');
+      console.warn(
+        '[Naša Cesta] The journeys table has no "' + col + '" column, so that ' +
+        'field cannot be saved. Run this in the Supabase SQL editor:\n\n' +
+        '  alter table journeys add column if not exists ' + col + ' text;\n'
+      );
+      rows = CACHE.map(toRow).map(stripUnknown);
+      ({ error: upErr } = await sb
+        .from('journeys')
+        .upsert(rows, { onConflict: 'trip_id' }));
+    }
+  }
   if(upErr) throw upErr;
 
   // then remove anything the database still holds that we no longer do
@@ -5153,6 +5256,14 @@ function openModal(id){
   renderTripMap(t);
   updateNav();
 
+  // suggestions belong to the photos just uploaded, not to whatever trip you
+  // happen to open next
+  const ss = document.getElementById('stop-suggest');
+  if(ss && !pendingStopSuggestions.length){
+    ss.innerHTML = '';
+    ss.classList.remove('on');
+  }
+
   document.getElementById('modal').classList.add('on');
   document.body.style.overflow = 'hidden';
   // each trip opens at the top, not wherever the last one was scrolled to
@@ -5605,9 +5716,17 @@ async function addPhotos(e){
     : 'Uploading '+files.length+'…');
 
   const urls = [];
+  const coords = [];      // GPS pulled from each photo, for the stop suggestions
+
   for(const f of files){
     if(!f.type.startsWith('image/')) continue;
     try{
+      /* Read the EXIF BEFORE compressing — the canvas re-encode strips every
+         tag, so the coordinates only exist on the original file. Getting this
+         order wrong would lose them silently. */
+      const gps = await readExifGps(f);
+      if(gps) coords.push(gps);
+
       // shrink before upload: straight off a phone a shot is 3-5 MB, at
       // 1600px/JPEG80 it lands near 400-700 KB — the difference between
       // ~250 photos and ~1500 in Supabase's free 1 GB
@@ -5641,6 +5760,148 @@ async function addPhotos(e){
   if(urls.length){
     showToast(lang==='sk' ? urls.length+' pridaných' : urls.length+' added');
   }
+
+  // the photos know where they were taken — offer those as stops
+  offerStopsFromPhotos(t, coords);
+}
+
+/* Suggest stops from the GPS in the photos just uploaded.
+ *
+ * The EXIF reader existed but was only ever called from the new-trip form, so
+ * photos added to an existing trip had their coordinates read and discarded.
+ * This is where they're actually useful: you upload a holiday's worth of
+ * pictures, and the places you went are already in them.
+ *
+ * Photos are clustered before being offered — twenty shots of the same beach
+ * are one stop, not twenty. */
+function offerStopsFromPhotos(t, coords){
+  if(!coords || !coords.length) return;
+  if(!isAdmin()) return;
+
+  const existing = (t.stops || []).filter(p =>
+    typeof p.lat === 'number' && typeof p.lng === 'number');
+
+  const near = (a, b, km) => {
+    const dLat = (a.lat - b.lat) * 111;
+    const dLng = (a.lng - b.lng) * 111 * Math.cos(a.lat * Math.PI / 180);
+    return Math.sqrt(dLat*dLat + dLng*dLng) < km;
+  };
+
+  // group the photos into places
+  const clusters = [];
+  coords.forEach(c=>{
+    const hit = clusters.find(cl => near(cl, c, 3));   // 3km = the same place
+    if(hit){
+      hit.n++;
+      hit.lat = (hit.lat * (hit.n - 1) + c.lat) / hit.n;
+      hit.lng = (hit.lng * (hit.n - 1) + c.lng) / hit.n;
+    } else {
+      clusters.push({ lat: c.lat, lng: c.lng, n: 1 });
+    }
+  });
+
+  // drop anything we already have a stop for
+  const fresh = clusters.filter(cl => !existing.some(p => near(p, cl, 8)));
+  if(!fresh.length) return;
+
+  // name them from the gazetteer where we can
+  const suggestions = fresh.map(cl=>{
+    const hit = nearestPlace(cl.lat, cl.lng, 40);
+    return {
+      lat: +cl.lat.toFixed(4),
+      lng: +cl.lng.toFixed(4),
+      n: hit ? (lang === 'sk' ? hit.place.sk : hit.place.en) : null,
+      iso: hit ? hit.place.iso : null,
+      photos: cl.n,
+      km: hit ? hit.km : null
+    };
+  });
+
+  pendingStopSuggestions = suggestions;
+  renderStopSuggestions();
+}
+
+let pendingStopSuggestions = [];
+
+function renderStopSuggestions(){
+  const box = document.getElementById('stop-suggest');
+  if(!box) return;
+
+  if(!pendingStopSuggestions.length){
+    box.innerHTML = '';
+    box.classList.remove('on');
+    return;
+  }
+
+  const sk = lang === 'sk';
+  box.classList.add('on');
+  box.innerHTML =
+    '<div class="ss-ttl">&#128205; '+
+      (sk ? 'Z fotiek: ' + qty(pendingStopSuggestions.length, 'place') + ' na pridanie'
+          : 'From the photos: ' + qty(pendingStopSuggestions.length, 'place') + ' to add')+
+    '</div>'+
+    pendingStopSuggestions.map((sug, i)=>
+      '<div class="ss-row">'+
+        '<div class="ss-body">'+
+          '<div class="ss-name">'+
+            (sug.n
+              ? esc(sug.n) + (sug.km ? ' <i>('+sug.km+' km)</i>' : '')
+              : '<span class="ss-unknown">'+(sk ? 'Neznáme miesto' : 'Unknown place')+'</span>')+
+          '</div>'+
+          '<div class="ss-meta">'+
+            sug.lat.toFixed(4)+', '+sug.lng.toFixed(4)+
+            ' &middot; '+qty(sug.photos, 'photo')+
+          '</div>'+
+        '</div>'+
+        '<button class="ss-add" onclick="acceptStopSuggestion('+i+')">+</button>'+
+        '<button class="ss-skip" onclick="dismissStopSuggestion('+i+')">&#10005;</button>'+
+      '</div>'
+    ).join('')+
+    '<button class="ss-all" onclick="acceptAllStopSuggestions()">'+
+      (sk ? 'Pridať všetky' : 'Add all')+
+    '</button>';
+}
+
+function acceptStopSuggestion(i){
+  const sug = pendingStopSuggestions[i];
+  if(!sug || openId == null) return;
+  if(!requireAdmin()) return;
+
+  const trips = getT();
+  const t = trips.find(x=>x.id === openId);
+  if(!t) return;
+
+  const stops = (t.stops || []).slice();
+  stops.push({
+    n: sug.n || (lang === 'sk' ? 'Miesto' : 'Place'),
+    lat: sug.lat, lng: sug.lng,
+    iso: sug.iso,
+    mode: stops.length ? 'car' : null
+  });
+  t.stops = stops;
+  saveT(trips);
+
+  pendingStopSuggestions.splice(i, 1);
+  renderStopSuggestions();
+  renderTripMap(t);
+  openModal(openId);      // repaint the detail, distances and all
+  tap();
+  showToast(lang === 'sk' ? 'Zastávka pridaná' : 'Stop added');
+}
+
+function acceptAllStopSuggestions(){
+  if(!requireAdmin()) return;
+  const n = pendingStopSuggestions.length;
+  while(pendingStopSuggestions.length){
+    acceptStopSuggestion(0);
+  }
+  showToast(lang === 'sk' ? qty(n,'stop') + ' pridaných' : qty(n,'stop') + ' added');
+}
+
+function dismissStopSuggestion(i){
+  pendingStopSuggestions.splice(i, 1);
+  renderStopSuggestions();
+  tap();
 }
 
 /* Pull the storage path back out of a public URL so we can delete the
