@@ -399,6 +399,27 @@ body.admin-mode #vadmin{padding-top:calc(var(--bh) + var(--safe-top))}
   background:linear-gradient(to bottom, var(--w) 0%, rgba(253,250,242,.6) 100%);
 }
 
+/* ── UPCOMING TRIPS ──
+   No photo, and none coming until the trip happens. The flag carries the
+   card instead — at 50%, not the 15% wash used when a photo is merely
+   missing, and with only a light scrim so it stays legible. */
+.tc.upcoming .tc-flag{opacity:.5}
+.tc.upcoming:hover .tc-flag{opacity:.62}
+.tc.upcoming::before{
+  background:linear-gradient(to bottom,
+    rgba(253,250,242,.82) 0%,
+    rgba(253,250,242,.68) 100%);
+}
+.tc.upcoming{border-style:dashed;border-color:var(--go)}
+.tc.upcoming:hover{box-shadow:5px 5px 0 var(--go)}
+.tc-soon{
+  font-size:.55rem;font-weight:700;letter-spacing:.07em;text-transform:uppercase;
+  background:var(--go);color:var(--e);
+  border:1px solid var(--e);
+  padding:.16rem .4rem;
+  white-space:nowrap;
+}
+
 /* the tricolour rail down the left edge */
 .tc-tri{
   position:absolute;left:0;top:0;bottom:0;
@@ -1952,7 +1973,7 @@ const SEED = [
 /* ═══════════ VERSION ═══════════
    Bump this on every iteration that ships — shown in the topbar next
    to the app icon, same pattern as Kvašung. One place to update. */
-const APP_VERSION = 'v2.10.0';
+const APP_VERSION = 'v2.11.0';
 
 /* ═══════════ PLURALS ═══════════
    Slovak splits nouns three ways by count: 1 takes the singular, 2–4 take
@@ -2997,18 +3018,36 @@ function previewHtml(t, stopName){
     '</button>';
 }
 
+/* Expand a trip into its individual stops. If a country is open, only that
+   country's stops are shown — otherwise clicking Naples while browsing Italy
+   would fly you off to Cyprus, because that trip's other three stops are
+   there. You asked to see Italy; you should stay in Italy. */
 function showStops(t){
   clearSubMarkers();
   if(!Array.isArray(t.stops) || t.stops.length < 2) return;
+
+  const stops = openCountry
+    ? t.stops.filter(p => p.iso === openCountry)
+    : t.stops;
+
+  // nothing to expand into within this country — leave the single pin be
+  if(stops.length < 2){
+    if(openCountry) return;
+  }
+
   expandedId = t.id;
   const zoom = map.getZoom();
-  t.stops.forEach(p=>{
+  stops.forEach(p=>{
+    if(typeof p.lat !== 'number' || typeof p.lng !== 'number') return;
     const m = L.marker([p.lat,p.lng], {icon:mkPin(t.cat, zoom, true)}).addTo(map);
     m.bindPopup(previewHtml(t, p.n));
     subMarkers.push(m);
   });
-  const bounds = L.latLngBounds(t.stops.map(p=>[p.lat,p.lng]));
-  map.fitBounds(bounds.pad(0.35));
+
+  const valid = stops.filter(p=>typeof p.lat==='number' && typeof p.lng==='number');
+  if(valid.length > 1){
+    map.fitBounds(L.latLngBounds(valid.map(p=>[p.lat,p.lng])).pad(0.35), { maxZoom: 11 });
+  }
 }
 
 /* The default view is the country wash — no pins. Pins are noise at
@@ -3147,12 +3186,22 @@ function drawMarkers(opts){
     markers.push(m);
   });
 
-  // a re-cluster triggered by zooming must not fight the zoom that caused it
+  /* Frame everything we found, and give it room. A re-cluster triggered by
+     zooming must not fight the zoom that caused it, hence keepView.
+
+     maxZoom matters here: fitBounds on a single point (or several points in
+     one town) would otherwise slam the camera to street level. And a single
+     cluster of several trips deserves a wider shot than a lone pin. */
   if(!keepView){
     if(clusters.length > 1){
-      map.fitBounds(L.latLngBounds(clusters.map(c=>[c.lat,c.lng])).pad(0.15));
+      map.fitBounds(
+        L.latLngBounds(clusters.map(c=>[c.lat, c.lng])).pad(0.25),
+        { maxZoom: 9, animate: true }
+      );
     } else if(clusters.length === 1){
-      map.setView([clusters[0].lat, clusters[0].lng], 8);
+      const only = clusters[0];
+      const spread = only.items.length > 1;
+      map.setView([only.lat, only.lng], spread ? 8 : 10, { animate: true });
     }
   }
 
@@ -3612,10 +3661,23 @@ function buildTl(){
       const row = document.createElement('div');
       row.className = 'tl-row' + ((sideFlip++ % 2) ? ' right' : '');
 
+      /* A trip in the future has no photos and never will until it happens,
+         so the faint flag wash used for "no photo yet" reads as an empty
+         card. Upcoming trips get the flag at full strength instead — it's
+         the only picture they have. */
+      const today = new Date().toISOString().slice(0,10);
+      const upcoming = (t.dateFrom || '') > today;
+
       const card = document.createElement('div');
-      card.className = 'tc ' + (hasPhoto ? 'has-photo' : 'no-photo');
+      card.className = 'tc ' +
+        (hasPhoto ? 'has-photo' : 'no-photo') +
+        (upcoming ? ' upcoming' : '');
       card.setAttribute('role','button');
       card.setAttribute('tabindex','0');
+
+      const daysAway = upcoming
+        ? Math.ceil((new Date(t.dateFrom+'T00:00:00') - new Date()) / 86400000)
+        : 0;
 
       card.innerHTML =
         (hasPhoto
@@ -3624,7 +3686,11 @@ function buildTl(){
         triHtml(t)+
         '<div class="tc-top-row">'+
           '<span class="tc-ctag" style="'+CAT_TAG[t.cat]+'">'+esc(catLabel(t.cat))+'</span>'+
-          (pics.length ? '<span class="tc-photos-badge">&#128247; '+pics.length+'</span>' : '')+
+          (upcoming
+            ? '<span class="tc-soon">'+(lang==='sk'
+                ? (daysAway <= 0 ? 'Čoskoro' : 'o ' + qty(daysAway,'day'))
+                : (daysAway <= 0 ? 'Soon' : 'in ' + qty(daysAway,'day')))+'</span>'
+            : (pics.length ? '<span class="tc-photos-badge">&#128247; '+pics.length+'</span>' : ''))+
         '</div>'+
         '<span class="tc-stripe" style="background:'+CAT_VAR[t.cat]+'"></span>'+
         '<div class="tc-body">'+
