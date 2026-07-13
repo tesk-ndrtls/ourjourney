@@ -2055,7 +2055,7 @@ const SEED = [
 /* ═══════════ VERSION ═══════════
    Bump this on every iteration that ships — shown in the topbar next
    to the app icon, same pattern as Kvašung. One place to update. */
-const APP_VERSION = 'v2.12.0';
+const APP_VERSION = 'v2.12.1';
 
 /* ═══════════ PLURALS ═══════════
    Slovak splits nouns three ways by count: 1 takes the singular, 2–4 take
@@ -2224,11 +2224,44 @@ function saveT(arr){
   });
 }
 
+/* Push the cache to Supabase.
+ *
+ * upsert() alone was not enough: it writes what the cache HAS, but says nothing
+ * about what the cache LOST. Deleting a trip removed it locally and then sent an
+ * upsert of everything else — the deleted row simply wasn't mentioned, so it sat
+ * untouched in the database and reappeared on the next load.
+ *
+ * So we also have to say what's gone. We diff the trip_ids in the database
+ * against the ones we hold, and delete the difference. */
 async function syncAll(){
   if(!sb || !isAdmin()) return;
+
   const rows = CACHE.map(toRow);
-  const { error } = await sb.from('journeys').upsert(rows, { onConflict: 'trip_id' });
-  if(error) throw error;
+  const keepIds = rows.map(r=>r.trip_id);
+
+  // write everything we have
+  const { error: upErr } = await sb
+    .from('journeys')
+    .upsert(rows, { onConflict: 'trip_id' });
+  if(upErr) throw upErr;
+
+  // then remove anything the database still holds that we no longer do
+  if(keepIds.length){
+    const { error: delErr } = await sb
+      .from('journeys')
+      .delete()
+      .not('trip_id', 'in', '(' + keepIds.join(',') + ')');
+    if(delErr) throw delErr;
+  }
+}
+
+/* Deleting a photo's record isn't enough on its own — the file stays in the
+   bucket, invisible and still counting against the quota. */
+async function purgePhotos(urls){
+  if(!sb || !Array.isArray(urls) || !urls.length) return;
+  const paths = urls.map(pathFromUrl).filter(Boolean);
+  if(!paths.length) return;
+  try{ await sb.storage.from(BUCKET).remove(paths); }catch(e){}
 }
 
 async function loadFromSupabase(){
@@ -5298,19 +5331,47 @@ async function saveTrip(){
   showToast(lang==='sk' ? 'Výlet pridaný' : 'Trip added');
 }
 
-function delTrip(id){
+async function delTrip(id){
   if(!requireAdmin()) return;
+
   const trips = getT();
   const i = trips.findIndex(t=>t.id===id);
   if(i < 0) return;
-  const name = trips[i].nameSk;
-  const msg = lang==='sk' ? 'Vymazať "'+name+'"?' : 'Delete "'+name+'"?';
+
+  const doomed = trips[i];
+  const name = nm(doomed);
+  const pics = photosOf(doomed);
+
+  const msg = lang === 'sk'
+    ? 'Vymazať „' + name + '"?' + (pics.length ? '\n\nAj ' + qty(pics.length, 'photo') + '.' : '')
+    : 'Delete "' + name + '"?' + (pics.length ? '\n\nIts ' + qty(pics.length, 'photo') + ' too.' : '');
   if(!confirm(msg)) return;
-  trips.splice(i,1);
-  saveT(trips);
+
+  trips.splice(i, 1);
+  CACHE = trips;
+  mirror();
   refreshAdmList();
   refresh();
-  showToast(lang==='sk' ? 'Vymazané' : 'Deleted');
+
+  /* Push the removal, and tell the truth if it doesn't land. Previously the
+     row was only dropped from the cache — the sync sent an upsert of what
+     remained, which never mentions a deleted row, so Supabase kept it and it
+     came back on the next load. */
+  if(sb && isAdmin()){
+    try{
+      await syncAll();
+      await purgePhotos(pics);   // don't leave orphaned files in the bucket
+      showToast(lang === 'sk' ? 'Vymazané' : 'Deleted');
+    }catch(err){
+      // put it back rather than let the two copies disagree
+      await boot();
+      showToast(lang === 'sk'
+        ? 'Nepodarilo sa vymazať — skús znova'
+        : 'Delete failed — try again');
+    }
+  } else {
+    showToast(lang === 'sk' ? 'Vymazané' : 'Deleted');
+  }
 }
 
 function refreshAdmList(){
