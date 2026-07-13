@@ -612,6 +612,7 @@ body.admin-mode #vadmin{padding-top:calc(var(--bh) + var(--safe-top))}
    and the ones further out shrink away to nothing. Same trick iOS uses
    on the home screen. Swipe is the real control; the dots just say where
    you are and how much is left. */
+.ts-dots.off{display:none}
 .ts-dots{
   position:fixed;z-index:2100;
   left:50%;bottom:calc(env(safe-area-inset-bottom, 0px) + 1rem);
@@ -1016,14 +1017,24 @@ body:not(.is-admin) .ts-actions .mbtn:not(:last-child){display:none}
   z-index:650;
   display:flex;align-items:center;justify-content:center;
   height:0;overflow:hidden;
-  background:var(--b);
+  background:var(--c);
   transition:height .18s ease;
+  --ptr-rot:0deg;
 }
-.ptr span{
-  font-size:.56rem;font-weight:700;letter-spacing:.13em;text-transform:uppercase;
-  color:var(--go);
+.ptr-wheel{
+  width:20px;height:20px;
+  color:var(--gh);
+  transform:rotate(var(--ptr-rot));
+  opacity:.55;
+  transition:color .15s,opacity .15s;
 }
-.ptr.armed span::after{ content:' &#8635;'; }
+.ptr.armed .ptr-wheel{color:var(--r);opacity:1}
+@keyframes ptr-spin{ to{ transform:rotate(360deg); } }
+.ptr.spinning .ptr-wheel{
+  color:var(--r);opacity:1;
+  animation:ptr-spin .7s linear infinite;
+  transform:none;
+}
 
 
 /* ══ LOGIN + CLOUD ══ */
@@ -1306,6 +1317,35 @@ select.fi{
   font-size:.72rem;
 }
 
+
+/* While a horizontal swipe is in flight, the sheet must not scroll — the
+   JS calls preventDefault(), and this stops any momentum already running. */
+.trip-sheet.swiping .ts-inner{
+  overflow-y:hidden;
+  touch-action:pan-x;
+}
+/* The hero owns the swipe gesture, so tell the browser not to hand the
+   horizontal component to its own scrolling. */
+.ts-hero{touch-action:pan-y pinch-zoom}
+
+/* the origin card is a real card now, so it should look pressable */
+.tc-origin{cursor:pointer;transition:transform .1s,box-shadow .1s}
+.tc-origin:hover{transform:translate(-2px,-2px);box-shadow:5px 5px 0 var(--go)}
+
+
+/* what the photo told us about where it was taken */
+.exif-note{
+  display:none;
+  margin-top:.5rem;
+  padding:.45rem .6rem;
+  background:var(--f);
+  color:var(--s);
+  font-size:.62rem;font-weight:600;
+  line-height:1.4;
+  border-left:4px solid var(--go);
+}
+.exif-note.on{display:block}
+
 /* ══ TOAST ══ */
 .toast{position:fixed;bottom:1.3rem;left:50%;z-index:2000;transform:translateX(-50%) translateY(55px);background:var(--f);color:var(--c);border:2px solid var(--fl);padding:.52rem 1.1rem;font-size:.7rem;font-weight:600;letter-spacing:.04em;white-space:nowrap;transition:transform .28s cubic-bezier(.22,1,.36,1)}
 .toast.on{transform:translateX(-50%) translateY(0)}
@@ -1379,7 +1419,13 @@ select.fi{
   </button>
 </div>
 
-<div class="ptr" id="ptr"><span></span></div>
+<div class="ptr" id="ptr">
+  <svg class="ptr-wheel" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+       stroke-width="2.4" stroke-linecap="round" aria-hidden="true">
+    <path d="M12 3a9 9 0 1 1-6.36 2.64" />
+    <path d="M3.5 3.2v3.6h3.6" />
+  </svg>
+</div>
 <div class="page-wrap">
 
   <!-- MAP -->
@@ -1506,6 +1552,7 @@ select.fi{
           <div class="upz-txt"><span class="t-sk">Klikni a vyber fotku</span><span class="t-en">Tap to choose a photo</span></div>
         </div>
         <img id="photo-prev" alt="">
+        <div class="exif-note" id="exif-note"></div>
       </div>
       <button class="btn-save" onclick="saveTrip()"><span class="t-sk">Uložiť výlet</span><span class="t-en">Save trip</span></button>
     </div>
@@ -1727,7 +1774,7 @@ const SEED = [
 /* ═══════════ VERSION ═══════════
    Bump this on every iteration that ships — shown in the topbar next
    to the app icon, same pattern as Kvašung. One place to update. */
-const APP_VERSION = 'v2.7.1';
+const APP_VERSION = 'v2.8.0';
 
 /* ═══════════ PLURALS ═══════════
    Slovak splits nouns three ways by count: 1 takes the singular, 2–4 take
@@ -2161,6 +2208,117 @@ const COUNTRY_INFO = {
   ae:{sk:"SAE",en:"UAE",flag:"🇦🇪"},
 };
 
+/* ═══════════ EXIF ═══════════
+   Phone photos carry GPS in their EXIF block, so a picture can tell us where
+   a trip happened. This is a minimal reader — enough to walk the TIFF IFDs
+   and pull the GPS tags — rather than pulling in a whole EXIF library for
+   four fields.
+
+   Not every photo has coordinates: they're stripped by most social apps, and
+   iOS omits them if location access was denied to the camera. So this is a
+   convenience, never a requirement — if there's nothing there, the fields
+   are simply left for you to fill in. */
+function readExifGps(file){
+  return new Promise(resolve=>{
+    const r = new FileReader();
+    r.onerror = ()=>resolve(null);
+    r.onload = e=>{
+      try{
+        const view = new DataView(e.target.result);
+        if(view.byteLength < 4 || view.getUint16(0) !== 0xFFD8){ resolve(null); return; }  // not a JPEG
+
+        let off = 2;
+        while(off < view.byteLength - 4){
+          const marker = view.getUint16(off);
+          if(marker === 0xFFE1) break;              // APP1 — the EXIF segment
+          if((marker & 0xFF00) !== 0xFF00){ resolve(null); return; }
+          off += 2 + view.getUint16(off + 2);
+        }
+        if(off >= view.byteLength - 4){ resolve(null); return; }
+
+        const exifStart = off + 4;
+        if(view.getUint32(exifStart) !== 0x45786966){ resolve(null); return; }  // "Exif"
+
+        const tiff = exifStart + 6;
+        const little = view.getUint16(tiff) === 0x4949;   // endianness varies by camera
+        const u16 = o => view.getUint16(o, little);
+        const u32 = o => view.getUint32(o, little);
+
+        if(u16(tiff + 2) !== 0x002A){ resolve(null); return; }
+
+        const ifd0 = tiff + u32(tiff + 4);
+        const nEntries = u16(ifd0);
+
+        // find the pointer to the GPS IFD (tag 0x8825) inside IFD0
+        let gpsPtr = 0;
+        for(let i = 0; i < nEntries; i++){
+          const entry = ifd0 + 2 + i * 12;
+          if(u16(entry) === 0x8825){ gpsPtr = tiff + u32(entry + 8); break; }
+        }
+        if(!gpsPtr){ resolve(null); return; }
+
+        // read the GPS IFD
+        const gpsCount = u16(gpsPtr);
+        const tags = {};
+        for(let i = 0; i < gpsCount; i++){
+          const entry = gpsPtr + 2 + i * 12;
+          const tag = u16(entry);
+          const type = u16(entry + 2);
+          const count = u32(entry + 4);
+          const valOff = (type === 5 || count > 4) ? tiff + u32(entry + 8) : entry + 8;
+
+          if(type === 2){                       // ASCII — the N/S/E/W refs
+            tags[tag] = String.fromCharCode(view.getUint8(valOff));
+          } else if(type === 5){                // RATIONAL — deg / min / sec
+            const parts = [];
+            for(let k = 0; k < count; k++){
+              const num = u32(valOff + k * 8);
+              const den = u32(valOff + k * 8 + 4);
+              parts.push(den ? num / den : 0);
+            }
+            tags[tag] = parts;
+          }
+        }
+
+        const dms = (parts, ref)=>{
+          if(!Array.isArray(parts) || parts.length < 3) return null;
+          let v = parts[0] + parts[1] / 60 + parts[2] / 3600;
+          if(ref === 'S' || ref === 'W') v = -v;
+          return v;
+        };
+
+        const lat = dms(tags[2], tags[1]);   // 0x0002 GPSLatitude,  0x0001 ref
+        const lng = dms(tags[4], tags[3]);   // 0x0004 GPSLongitude, 0x0003 ref
+
+        if(typeof lat !== 'number' || typeof lng !== 'number' ||
+           isNaN(lat) || isNaN(lng) || (lat === 0 && lng === 0)){
+          resolve(null);
+          return;
+        }
+        resolve({ lat: +lat.toFixed(4), lng: +lng.toFixed(4) });
+      }catch(err){
+        resolve(null);   // a malformed EXIF block should never break an upload
+      }
+    };
+    // the EXIF block lives at the front of the file; no need to read the rest
+    r.readAsArrayBuffer(file.slice(0, 131072));
+  });
+}
+
+/* Nearest known place to a coordinate, if it's close enough to be the same
+   place. 60km is generous enough for a photo taken on the edge of a city and
+   tight enough not to claim a neighbouring country. */
+function nearestPlace(lat, lng, maxKm){
+  let best = null, bestD = Infinity;
+  GAZ.forEach(g=>{
+    const dLat = (g.lat - lat) * 111;
+    const dLng = (g.lng - lng) * 111 * Math.cos(lat * Math.PI / 180);
+    const d = Math.sqrt(dLat*dLat + dLng*dLng);
+    if(d < bestD){ bestD = d; best = g; }
+  });
+  return (best && bestD <= (maxKm || 60)) ? { place: best, km: Math.round(bestD) } : null;
+}
+
 /* strip accents so "Kosice" finds "Košice" and "Marrakes" finds "Marrákeš" */
 function norm(str){
   return (str||'')
@@ -2402,8 +2560,8 @@ let mapOk = false;
 try {
   if (typeof L === 'undefined') throw new Error('Leaflet unavailable');
   map = L.map('map',{zoomControl:true, scrollWheelZoom:false, worldCopyJump:true}).setView([47,12],4);
-  L.tileLayer('https://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}{r}.png',{
-    attribution:'&copy; OpenStreetMap &copy; CARTO', subdomains:'abcd', maxZoom:19
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',{
+    attribution:'&copy; OpenStreetMap &copy; CARTO', subdomains:'abcd', maxZoom:20
   }).addTo(map);
   mapOk = true;
 } catch(e) {
@@ -2744,8 +2902,10 @@ function visitCounts(){
 }
 
 function shadeFor(n, max){
-  // 0.16 for a single visit up to 0.62 for the most-visited
-  const lo = 0.16, hi = 0.62;
+  /* Lighter than before. The tiles now carry place names and roads, and the
+     old 0.16–0.62 range buried them under a rust wash. The fill still ranks
+     countries by how often we've been, it just no longer fights the map. */
+  const lo = 0.08, hi = 0.30;
   if(max <= 1) return lo;
   const t = (n - 1) / (max - 1);
   return lo + (hi - lo) * t;
@@ -3092,20 +3252,6 @@ function buildTl(){
       (meta ? '<span class="year-meta">'+meta+'</span>' : '');
     spine.appendChild(hdr);
 
-    // origin sits on the spine too, but full width and unstyled as a card
-    list.filter(t=>t.cat==='origin').forEach(t=>{
-      const o = document.createElement('div');
-      o.className = 'tc-origin';
-      o.innerHTML =
-        '<div class="tc-origin-ico">'+esc(t.flag||'♥')+'</div><div>'+
-        '<div class="tc-origin-lbl">'+(lang==='sk'?'Kde sa to začalo':'Where it began')+'</div>'+
-        '<div class="tc-origin-name">'+esc(nm(t))+'</div>'+
-        '<div class="tc-origin-date">'+esc(fmt(t.dateFrom,t.dateTo))+'</div>'+
-        (nt(t) ? '<div class="tc-origin-note">'+esc(nt(t))+'</div>' : '')+
-        '</div>';
-      spine.appendChild(o);
-    });
-
     list.filter(t=>t.cat!=='origin').forEach(t=>{
       const d = days(t);
       const pics = photosOf(t);
@@ -3147,6 +3293,30 @@ function buildTl(){
       row.innerHTML = '<span class="tl-arm"></span><span class="tl-node"></span>';
       row.appendChild(card);
       spine.appendChild(row);
+    });
+
+    /* The origin card closes out its year. The timeline is newest-first, so
+       the day it all started is the last thing you reach — it used to render
+       above that year's trips, which read as if the relationship began after
+       the holidays it preceded. */
+    list.filter(t=>t.cat==='origin').forEach(t=>{
+      const o = document.createElement('div');
+      o.className = 'tc-origin';
+      o.setAttribute('role','button');
+      o.setAttribute('tabindex','0');
+      o.innerHTML =
+        '<div class="tc-origin-ico">'+esc(t.flag||'♥')+'</div><div>'+
+        '<div class="tc-origin-lbl">'+(lang==='sk'?'Kde sa to začalo':'Where it began')+'</div>'+
+        '<div class="tc-origin-name">'+esc(nm(t))+'</div>'+
+        '<div class="tc-origin-date">'+esc(fmt(t.dateFrom,t.dateTo))+'</div>'+
+        (nt(t) ? '<div class="tc-origin-note">'+esc(nt(t))+'</div>' : '')+
+        '</div>';
+      const open = ()=>{ tap(); openModal(t.id); };
+      o.addEventListener('click', open);
+      o.addEventListener('keydown', e=>{
+        if(e.key==='Enter'||e.key===' '){ e.preventDefault(); open(); }
+      });
+      spine.appendChild(o);
     });
   });
 
@@ -3492,8 +3662,8 @@ function renderTripMap(t){
         zoomControl:false, scrollWheelZoom:false, dragging:false,
         doubleClickZoom:false, boxZoom:false, keyboard:false, attributionControl:false
       });
-      L.tileLayer('https://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}{r}.png',
-        { subdomains:'abcd', maxZoom:19 }).addTo(tsMap);
+      L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
+        { subdomains:'abcd', maxZoom:20 }).addTo(tsMap);
     }
     // clear previous trip's markers
     tsMap.eachLayer(l=>{ if(l instanceof L.Marker) tsMap.removeLayer(l); });
@@ -3526,7 +3696,9 @@ function updateNav(){
 
   const order = tripOrder();
   const i = order.findIndex(t=>t.id === openId);
-  if(i === -1){ box.innerHTML = ''; return; }
+  // the origin card isn't part of the trip chain — no dots, no swipe
+  if(i === -1){ box.innerHTML = ''; box.classList.add('off'); return; }
+  box.classList.remove('off');
 
   const WINDOW = 9;   // how many dots are drawn either side before we stop
   let html = '';
@@ -3582,86 +3754,100 @@ function closeModal(){
 }
 
 /* ═══════════ SWIPE ═══════════
-   The sheet tracks the finger: drag and the whole thing slides with you,
-   revealing a hint of the trip either side. Let go past the threshold and
-   it completes the throw, then the next trip springs in from the opposite
-   edge. Let go short of it and it snaps back.
+   Two rules learned the hard way:
 
-   Vertical scrolling has to keep working, so the first few pixels decide
-   the gesture's axis and it commits to that for the rest of the drag. */
+   1. Only the hero area starts a swipe. Previously the whole sheet was a
+      swipe surface, which meant pinching the little map or scrolling the
+      gallery could throw you into the next trip by accident. The hero is
+      the one region with nothing interactive in it, so it's the one region
+      that owns the gesture.
+
+   2. Once a drag commits to horizontal, vertical scrolling is locked for
+      the rest of that gesture. Without the lock the page slid sideways and
+      scrolled at the same time, which looked broken. */
 (function(){
   const sheet = document.getElementById('modal');
   const inner = document.getElementById('modal-inner');
-  if(!sheet || !inner) return;
+  const hero  = document.getElementById('ts-hero');
+  if(!sheet || !inner || !hero) return;
 
   let x0 = 0, y0 = 0;
   let dx = 0;
-  let axis = null;        // null until decided, then 'x' or 'y'
+  let axis = null;         // null until decided, then 'x' or 'y'
   let dragging = false;
   let canPrev = false, canNext = false;
 
-  const THRESHOLD = 70;   // px past which the drag becomes a page turn
-  const RESIST    = 0.32; // how much a drag toward a non-existent trip gives
+  const THRESHOLD = 70;
+  const RESIST    = 0.32;
 
   function edges(){
     const order = tripOrder();
     const i = order.findIndex(t=>t.id === openId);
     canPrev = i > 0;
     canNext = i > -1 && i < order.length - 1;
+    return i !== -1;   // false for the origin card, which has no neighbours
   }
 
-  sheet.addEventListener('touchstart', e=>{
+  // touchstart is bound to the HERO, not the sheet — that's the whole fix
+  hero.addEventListener('touchstart', e=>{
     if(sheet.classList.contains('editing')) return;
     if(document.getElementById('lightbox').classList.contains('on')) return;
     if(e.touches.length !== 1) return;
+    if(!edges()) return;
+
     x0 = e.touches[0].clientX;
     y0 = e.touches[0].clientY;
     dx = 0;
     axis = null;
     dragging = true;
-    edges();
     inner.style.transition = 'none';
   }, {passive:true});
 
+  /* Bound to the sheet, so a drag that began on the hero keeps tracking even
+     as the finger leaves it. Not passive: once we've committed to horizontal
+     we call preventDefault() to stop the page scrolling underneath. */
   sheet.addEventListener('touchmove', e=>{
     if(!dragging) return;
     const t = e.touches[0];
     const mx = t.clientX - x0;
     const my = t.clientY - y0;
 
-    // decide once, early, which way this gesture is going
     if(axis === null){
       if(Math.abs(mx) < 8 && Math.abs(my) < 8) return;
       axis = (Math.abs(mx) > Math.abs(my) * 1.25) ? 'x' : 'y';
-      if(axis === 'y'){ dragging = false; return; }   // hand it back to the scroller
+      if(axis === 'y'){ dragging = false; return; }   // let it scroll
+      sheet.classList.add('swiping');                 // locks scroll in CSS
     }
 
+    if(axis !== 'x') return;
+    e.preventDefault();          // this is what stops the two-axis wobble
+
     dx = mx;
-    // pull against a wall when there's nothing to swipe to
     if((dx > 0 && !canPrev) || (dx < 0 && !canNext)) dx *= RESIST;
 
     inner.style.transform = 'translateX(' + dx + 'px)';
-    // the further you pull, the more the current trip fades out
     inner.style.opacity = String(1 - Math.min(Math.abs(dx) / 400, 0.35));
-  }, {passive:true});
+  }, {passive:false});
 
   sheet.addEventListener('touchend', ()=>{
-    if(!dragging){ return; }
+    sheet.classList.remove('swiping');
+    if(!dragging) return;
     dragging = false;
     if(axis !== 'x'){ reset(); return; }
 
     const passed = Math.abs(dx) > THRESHOLD;
-    const dir = dx < 0 ? 1 : -1;          // dragging left = go to next
+    const dir = dx < 0 ? 1 : -1;
     const allowed = dir === 1 ? canNext : canPrev;
 
-    if(passed && allowed){
-      throwTo(dir);
-    } else {
-      reset();
-    }
+    if(passed && allowed) throwTo(dir);
+    else reset();
   }, {passive:true});
 
-  /* Snap back to centre — the drag didn't earn a page turn. */
+  sheet.addEventListener('touchcancel', ()=>{
+    sheet.classList.remove('swiping');
+    if(dragging){ dragging = false; reset(); }
+  }, {passive:true});
+
   function reset(){
     inner.style.transition = 'transform .28s cubic-bezier(.22,1,.36,1), opacity .28s';
     inner.style.transform = 'translateX(0)';
@@ -3669,10 +3855,6 @@ function closeModal(){
     setTimeout(()=>{ inner.style.transition = ''; }, 300);
   }
 
-  /* Finish the throw off-screen, swap the content, then bring the new trip
-     in from the far side. Two frames of setTimeout: one to let the exit
-     animation play, one to let the browser apply the off-screen start
-     position before we animate back from it. */
   function throwTo(dir){
     const w = window.innerWidth || 400;
     inner.style.transition = 'transform .2s ease-out, opacity .2s ease-out';
@@ -3686,9 +3868,8 @@ function closeModal(){
       const next = order[i + dir];
       if(!next){ reset(); return; }
 
-      openModal(next.id);   // repaints the sheet with the new trip
+      openModal(next.id);
 
-      // start the incoming trip off-screen on the opposite side...
       inner.style.transition = 'none';
       inner.style.transform = 'translateX(' + (dir === 1 ? w : -w) + 'px)';
       inner.style.opacity = '0';
@@ -4020,10 +4201,11 @@ let photoFile = null;
    saved it straight into the record, which meant a trip added here got a
    photo stored differently from every other trip in the app — inline blob
    instead of a Storage URL. Now it goes through the same upload path. */
-function prevPhoto(e){
+async function prevPhoto(e){
   const f = e.target.files[0];
   if(!f) return;
   photoFile = f;
+
   const r = new FileReader();
   r.onload = ev=>{
     const img = document.getElementById('photo-prev');
@@ -4031,6 +4213,57 @@ function prevPhoto(e){
     img.classList.add('on');
   };
   r.readAsDataURL(f);
+
+  /* If the photo knows where it was taken, use it — but only to fill blanks.
+     A coordinate from the picture is better evidence than anything we could
+     guess, though it never overrides something already typed. */
+  const gps = await readExifGps(f);
+  const note = document.getElementById('exif-note');
+  if(!gps){
+    if(note) note.classList.remove('on');
+    return;
+  }
+
+  const latEl = document.getElementById('f-lat');
+  const lngEl = document.getElementById('f-lng');
+  const filledCoords = !latEl.value.trim() && !lngEl.value.trim();
+  if(filledCoords){
+    latEl.value = String(gps.lat);
+    lngEl.value = String(gps.lng);
+  }
+
+  // try to name the spot, and fill the rest of the form from that
+  const near = nearestPlace(gps.lat, gps.lng, 60);
+  let msg;
+  if(near){
+    const g = near.place;
+    const c = COUNTRY_INFO[g.iso];
+    const setIfBlank = (id, v)=>{
+      const el = document.getElementById(id);
+      if(el && !el.value.trim() && v) el.value = v;
+    };
+    setIfBlank('f-nsk', g.sk);
+    setIfBlank('f-nen', g.en);
+    if(c){
+      setIfBlank('f-csk', c.sk);
+      setIfBlank('f-cen', c.en);
+      setIfBlank('f-flag', c.flag);
+    }
+    const label = (lang === 'sk') ? g.sk : g.en;
+    msg = (lang === 'sk')
+      ? '\uD83D\uDCCD Z fotky: ' + label + ' (' + near.km + ' km od stredu)'
+      : '\uD83D\uDCCD From the photo: ' + label + ' (' + near.km + ' km away)';
+  } else {
+    msg = (lang === 'sk')
+      ? '\uD83D\uDCCD Z fotky: ' + gps.lat + ', ' + gps.lng + ' — miesto nepoznáme, doplň názov'
+      : '\uD83D\uDCCD From the photo: ' + gps.lat + ', ' + gps.lng + ' — unknown place, add a name';
+  }
+
+  if(note){
+    note.textContent = msg;
+    note.classList.add('on');
+  }
+  tap();
 }
 function gv(id){ return document.getElementById(id).value.trim(); }
 
@@ -4178,19 +4411,19 @@ function refresh(){
 }
 
 /* ═══════════ PULL TO REFRESH ═══════════
-   Only arms when the scroller is already at the top, so it never fights
-   normal scrolling. Rebuilds the current view — cheap, but it's the
-   gesture people reach for. */
+   A spinner, not a toast. The old version announced "Obnovené" every time,
+   which was noise for something that should just quietly happen. Now the
+   wheel spins while the reload is in flight and disappears when it lands. */
 (function(){
   const ptr = document.getElementById('ptr');
   if(!ptr) return;
-  let startY = 0, pulling = false, dist = 0;
-  const MAX = 70, TRIGGER = 55;
-
-  const scroller = () => document.querySelector('.page-wrap') || document.body;
+  let startY = 0, pulling = false, dist = 0, busy = false;
+  const MAX = 72, TRIGGER = 58;
 
   document.addEventListener('touchstart', e=>{
+    if(busy) return;
     if(document.body.classList.contains('admin-mode')) return;
+    if(document.getElementById('modal').classList.contains('on')) return;
     if(window.scrollY > 4) return;
     startY = e.touches[0].clientY;
     pulling = true;
@@ -4198,29 +4431,51 @@ function refresh(){
   }, {passive:true});
 
   document.addEventListener('touchmove', e=>{
-    if(!pulling) return;
+    if(!pulling || busy) return;
     dist = e.touches[0].clientY - startY;
-    if(dist <= 0){ pulling = false; ptr.style.height = '0px'; ptr.classList.remove('armed'); return; }
+    if(dist <= 0){
+      pulling = false;
+      ptr.style.height = '0px';
+      ptr.classList.remove('armed');
+      return;
+    }
     const h = Math.min(dist * 0.5, MAX);
     ptr.style.height = h + 'px';
-    const armed = dist > TRIGGER;
-    ptr.classList.toggle('armed', armed);
-    ptr.querySelector('span').textContent = armed
-      ? (lang==='sk' ? 'Pusti' : 'Release')
-      : (lang==='sk' ? 'Potiahni' : 'Pull');
+    // the wheel turns as you pull, so the gesture feels connected
+    const spin = Math.min(dist / TRIGGER, 1) * 270;
+    ptr.style.setProperty('--ptr-rot', spin + 'deg');
+    ptr.classList.toggle('armed', dist > TRIGGER);
   }, {passive:true});
 
-  document.addEventListener('touchend', ()=>{
-    if(!pulling) return;
-    const fire = dist > TRIGGER;
+  document.addEventListener('touchend', async ()=>{
+    if(!pulling || busy) return;
     pulling = false;
-    ptr.style.height = '0px';
-    ptr.classList.remove('armed');
-    if(fire){
-      tap(14);
-      refresh();
-      showToast(lang==='sk' ? 'Obnovené' : 'Refreshed');
+    const fire = dist > TRIGGER;
+
+    if(!fire){
+      ptr.style.height = '0px';
+      ptr.classList.remove('armed');
+      return;
     }
+
+    busy = true;
+    tap(14);
+    ptr.style.height = '46px';
+    ptr.classList.remove('armed');
+    ptr.classList.add('spinning');
+
+    // pull fresh data if we can, otherwise just repaint
+    try{
+      if(sb) await loadFromSupabase();
+    }catch(e){}
+    refresh();
+
+    // hold the spinner briefly so it reads as a deliberate action, not a flicker
+    setTimeout(()=>{
+      ptr.classList.remove('spinning');
+      ptr.style.height = '0px';
+      busy = false;
+    }, 450);
   }, {passive:true});
 })();
 
