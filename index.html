@@ -46,6 +46,7 @@
   --ff-b:'DM Sans',system-ui,-apple-system,sans-serif;
   --bh:80px;
   --th:56px;
+  --sh:54px;    /* the stats strip, now a fixed part of the chrome */
   --safe-top:env(safe-area-inset-top, 0px);
 }
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
@@ -118,7 +119,7 @@ input,textarea,select{font-family:var(--ff-b)}
 .admin-btn:hover{border-color:var(--sl);color:var(--sl)}
 
 /* ══ TABBAR ══ */
-.tabbar{position:fixed;top:calc(var(--bh) + var(--safe-top));left:0;right:0;z-index:700;background:var(--b);border-bottom:2px solid var(--e);height:var(--th);display:flex}
+.tabbar{position:fixed;top:calc(var(--bh) + var(--sh) + var(--safe-top));left:0;right:0;z-index:700;background:var(--b);border-bottom:2px solid var(--e);height:var(--th);display:flex}
 .tab{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.12rem;background:none;border:none;border-bottom:3px solid transparent;color:var(--gh);font-size:.56rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;padding:.35rem .2rem;transition:color .15s,border-color .15s,background .15s}
 .tab-ico{
   display:block;
@@ -129,7 +130,7 @@ input,textarea,select{font-family:var(--ff-b)}
 .tab.on{color:var(--s);border-bottom-color:var(--r);background:var(--e)}
 .tab:hover:not(.on){color:var(--sl)}
 
-.page-wrap{padding-top:calc(var(--bh) + var(--th) + var(--safe-top));min-height:100vh}
+.page-wrap{padding-top:calc(var(--bh) + var(--sh) + var(--th) + var(--safe-top));min-height:100vh}
 .view{display:none}
 .view.on{display:block}
 /* The admin panel is hidden by default and shown only when BOTH are
@@ -146,6 +147,8 @@ body:not(.is-admin) #vadmin{display:none !important}
 /* the tab bar does nothing in admin mode and sits on top of the panel
    header, so take it out of the layout entirely rather than disable it */
 body.admin-mode .tabbar{display:none}
+/* the numbers describe trips, which is not what the admin panel is about */
+body.admin-mode .hero-slim{display:none}
 body.admin-mode #vadmin{padding-top:calc(var(--bh) + var(--safe-top))}
 
 /* ══ HERO ══ */
@@ -153,31 +156,34 @@ body.admin-mode #vadmin{padding-top:calc(var(--bh) + var(--safe-top))}
    big number blocks stacked up — roughly 150px of chrome before you got
    to the map. This says the same thing in one line. */
 .hero-slim{
+  position:fixed;
+  top:calc(var(--bh) + var(--safe-top));
+  left:0;right:0;
+  z-index:750;
+  height:var(--sh);
+  box-sizing:border-box;
   display:flex;
   background:var(--e);
   border-bottom:2px solid var(--r);
-  padding:.55rem .5rem;
+  padding:.5rem .5rem;
   gap:.3rem;
   transition:border-color .2s;
 }
-/* the numbers describe a subset, not everything — say so quietly */
-.hero-slim.filtered{border-bottom-color:var(--go)}
-.hero-slim.filtered .hs-stat b{color:var(--go)}
 .hs-stat{
   flex:1;
-  display:flex;flex-direction:column;align-items:center;
-  gap:.1rem;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:.02rem;
   min-width:0;
 }
-/* the numbers are the point of this strip — they earn the space */
 .hs-stat b{
   font-family:var(--ff-d);
-  font-size:1.5rem;font-weight:900;
+  font-size:1.15rem;font-weight:900;
   color:var(--go);
-  line-height:1;
+  line-height:1.05;
   letter-spacing:-.02em;
+  font-variant-numeric:tabular-nums;
 }
-@media(min-width:600px){ .hs-stat b{font-size:1.75rem} }
+@media(min-width:600px){ .hs-stat b{font-size:1.35rem} }
 .hs-stat span{
   font-size:.55rem;font-weight:700;
   letter-spacing:.09em;text-transform:uppercase;
@@ -215,7 +221,7 @@ body.admin-mode #vadmin{padding-top:calc(var(--bh) + var(--safe-top))}
    (~34px), the filter rail (~40px) and the footer (~70px) */
 #map{
   width:100%;
-  height:calc(100vh - var(--bh) - var(--th) - var(--safe-top) - 168px);
+  height:calc(100vh - var(--bh) - var(--sh) - var(--th) - var(--safe-top) - 118px);
   min-height:380px;
   border-bottom:3px solid var(--e);
   background:var(--cd);
@@ -239,95 +245,42 @@ body.admin-mode #vadmin{padding-top:calc(var(--bh) + var(--safe-top))}
 }
 .pop-open:hover{background:var(--rl);color:var(--w)}
 
-/* ══ TIMELINE ══ */
-.tl-search-bar{background:var(--cd);border-bottom:2px solid var(--e);padding:.6rem .9rem}
-.tl-search{width:100%;padding:.5rem .65rem;border:2px solid var(--s);background:var(--w);font-size:16px;color:var(--e);outline:none;border-radius:0;-webkit-appearance:none}
-.tl-search:focus{border-color:var(--r)}
-.tl-search::placeholder{color:var(--gh)}
-.tl-body{padding:.85rem .9rem 4rem;max-width:1180px;margin:0 auto}
-.year-grp{margin-bottom:2rem}
-.year-hdr{display:flex;align-items:center;gap:.5rem;margin-bottom:.75rem}
-.year-meta{font-size:.58rem;color:var(--gh);font-weight:600;letter-spacing:.05em;text-transform:uppercase;white-space:nowrap}
-
-/* card grid — 1 column on phones, 2 from tablet width, 3 on wide desktop */
-/* ══ TIMELINE: a real vertical spine ══
-   A 2px rule runs down the page. Year markers sit on it, trips alternate
-   left and right of it, each pegged to the spine by a node and a short
-   connector. On phones there isn't room for two columns, so the spine
-   shifts to the left edge and every card hangs off it on the same side —
-   same structure, one column. */
 /* ══ TIMELINE ══
-   Phones get a single column with the road down the left edge. From tablet
-   width the road runs down the middle and cards sit either side.
+   A dashed line with a node for every trip. On a phone the line sits at the
+   left and everything hangs off it; from tablet width it runs down the middle
+   and cards alternate either side.
 
-   The two sides are independent columns, not rows of a grid. That distinction
-   is the whole point: as a grid, a card on the left forced an empty cell on
-   the right, so a short note next to a long one left a hole. As columns, each
-   side flows on its own and the cards pack tightly — they overlap vertically,
-   which is what makes it read as a road with stuff along it rather than a
-   ladder. */
+   The nodes have to sit ON the line, which means the line and the nodes must
+   be positioned from the same reference. Both are pinned to 50% of the spine
+   (or 22px on a phone), so they can't drift apart however the cards resize. */
 .tl-spine{
   position:relative;
   padding:.5rem 0 2rem;
 }
 
-/* The road itself. On phones it's a straight rule; on wider screens it's an
-   SVG that curves gently down the middle, drawn to whatever height the
-   content turns out to be. */
-.tl-road{
-  display:none;
-  position:absolute;
-  top:0;bottom:0;left:0;right:0;
-  z-index:0;
-  pointer-events:none;
-  overflow:visible;
-}
+/* the line: one dashed rule, nothing more */
 .tl-spine::before{
   content:'';
-  position:absolute;top:0;bottom:0;
-  left:22px;
-  width:2px;
-  background:var(--e);
-  opacity:.35;
+  position:absolute;
+  top:0;bottom:0;
+  left:var(--line-x);
+  width:0;
+  border-left:2px dashed var(--e);
+  opacity:.4;
   z-index:0;
 }
 
+.tl-spine{
+  --line-x:22px;      /* phone: the line hugs the left edge */
+  --node-size:13px;
+}
 @media(min-width:820px){
-  .tl-spine::before{ display:none; }   /* the SVG road takes over */
-  .tl-road{ display:block; }
+  .tl-spine{
+    --line-x:50%;     /* tablet and up: down the middle */
+  }
 }
 
-/* the asphalt, and the dashes down the middle of it */
-.road-surface{
-  fill:none;
-  stroke:var(--bm);
-  stroke-width:22;
-  stroke-linecap:round;
-  opacity:.28;
-}
-.road-edge{
-  fill:none;
-  stroke:var(--e);
-  stroke-width:24;
-  stroke-linecap:round;
-  opacity:.16;
-}
-.road-dashes{
-  fill:none;
-  stroke:var(--s);
-  stroke-width:2.5;
-  stroke-dasharray:10 14;
-  stroke-linecap:round;
-  opacity:.75;
-}
-/* things travelling along it */
-.road-vehicle{
-  font-size:19px;
-  dominant-baseline:central;
-  text-anchor:middle;
-}
-
-/* ── year marker ── */
+/* ── year marker, sitting on the line ── */
 .year-hdr{
   position:relative;
   display:flex;align-items:center;gap:.6rem;
@@ -353,86 +306,91 @@ body.admin-mode #vadmin{padding-top:calc(var(--bh) + var(--safe-top))}
   background:var(--c);padding:.1rem .4rem;
 }
 
-/* ── the two lanes of cards ── */
 .tl-lanes{
   position:relative;
   z-index:2;
 }
-@media(min-width:820px){
-  .tl-lanes{
-    display:flex;
-    align-items:flex-start;
-    gap:96px;                 /* the road runs through this gap */
-  }
-}
-.tl-lane{
-  display:flex;
-  flex-direction:column;
-  gap:1rem;
-  min-width:0;
-}
-@media(min-width:820px){
-  .tl-lane{ flex:1; }
-  /* nudging one lane down staggers the two sides, so cards interleave
-     rather than lining up in pairs */
-  .tl-lane.right{ margin-top:72px; }
-}
 
-/* on phones there is only one lane, and the road is at the left edge */
-@media(max-width:819px){
-  .tl-lane.right{ margin-top:0; }
-  .tl-lanes{ display:flex; flex-direction:column; gap:1rem; }
-}
-
-/* a card's stub connecting it to the road */
+/* ── one trip ── */
 .tl-item{
   position:relative;
+  padding-left:52px;          /* phone: card sits right of the line */
+  margin-bottom:1rem;
 }
-@media(max-width:819px){
-  .tl-item{ padding-left:52px; }
-  .tl-item::before{      /* the node */
-    content:'';
-    position:absolute;
-    left:22px;top:26px;
-    width:13px;height:13px;
-    transform:translate(-50%,-50%) rotate(45deg);
-    background:var(--w);
-    border:2.5px solid var(--e);
-    z-index:3;
-  }
-  .tl-item::after{       /* the arm */
-    content:'';
-    position:absolute;
-    left:22px;top:26px;
-    width:30px;height:2px;
-    background:var(--e);opacity:.35;
-    z-index:1;
-  }
-}
-@media(min-width:820px){
-  .tl-item::before{
-    content:'';
-    position:absolute;
-    top:26px;
-    width:11px;height:11px;
-    transform:rotate(45deg);
-    background:var(--w);
-    border:2.5px solid var(--e);
-    z-index:3;
-  }
-  .tl-lane.left  .tl-item::before{ right:-56px; }
-  .tl-lane.right .tl-item::before{ left:-56px; }
 
-  .tl-item::after{
-    content:'';
-    position:absolute;
-    top:31px;
-    width:46px;height:2px;
-    background:var(--e);opacity:.3;
-    z-index:1;
+/* The node. Centred on the line by translating half its own width back —
+   this is what keeps it ON the line rather than beside it. */
+.tl-item::before{
+  content:'';
+  position:absolute;
+  left:var(--line-x);
+  top:28px;
+  width:var(--node-size);
+  height:var(--node-size);
+  margin-left:calc(var(--node-size) / -2);
+  margin-top:calc(var(--node-size) / -2);
+  transform:rotate(45deg);
+  background:var(--w);
+  border:2.5px solid var(--e);
+  z-index:4;
+}
+
+/* the little arm from the line out to the card */
+.tl-item::after{
+  content:'';
+  position:absolute;
+  left:var(--line-x);
+  top:28px;
+  width:30px;
+  height:0;
+  border-top:2px dashed var(--e);
+  opacity:.4;
+  z-index:1;
+}
+
+@media(min-width:820px){
+  /* Each card is (half the width, minus the gutter). Its inner edge therefore
+     sits exactly GUTTER px from the centre line — which gives the node and the
+     arm a fixed, known anchor. Everything below is measured from that edge, so
+     the node lands on the dashes no matter how the card resizes. */
+  .tl-spine{ --gutter:60px; }
+
+  .tl-item{
+    padding-left:0;
+    width:calc(50% - var(--gutter));
+    margin-bottom:0;
   }
-  .tl-lane.left  .tl-item::after{ right:-46px; }
-  .tl-lane.right .tl-item::after{ left:-46px; }
+  .tl-item.left { margin-right:auto; }
+  .tl-item.right{ margin-left:auto;  }
+
+  /* Pull each card up beside the previous one. Because the sides alternate, a
+     card only ever overlaps one across the line from it — never one in its own
+     column. That's what closes the gaps without touching the order. */
+  .tl-item + .tl-item{ margin-top:-64px; }
+  .tl-lanes > .tl-item:first-child{ margin-top:0; }
+
+  /* the node, on the line */
+  .tl-item.left::before{
+    left:auto;
+    right:calc(var(--gutter) * -1);
+    margin-right:calc(var(--node-size) / -2);
+    margin-left:0;
+  }
+  .tl-item.right::before{
+    left:calc(var(--gutter) * -1);
+    margin-left:calc(var(--node-size) / -2);
+  }
+
+  /* the arm, from the line to the card */
+  .tl-item.left::after{
+    left:auto;
+    right:calc(var(--gutter) * -1);
+    width:var(--gutter);
+  }
+  .tl-item.right::after{
+    left:calc(var(--gutter) * -1);
+    width:var(--gutter);
+  }
 }
 
 /* ══ TRIP CARD ══
@@ -1161,7 +1119,7 @@ body:not(.is-admin) .ts-actions .mbtn:not(:last-child){display:none}
 /* ══ PULL TO REFRESH ══ */
 .ptr{
   position:fixed;left:0;right:0;
-  top:calc(var(--bh) + var(--th) + var(--safe-top));
+  top:calc(var(--bh) + var(--sh) + var(--th) + var(--safe-top));
   z-index:650;
   display:flex;align-items:center;justify-content:center;
   height:0;overflow:hidden;
@@ -1663,18 +1621,26 @@ select.fi{
   padding:.6rem .8rem;
   margin-bottom:1.2rem;
   position:sticky;
-  top:calc(var(--bh) + var(--th) + var(--safe-top) + .4rem);
+  top:calc(var(--bh) + var(--sh) + var(--th) + var(--safe-top) + .4rem);
   z-index:500;
 }
 .sf-lbl{
   font-size:.52rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;
   color:var(--gh);
 }
-.sf-val{
+.sf-chips{display:flex;flex-wrap:wrap;gap:.3rem}
+.sf-chip{
+  display:inline-flex;align-items:center;gap:.3rem;
   font-family:var(--ff-d);
-  font-size:1rem;font-weight:900;
-  color:var(--go);
+  font-size:.85rem;font-weight:900;
+  background:var(--go);color:var(--e);
+  border:1px solid var(--e);
+  padding:.15rem .45rem;
+  cursor:pointer;
+  transition:background .12s;
 }
+.sf-chip:hover{background:var(--r);color:var(--s)}
+.sf-chip span{font-size:.6rem;font-weight:700;opacity:.7}
 .sf-n{
   font-size:.62rem;font-weight:600;
   color:var(--sl);opacity:.75;
@@ -1759,6 +1725,143 @@ select.fi{
   margin-top:.25rem;
 }
 
+
+/* ══ TRAVEL LEGS ══ */
+.stop-leg{
+  display:flex;align-items:center;gap:.4rem;
+  padding:.15rem 0 .15rem 26px;
+  margin:-.1rem 0;
+  position:relative;
+}
+.leg-line{
+  position:absolute;
+  left:9px;top:0;bottom:0;
+  width:0;
+  border-left:2px dashed var(--s);
+}
+.leg-mode{
+  font-size:.68rem;
+  padding:.15rem .3rem;
+  border:1.5px solid var(--s);
+  background:var(--w);
+  color:var(--bm);
+  border-radius:0;
+  -webkit-appearance:none;
+  appearance:none;
+  cursor:pointer;
+}
+.leg-mode:focus{border-color:var(--r);outline:none}
+.leg-km{
+  font-size:.62rem;font-weight:700;
+  color:var(--gh);
+  font-variant-numeric:tabular-nums;
+}
+.stops-total{
+  margin-top:.5rem;
+  padding:.4rem .55rem;
+  background:var(--cd);
+  border-left:4px solid var(--go);
+  font-size:.68rem;
+  color:var(--bm);
+}
+.stops-total b{color:var(--e);font-variant-numeric:tabular-nums}
+
+/* ══ DISTANCE, IN THE TRIP DETAIL ══ */
+.ts-dist{margin-top:1.4rem}
+.dist-total{
+  display:flex;align-items:baseline;gap:.35rem;
+  margin-bottom:.6rem;
+}
+.dist-n{
+  font-family:var(--ff-d);
+  font-size:2.1rem;font-weight:900;
+  color:var(--r);
+  line-height:1;
+  font-variant-numeric:tabular-nums;
+}
+.dist-u{
+  font-size:.8rem;font-weight:700;
+  color:var(--gh);
+}
+.dist-modes{
+  display:flex;flex-wrap:wrap;gap:.4rem;
+  margin-bottom:.5rem;
+}
+.dist-mode{
+  display:flex;flex-direction:column;
+  background:var(--w);
+  border:2px solid var(--e);
+  box-shadow:2px 2px 0 var(--s);
+  padding:.35rem .55rem;
+  font-size:.7rem;
+  color:var(--bm);
+}
+.dist-mode b{
+  color:var(--e);font-weight:700;
+  font-variant-numeric:tabular-nums;
+}
+.dist-mode i{
+  font-style:normal;
+  font-size:.55rem;font-weight:700;
+  letter-spacing:.08em;text-transform:uppercase;
+  color:var(--gh);
+  margin-top:.1rem;
+}
+.dist-note{
+  font-size:.6rem;
+  color:var(--gh);
+  line-height:1.4;
+}
+
+
+/* ══ TIMELINE SEARCH ══
+   This had no styles at all — the block was lost in an earlier rewrite, which
+   is why it rendered as a bare native search box. */
+.tl-search-bar{
+  padding:.75rem .9rem .25rem;
+  max-width:1180px;
+  margin:0 auto;
+}
+.tl-search{
+  width:100%;
+  padding:.65rem .8rem .65rem 2.2rem;
+  border:2px solid var(--e);
+  box-shadow:3px 3px 0 var(--s);
+  background:var(--w);
+  background-image:url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%237A6A52' stroke-width='2.2' stroke-linecap='round'%3e%3ccircle cx='11' cy='11' r='7'/%3e%3cpath d='M20 20l-3.5-3.5'/%3e%3c/svg%3e");
+  background-repeat:no-repeat;
+  background-position:.6rem center;
+  background-size:15px;
+  font-family:var(--ff-b);
+  font-size:16px;              /* under 16px and iOS force-zooms on focus */
+  color:var(--e);
+  outline:none;
+  border-radius:0;
+  -webkit-appearance:none;
+  appearance:none;
+  box-sizing:border-box;
+  transition:border-color .15s,box-shadow .1s;
+}
+.tl-search::placeholder{color:var(--gh);opacity:.75}
+.tl-search:focus{
+  border-color:var(--r);
+  box-shadow:3px 3px 0 var(--r);
+}
+/* the native clear button is grey and out of place */
+.tl-search::-webkit-search-cancel-button{
+  -webkit-appearance:none;
+  height:14px;width:14px;
+  background-image:url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' stroke='%23B5350A' stroke-width='3' stroke-linecap='round'%3e%3cpath d='M5 5l14 14M19 5L5 19'/%3e%3c/svg%3e");
+  background-size:contain;
+  cursor:pointer;
+}
+.tl-empty{
+  padding:2.5rem 1rem;
+  text-align:center;
+  color:var(--gh);
+  font-size:.82rem;
+}
+
 /* ══ TOAST ══ */
 .toast{position:fixed;bottom:1.3rem;left:50%;z-index:2000;transform:translateX(-50%) translateY(55px);background:var(--f);color:var(--c);border:2px solid var(--fl);padding:.52rem 1.1rem;font-size:.7rem;font-weight:600;letter-spacing:.04em;white-space:nowrap;transition:transform .28s cubic-bezier(.22,1,.36,1)}
 .toast.on{transform:translateX(-50%) translateY(0)}
@@ -1784,6 +1887,17 @@ select.fi{
     <button class="lbtn" onclick="setLang('en')">EN</button>
   </div>
 </nav>
+
+<!-- The numbers belong to the app, not to the map — they were living inside
+     the map view, so they vanished on the other tabs. Now they sit above the
+     tab bar and stay put. Years dropped in favour of kilometres, which is the
+     more interesting figure now that we compute it. -->
+<div class="hero-slim" id="hero-slim">
+  <div class="hs-stat"><b id="h-trips">–</b><span class="t-sk">výletov</span><span class="t-en">trips</span></div>
+  <div class="hs-stat"><b id="h-ctrs">–</b><span class="t-sk">krajín</span><span class="t-en">countries</span></div>
+  <div class="hs-stat"><b id="h-days">–</b><span class="t-sk">dní</span><span class="t-en">days</span></div>
+  <div class="hs-stat"><b id="h-km">–</b><span class="t-sk">km</span><span class="t-en">km</span></div>
+</div>
 
 <div class="tabbar">
   <button class="tab" data-tab="map" onclick="showTab('map')">
@@ -1843,15 +1957,6 @@ select.fi{
 
   <!-- MAP -->
   <div class="view" id="vmap" style="position:relative">
-    <!-- one slim strip: the numbers, nothing else. The headline and the
-         "together since" line were pretty but they were eating the map. -->
-    <div class="hero-slim" id="hero-slim">
-      <div class="hs-stat"><b id="h-trips">–</b><span class="t-sk">výletov</span><span class="t-en">trips</span></div>
-      <div class="hs-stat"><b id="h-ctrs">–</b><span class="t-sk">krajín</span><span class="t-en">countries</span></div>
-      <div class="hs-stat"><b id="h-days">–</b><span class="t-sk">dní</span><span class="t-en">days</span></div>
-      <div class="hs-stat"><b id="h-yrs">–</b><span class="t-sk">rokov</span><span class="t-en">years</span></div>
-    </div>
-
     <!-- filters and Play share one scrollable rail, so Play sits in the
          controls instead of floating over the map -->
     <div class="map-filters">
@@ -1943,6 +2048,19 @@ select.fi{
         </div>
       </div>
       <div class="fr"><label class="flbl"><span class="t-sk">Miesta</span><span class="t-en">Places</span></label><input class="fi" id="f-places" placeholder="Agadir, Taghazout, Marrakesh"></div>
+      <div class="fr">
+        <label class="flbl">
+          <span class="t-sk">Ako sme sa tam dostali</span><span class="t-en">How we got there</span>
+        </label>
+        <select class="fi" id="f-outmode" onchange="onOutModeChange('f-')">
+          <option value="plane">&#9992;&#65039; Lietadlo / Plane</option>
+          <option value="car">&#128663; Auto / Car</option>
+          <option value="train">&#128646; Vlak / Train</option>
+          <option value="bus">&#128652; Autobus / Bus</option>
+          <option value="boat">&#9972;&#65039; Loď / Boat</option>
+        </select>
+      </div>
+
       <div class="fr">
         <label class="flbl">
           <span class="t-sk">Zastávky</span><span class="t-en">Stops</span>
@@ -2052,6 +2170,7 @@ select.fi{
           <div class="ts-sec-ttl"><span class="t-sk">Kde to bolo</span><span class="t-en">Where it was</span></div>
           <div class="ts-map" id="ts-map"></div>
           <div class="ts-stops" id="ts-stops"></div>
+        <div class="ts-dist" id="ts-dist"></div>
         </div>
       </div>
     </div>
@@ -2075,6 +2194,19 @@ select.fi{
           <label class="elbl"><span class="t-sk">Miesta</span><span class="t-en">Places</span></label>
           <input class="einput" id="e-places">
         </div>
+      <div class="efield">
+        <label class="elbl">
+          <span class="t-sk">Ako sme sa tam dostali</span><span class="t-en">How we got there</span>
+        </label>
+        <select class="einput" id="e-outmode" onchange="onOutModeChange('e-')">
+          <option value="plane">&#9992;&#65039; Lietadlo / Plane</option>
+          <option value="car">&#128663; Auto / Car</option>
+          <option value="train">&#128646; Vlak / Train</option>
+          <option value="bus">&#128652; Autobus / Bus</option>
+          <option value="boat">&#9972;&#65039; Loď / Boat</option>
+        </select>
+      </div>
+
       <div class="efield">
         <label class="elbl">
           <span class="t-sk">Zastávky</span><span class="t-en">Stops</span>
@@ -2264,7 +2396,7 @@ const SEED = [
 /* ═══════════ VERSION ═══════════
    Bump this on every iteration that ships — shown in the topbar next
    to the app icon, same pattern as Kvašung. One place to update. */
-const APP_VERSION = 'v2.14.0';
+const APP_VERSION = 'v2.16.0';
 
 /* ═══════════ PLURALS ═══════════
    Slovak splits nouns three ways by count: 1 takes the singular, 2–4 take
@@ -2358,6 +2490,7 @@ function fromRow(r){
     places: r.places, cat: r.cat, flag: r.flag,
     noteSk: r.note_sk, noteEn: r.note_en,
     stops: undefined,
+    outMode: r.out_mode || null,
     photos: Array.isArray(r.photos) ? r.photos : []
   };
   t.stops = healStops(r.stops, t);
@@ -2373,6 +2506,7 @@ function toRow(t){
     places: t.places, cat: t.cat, flag: t.flag,
     note_sk: t.noteSk, note_en: t.noteEn,
     stops: t.stops || null,
+    out_mode: t.outMode || null,
     photos: photosOf(t)
   };
 }
@@ -2983,6 +3117,125 @@ function wireAutofill(prefix, listId){
   });
 }
 
+/* ═══════════ TRAVEL ═══════════
+   How we got there, leg by leg. Each stop after the first carries the mode used
+   to reach it, so the distance can be split by transport: 9,000 km flown, 400 km
+   driven. It recalculates from the stops on every change — add a stop tomorrow
+   and the totals move on their own. */
+const MODES = {
+  plane: { sk:'Lietadlo', en:'Plane', icon:'\u2708\uFE0F', factor:1.00 },
+  car:   { sk:'Auto',     en:'Car',   icon:'\uD83D\uDE97', factor:1.25 },
+  train: { sk:'Vlak',     en:'Train', icon:'\uD83D\uDE86', factor:1.20 },
+  bus:   { sk:'Autobus',  en:'Bus',   icon:'\uD83D\uDE8C', factor:1.30 },
+  boat:  { sk:'Loď',      en:'Boat',  icon:'\u26F4\uFE0F',  factor:1.10 },
+  foot:  { sk:'Pešo',     en:'Foot',  icon:'\uD83E\uDD7E', factor:1.35 }
+};
+const MODE_KEYS = ['plane','car','train','bus','boat','foot'];
+
+function modeLabel(k){
+  const m = MODES[k];
+  return m ? (lang === 'sk' ? m.sk : m.en) : '';
+}
+
+/* Great-circle distance between two points. */
+function kmBetween(a, b){
+  const R = 6371;
+  const dLat = (b.lat - a.lat) * Math.PI / 180;
+  const dLng = (b.lng - a.lng) * Math.PI / 180;
+  const s = Math.sin(dLat/2)**2 +
+            Math.cos(a.lat*Math.PI/180) * Math.cos(b.lat*Math.PI/180) * Math.sin(dLng/2)**2;
+  return R * 2 * Math.atan2(Math.sqrt(s), Math.sqrt(1-s));
+}
+
+/* Distance for a trip, broken down by how each leg was travelled.
+ *
+ * The straight-line distance is exact; the road distance isn't. A car doesn't
+ * fly, so we scale ground legs by a factor — 1.25 for driving is the usual
+ * rule of thumb against the crow's flight. It's an estimate and the UI says so,
+ * rather than pretending a haversine is a route. */
+function tripLegs(t){
+  const stops = (t.stops || []).filter(p =>
+    typeof p.lat === 'number' && typeof p.lng === 'number');
+  if(stops.length < 2) return { legs: [], total: 0, byMode: {} };
+
+  const legs = [];
+  const byMode = {};
+  let total = 0;
+
+  for(let i = 1; i < stops.length; i++){
+    const from = stops[i-1];
+    const to = stops[i];
+    const mode = to.mode || 'car';          // ground travel is the safe default
+    const raw = kmBetween(from, to);
+    const km = Math.round(raw * (MODES[mode] ? MODES[mode].factor : 1));
+
+    legs.push({ from, to, mode, km });
+    byMode[mode] = (byMode[mode] || 0) + km;
+    total += km;
+  }
+
+  return { legs, total, byMode };
+}
+
+/* Home is where every trip starts and ends, so the journey there and back is
+   part of the distance — otherwise a fortnight in Costa Rica looks like the
+   200km we drove once we landed. */
+const HOME_POINT = { n:'Bratislava', lat:48.1486, lng:17.1077 };
+
+/* Distance is recomputed on every render — the strip, the detail, the stats all
+   ask for it. At 10ms per full pass that was showing up on every filter click,
+   so the result is memoised against the trip's own contents. Change a stop and
+   the key changes with it, so the cache can't go stale. */
+const distCache = new Map();
+
+function distKey(t){
+  return t.id + '|' + (t.outMode||'') + '|' + t.lat + ',' + t.lng + '|' +
+    (t.stops||[]).map(p=>p.lat+','+p.lng+','+(p.mode||'')).join(';');
+}
+
+function tripDistance(t){
+  const key = distKey(t);
+  const hit = distCache.get(key);
+  if(hit) return hit;
+  const val = computeDistance(t);
+  distCache.set(key, val);
+  // the key encodes the contents, so entries can only pile up as trips change;
+  // a modest cap keeps that bounded without any invalidation logic
+  if(distCache.size > 400) distCache.clear();
+  return val;
+}
+
+function computeDistance(t){
+  const inner = tripLegs(t);
+  const stops = (t.stops || []).filter(p =>
+    typeof p.lat === 'number' && typeof p.lng === 'number');
+
+  if(!stops.length){
+    // no stops yet — fall back to the trip's own point, there and back
+    if(typeof t.lat !== 'number' || typeof t.lng !== 'number') return null;
+    const mode = t.outMode || 'plane';
+    const km = Math.round(kmBetween(HOME_POINT, { lat:t.lat, lng:t.lng }) *
+                          (MODES[mode] ? MODES[mode].factor : 1)) * 2;
+    return { total: km, legs: [], byMode: { [mode]: km }, estimated: true };
+  }
+
+  const outMode = t.outMode || 'plane';
+  const f = MODES[outMode] ? MODES[outMode].factor : 1;
+  const out  = Math.round(kmBetween(HOME_POINT, stops[0]) * f);
+  const back = Math.round(kmBetween(stops[stops.length-1], HOME_POINT) * f);
+
+  const byMode = Object.assign({}, inner.byMode);
+  byMode[outMode] = (byMode[outMode] || 0) + out + back;
+
+  return {
+    total: inner.total + out + back,
+    legs: inner.legs,
+    byMode,
+    out, back, outMode,
+    estimated: false
+  };
+}
+
 /* ═══════════ STOPS EDITOR ═══════════
    A trip is a list of places. Type one and we look it up in the gazetteer;
    if we know it, we take its coordinates. If we don't — a club, a beach, a
@@ -2993,7 +3246,11 @@ let editStops = [];   // the working copy while a form is open
 
 function stopsFromTrip(t){
   if(!t || !Array.isArray(t.stops)) return [];
-  return t.stops.map(p=>({ n:p.n, lat:p.lat, lng:p.lng, iso:p.iso || null }));
+  return t.stops.map(p=>({
+    n:p.n, lat:p.lat, lng:p.lng,
+    iso:p.iso || null,
+    mode:p.mode || null      // how we reached this stop from the one before
+  }));
 }
 
 /* Try to resolve a place name to a point. Returns null when we simply don't
@@ -3017,9 +3274,36 @@ function renderStops(prefix){
     return;
   }
 
-  box.innerHTML = editStops.map((p, i)=>{
+  let html = '';
+
+  editStops.forEach((p, i)=>{
     const known = typeof p.lat === 'number' && typeof p.lng === 'number';
-    return '<div class="stop-row'+(known ? '' : ' unresolved')+'">'+
+
+    /* Every stop but the first is reached FROM the one above it, so that's
+       where the mode belongs — on the leg, drawn between the two stops. */
+    if(i > 0){
+      const prev = editStops[i-1];
+      const canMeasure = known &&
+        typeof prev.lat === 'number' && typeof prev.lng === 'number';
+      const mode = p.mode || 'car';
+      const km = canMeasure
+        ? Math.round(kmBetween(prev, p) * (MODES[mode] ? MODES[mode].factor : 1))
+        : null;
+
+      html += '<div class="stop-leg">'+
+        '<span class="leg-line"></span>'+
+        '<select class="leg-mode" onchange="setStopMode(\''+prefix+'\','+i+',this.value)">'+
+          MODE_KEYS.map(k=>
+            '<option value="'+k+'"'+(k === mode ? ' selected' : '')+'>'+
+              MODES[k].icon+' '+esc(modeLabel(k))+
+            '</option>'
+          ).join('')+
+        '</select>'+
+        (km !== null ? '<span class="leg-km">'+km.toLocaleString(lang==='sk'?'sk-SK':'en-GB')+' km</span>' : '')+
+      '</div>';
+    }
+
+    html += '<div class="stop-row'+(known ? '' : ' unresolved')+'">'+
       '<span class="stop-num">'+(i+1)+'</span>'+
       '<div class="stop-body">'+
         '<div class="stop-name">'+esc(p.n)+'</div>'+
@@ -3035,7 +3319,18 @@ function renderStops(prefix){
       '<button class="stop-del" onclick="delStop(\''+prefix+'\','+i+')" '+
         'title="'+(lang==='sk'?'Vymazať':'Delete')+'">&#10005;</button>'+
     '</div>';
-  }).join('');
+  });
+
+  // running total for the stops as they stand
+  const legs = tripLegs({ stops: editStops });
+  if(legs.total > 0){
+    html += '<div class="stops-total">'+
+      (lang === 'sk' ? 'Medzi zastávkami: ' : 'Between stops: ')+
+      '<b>'+legs.total.toLocaleString(lang==='sk'?'sk-SK':'en-GB')+' km</b>'+
+    '</div>';
+  }
+
+  box.innerHTML = html;
 }
 
 function addStop(prefix){
@@ -3080,6 +3375,20 @@ function addStop(prefix){
   tap();
 }
 
+/* Change how a leg was travelled. Redraws so the kilometres update as you pick. */
+/* The outbound mode changes the distance, so redraw the running total. */
+function onOutModeChange(prefix){
+  renderStops(prefix);
+  tap();
+}
+
+function setStopMode(prefix, i, mode){
+  if(!editStops[i]) return;
+  editStops[i].mode = mode;
+  renderStops(prefix);
+  tap();
+}
+
 function delStop(prefix, i){
   editStops.splice(i, 1);
   renderStops(prefix);
@@ -3100,7 +3409,14 @@ function moveStop(prefix, i, dir){
    A stop typed but never located is dropped on save rather than stored as a
    broken record. */
 function stopsForSave(){
-  const good = editStops.filter(p=>typeof p.lat === 'number' && typeof p.lng === 'number');
+  const good = editStops
+    .filter(p=>typeof p.lat === 'number' && typeof p.lng === 'number')
+    .map((p, i)=>({
+      n: p.n, lat: p.lat, lng: p.lng,
+      iso: p.iso || null,
+      // the first stop isn't reached from anywhere, so it has no leg
+      mode: i === 0 ? null : (p.mode || 'car')
+    }));
   return good.length ? good : null;
 }
 
@@ -4105,106 +4421,6 @@ function annBanner(){
   '</div>';
 }
 
-/* ═══════════ THE ROAD ═══════════
-   Drawn once the cards are in the document, because it has to be exactly as
-   tall as they turned out to be — which we can't know in advance. It's a
-   gentle S-curve down the middle, with a few vehicles parked along it. */
-function drawRoad(){
-  const spine = document.querySelector('.tl-spine');
-  if(!spine) return;
-
-  const old = spine.querySelector('.tl-road');
-  if(old) old.remove();
-
-  // only on tablet and up; the phone layout uses a plain rule
-  if(window.innerWidth < 820) return;
-
-  const w = spine.offsetWidth;
-  const h = spine.offsetHeight;
-  if(!w || !h) return;
-
-  const mid = w / 2;
-  const amp = Math.min(46, w * 0.045);   // how far the road wanders
-
-  /* One bend roughly every 420px, so the curve keeps its rhythm whether
-     there are five trips or fifty. */
-  const bends = Math.max(2, Math.round(h / 420));
-  const step = h / bends;
-
-  let d = 'M ' + mid + ' 0';
-  for(let i = 0; i < bends; i++){
-    const y0 = i * step;
-    const y1 = y0 + step;
-    const dir = (i % 2 === 0) ? 1 : -1;
-    const cx1 = mid + amp * dir;
-    const cx2 = mid + amp * dir;
-    d += ' C ' + cx1 + ' ' + (y0 + step * 0.35) +
-         ', ' + cx2 + ' ' + (y1 - step * 0.35) +
-         ', ' + mid + ' ' + y1;
-  }
-
-  const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-  svg.setAttribute('class', 'tl-road');
-  svg.setAttribute('viewBox', '0 0 ' + w + ' ' + h);
-  svg.setAttribute('preserveAspectRatio', 'none');
-  svg.setAttribute('width', w);
-  svg.setAttribute('height', h);
-
-  const path = (cls, dd) => {
-    const p = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-    p.setAttribute('class', cls);
-    p.setAttribute('d', dd);
-    return p;
-  };
-
-  svg.appendChild(path('road-edge', d));
-  svg.appendChild(path('road-surface', d));
-  svg.appendChild(path('road-dashes', d));
-
-  /* Vehicles, spaced down the road and rotated to follow it. getPointAtLength
-     gives us both the position and, by sampling just ahead, the heading. */
-  /* Keep one path around purely to measure against — creating and destroying
-     one per vehicle was needless. It stays in the SVG but draws nothing. */
-  const ruler = path('road-measure', d);
-  ruler.setAttribute('fill', 'none');
-  ruler.setAttribute('stroke', 'none');
-  svg.appendChild(ruler);
-
-  let len = 0;
-  try{ len = ruler.getTotalLength(); }catch(e){ len = 0; }
-
-  if(len > 0){
-    const FLEET = ['\uD83D\uDE97','\u2708\uFE0F','\uD83D\uDE90','\uD83D\uDEE5\uFE0F','\uD83D\uDEB2'];
-    const count = Math.max(2, Math.min(6, Math.round(h / 700)));
-
-    for(let i = 0; i < count; i++){
-      const at = len * ((i + 0.5) / count);
-      const pt    = ruler.getPointAtLength(at);
-      const ahead = ruler.getPointAtLength(Math.min(at + 12, len));
-      const angle = Math.atan2(ahead.y - pt.y, ahead.x - pt.x) * 180 / Math.PI;
-
-      const v = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-      v.setAttribute('class', 'road-vehicle');
-      v.setAttribute('x', pt.x);
-      v.setAttribute('y', pt.y);
-      // emoji point right by default; +90° turns them to face down the road
-      v.setAttribute('transform', 'rotate(' + (angle + 90) + ' ' + pt.x + ' ' + pt.y + ')');
-      v.textContent = FLEET[i % FLEET.length];
-      svg.appendChild(v);
-    }
-  }
-
-  spine.insertBefore(svg, spine.firstChild);
-}
-
-/* The road depends on the rendered height of the cards, so it has to be
-   redrawn whenever that changes — a resize, or a lane reflow. */
-let roadTimer = null;
-window.addEventListener('resize', ()=>{
-  clearTimeout(roadTimer);
-  roadTimer = setTimeout(drawRoad, 180);
-});
-
 function buildTl(){
   const box = document.getElementById('tl-body');
   const qEl = document.getElementById('tl-q');
@@ -4260,20 +4476,19 @@ function buildTl(){
       (meta ? '<span class="year-meta">'+meta+'</span>' : '');
     spine.appendChild(hdr);
 
-    /* Two lanes per year, filled independently. */
+    /* One column of items, in date order, each card offset to one side.
+    
+       The previous version put each card into whichever side was shorter,
+       which packed them tightly but destroyed the ordering: a September trip
+       could end up above a November one, because the lanes grew at different
+       rates. On a timeline that's not a trade worth making. Chronology wins;
+       the cards overlap vertically instead, using a negative margin, so the
+       space is still used. */
     const lanesEl = document.createElement('div');
     lanesEl.className = 'tl-lanes';
-    const lanes = {
-      left:  document.createElement('div'),
-      right: document.createElement('div')
-    };
-    lanes.left.className  = 'tl-lane left';
-    lanes.right.className = 'tl-lane right';
-    lanesEl.appendChild(lanes.left);
-    lanesEl.appendChild(lanes.right);
     spine.appendChild(lanesEl);
 
-    const laneHeight = { left: 0, right: 72 };   // the right lane starts lower
+    let side = 0;   // strict alternation, so the eye can follow the sequence
 
     list.filter(t=>t.cat!=='origin').forEach(t=>{
       const d = days(t);
@@ -4282,7 +4497,7 @@ function buildTl(){
       const fUrl = flagUrl(t);
 
       const row = document.createElement('div');
-      row.className = 'tl-item';
+      row.className = 'tl-item ' + (side++ % 2 === 0 ? 'left' : 'right');
 
       /* A trip in the future has no photos and never will until it happens,
          so the faint flag wash used for "no photo yet" reads as an empty
@@ -4331,19 +4546,7 @@ function buildTl(){
       });
 
       row.appendChild(card);
-
-      /* Put the card in whichever lane is currently shorter, rather than
-         strictly alternating. Alternating is what left the gaps: a tall card
-         on the left forced the next one to start below it on the right, even
-         though there was room higher up. Measuring as we go keeps both sides
-         packed. */
-      const target = (laneHeight.left <= laneHeight.right) ? 'left' : 'right';
-      lanes[target].appendChild(row);
-
-      // an estimate is enough — the card isn't in the document yet, so we
-      // can't measure it, but photo/no-photo is the dominant factor
-      laneHeight[target] += hasPhoto ? 210 : (upcoming ? 210 : 145);
-      laneHeight[target] += nt(t) ? 22 : 0;
+      lanesEl.appendChild(row);
     });
 
     /* The origin card closes out its year. The timeline is newest-first, so
@@ -4372,11 +4575,6 @@ function buildTl(){
   });
 
   box.appendChild(spine);
-
-  // now that the cards are laid out we know how tall the road has to be
-  requestAnimationFrame(()=>{
-    requestAnimationFrame(drawRoad);
-  });
 }
 
 
@@ -4384,52 +4582,97 @@ function buildTl(){
    Cross-filtering, the way a BI dashboard does it: click a category, a year, a
    month or a country, and everything else recalculates around that slice.
    Click it again to let go. */
-let statFilter = null;   // {kind:'cat'|'year'|'month'|'country', value}
+/* Filters stack. This used to be a single object, so clicking a second thing
+   REPLACED the first rather than narrowing it — "gigs" then "2024" gave you all
+   of 2024, not the gigs in it. And if you clicked a month, the value arrived
+   from the DOM as a string while the comparison expected a number, so it matched
+   nothing and the panel went blank. Both are fixed by holding a list and
+   normalising the values on the way in. */
+let statFilters = [];   // [{kind, value}, ...] — all applied together
 
-function statFilterLabel(){
-  if(!statFilter) return '';
+function filterKey(f){ return f.kind + ':' + f.value; }
+
+function hasFilter(kind, value){
+  return statFilters.some(f => f.kind === kind && String(f.value) === String(value));
+}
+
+function filterLabel(f){
   const sk = lang === 'sk';
-  switch(statFilter.kind){
-    case 'cat':     return catLabel(statFilter.value);
-    case 'year':    return statFilter.value;
-    case 'month':   return (sk ? MON_SK : MON_EN)[statFilter.value];
-    case 'country': return statFilter.value;
+  switch(f.kind){
+    case 'cat':     return catLabel(f.value);
+    case 'year':    return String(f.value);
+    case 'month':   return (sk ? MON_SK : MON_EN)[Number(f.value)];
+    case 'country': return f.value;
   }
   return '';
 }
 
 function setStatFilter(kind, value){
   tap();
-  if(statFilter && statFilter.kind === kind && String(statFilter.value) === String(value)){
-    statFilter = null;          // clicking the same thing twice clears it
+  const i = statFilters.findIndex(f => f.kind === kind && String(f.value) === String(value));
+
+  if(i >= 0){
+    statFilters.splice(i, 1);              // clicking the same thing again removes it
   } else {
-    statFilter = { kind, value };
+    // one filter per dimension: picking a different year replaces the year,
+    // it doesn't ask for two years at once
+    const j = statFilters.findIndex(f => f.kind === kind);
+    if(j >= 0) statFilters.splice(j, 1);
+    statFilters.push({ kind, value });
   }
+
   buildStats();
-  const el = document.getElementById('stats-body');
-  if(el) el.scrollIntoView({ block:'start', behavior:'smooth' });
+  scrollStatsTop();
 }
 
 function clearStatFilter(){
   tap();
-  statFilter = null;
+  statFilters = [];
   buildStats();
+  scrollStatsTop();
 }
 
-/* The slice everything is computed from. */
-function statTrips(){
-  let t = getT().filter(x=>x.cat !== 'origin');
-  if(!statFilter) return t;
-  switch(statFilter.kind){
-    case 'cat':
-      return t.filter(x=>x.cat === statFilter.value);
-    case 'year':
-      return t.filter(x=>(x.dateFrom||'').slice(0,4) === String(statFilter.value));
-    case 'month':
-      return t.filter(x=>parseInt((x.dateFrom||'').slice(5,7),10) - 1 === statFilter.value);
-    case 'country':
-      return t.filter(x=>(x.countryEn||'').split(' / ').some(c=>c.trim() === statFilter.value));
+function removeFilter(kind, value){
+  tap();
+  statFilters = statFilters.filter(f => !(f.kind === kind && String(f.value) === String(value)));
+  buildStats();
+  scrollStatsTop();
+}
+
+/* Land at the very top of the page, not at the top of the stats panel — the
+   headline numbers live above it, and they're the first thing you want to see
+   after changing the slice. */
+function scrollStatsTop(){
+  try{
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }catch(e){
+    window.scrollTo(0, 0);
   }
+}
+
+/* Every filter applied in turn. */
+function statTrips(){
+  let t = getT().filter(x => x.cat !== 'origin');
+
+  statFilters.forEach(f=>{
+    switch(f.kind){
+      case 'cat':
+        t = t.filter(x => x.cat === f.value);
+        break;
+      case 'year':
+        t = t.filter(x => (x.dateFrom||'').slice(0,4) === String(f.value));
+        break;
+      case 'month':
+        // Number(), because the value comes back from the DOM as a string and
+        // '5' === 5 is false — which is what emptied the panel
+        t = t.filter(x => parseInt((x.dateFrom||'').slice(5,7), 10) - 1 === Number(f.value));
+        break;
+      case 'country':
+        t = t.filter(x => (x.countryEn||'').split(' / ').some(c => c.trim() === f.value));
+        break;
+    }
+  });
+
   return t;
 }
 
@@ -4442,8 +4685,10 @@ function bstat(n,l){
 
 /* A bar that can be clicked to filter by whatever it represents. */
 function bar(label, pct, color, val, kind, value){
-  const active = statFilter && statFilter.kind === kind && String(statFilter.value) === String(value);
-  const dim    = statFilter && !active;
+  const active = hasFilter(kind, value);
+  // dim the siblings of an active filter, so it's clear which one is chosen —
+  // but don't dim a whole chart just because some other dimension is filtered
+  const dim = !active && statFilters.some(f => f.kind === kind);
   const cls = 'bar-lbl' + (active ? ' on' : '') + (dim ? ' dim' : '');
   const click = kind ? ' onclick="setStatFilter(\''+kind+'\',\''+value+'\')"' : '';
   const rowCls = 'bar-click' + (active ? ' on' : '') + (dim ? ' dim' : '');
@@ -4563,7 +4808,7 @@ function funFacts(trips, all, ctx){
     );
   }
 
-  if(!statFilter){
+  if(!statFilters.length){
     h += card('\u2665',
       sk ? 'Spolu' : 'Together',
       sk
@@ -4673,13 +4918,22 @@ function buildStats(){
   let h = '';
 
   /* the active slice, and how to get out of it */
-  if(statFilter){
+  if(statFilters.length){
     h += '<div class="stat-filter">'+
       '<span class="sf-lbl">'+(sk ? 'Filter' : 'Filtered by')+'</span>'+
-      '<span class="sf-val">'+esc(statFilterLabel())+'</span>'+
+      '<span class="sf-chips">'+
+        statFilters.map(f=>
+          '<button class="sf-chip" onclick="removeFilter(\''+f.kind+'\',\''+
+            String(f.value).replace(/'/g,"\\'")+'\')">'+
+            esc(filterLabel(f))+' <span>&#10005;</span>'+
+          '</button>'
+        ).join('')+
+      '</span>'+
       '<span class="sf-n">'+qty(trips.length,'trip')+'</span>'+
-      '<button class="sf-clear" onclick="clearStatFilter()">&#10005; '+
-        (sk ? 'Zrušiť' : 'Clear')+'</button>'+
+      (statFilters.length > 1
+        ? '<button class="sf-clear" onclick="clearStatFilter()">'+
+            (sk ? 'Zrušiť všetko' : 'Clear all')+'</button>'
+        : '')+
     '</div>';
   }
 
@@ -4733,8 +4987,8 @@ function buildStats(){
   '</div><div class="big-stats">'+
     bstat(yKeys.length,   sk?'rokov':'years')+
     bstat(cat.gig.n,      sk?'koncertov':'gigs')+
-    bstat(statFilter ? Math.round(totalDays/trips.length) : pctTravelling+'%',
-          statFilter ? (sk?'dní / výlet':'days / trip') : (sk?'času na cestách':'of time away'))+
+    bstat(statFilters.length ? Math.round(totalDays/trips.length) : pctTravelling+'%',
+          statFilters.length ? (sk?'dní / výlet':'days / trip') : (sk?'času na cestách':'of time away'))+
   '</div></div>';
 
   /* by type */
@@ -4755,7 +5009,7 @@ function buildStats(){
   });
   h += '</div>';
 
-  if(!statFilter || statFilter.kind !== 'year'){
+  if(!statFilters.some(f => f.kind === 'year')){
     h += '<div class="yoy-grid">';
     yKeys.slice().reverse().forEach(y=>{
       const v = ymap[y];
@@ -4819,7 +5073,7 @@ function buildStats(){
       '<th>'+(sk?'Dní':'Days')+'</th>'+
     '</tr></thead><tbody>';
   crows.forEach(([c,v])=>{
-    const active = statFilter && statFilter.kind === 'country' && statFilter.value === c;
+    const active = hasFilter('country', c);
     h += '<tr class="ctry-row'+(active?' on':'')+'" onclick="setStatFilter(\'country\',\''+
       c.replace(/'/g,"\\'")+'\')"><td>'+esc(c)+'</td><td>'+v.n+'</td><td>'+v.d+'</td></tr>';
   });
@@ -4935,6 +5189,44 @@ function renderTripMap(t){
 
   document.getElementById('ts-stops').innerHTML =
     pts.map(p=>'<span class="ts-stop">&#128205; '+esc(p.n)+'</span>').join('');
+
+  /* Distance, split by how each leg was travelled. Recomputed here rather than
+     stored, so adding a stop tomorrow moves the numbers on its own. */
+  const distEl = document.getElementById('ts-dist');
+  if(distEl){
+    const d = tripDistance(t);
+    if(!d || !d.total){
+      distEl.innerHTML = '';
+    } else {
+      const loc = lang === 'sk' ? 'sk-SK' : 'en-GB';
+      const modes = Object.entries(d.byMode)
+        .sort((a,b)=>b[1]-a[1])
+        .map(([k,km])=>
+          '<span class="dist-mode">'+
+            (MODES[k] ? MODES[k].icon : '')+' '+
+            '<b>'+km.toLocaleString(loc)+'</b> km'+
+            '<i>'+esc(modeLabel(k))+'</i>'+
+          '</span>'
+        ).join('');
+
+      distEl.innerHTML =
+        '<div class="ts-sec-ttl">'+(lang==='sk'?'Koľko sme prešli':'Distance covered')+'</div>'+
+        '<div class="dist-total">'+
+          '<span class="dist-n">'+d.total.toLocaleString(loc)+'</span>'+
+          '<span class="dist-u">km</span>'+
+        '</div>'+
+        '<div class="dist-modes">'+modes+'</div>'+
+        '<div class="dist-note">'+
+          (lang === 'sk'
+            ? (d.estimated
+                ? 'Odhad — pridaj zastávky pre presnejší výpočet.'
+                : 'Vzdušnou čiarou z Bratislavy a späť, upravené podľa dopravy.')
+            : (d.estimated
+                ? 'Estimate — add stops for a better figure.'
+                : 'From Bratislava and back, adjusted for how we travelled.'))+
+        '</div>';
+    }
+  }
 
   try{
     if(!tsMap){
@@ -5642,6 +5934,8 @@ function startEdit(){
   if(!t) return;
   // load the trip's stops into the working copy, or saving would wipe them
   editStops = stopsFromTrip(t);
+  const om = document.getElementById('e-outmode');
+  if(om) om.value = t.outMode || 'plane';
   renderStops('e-');
   const set = (id,v)=>{ document.getElementById(id).value = v || ''; };
   set('e-nsk', t.nameSk);      set('e-nen', t.nameEn);
@@ -5688,6 +5982,9 @@ function saveEdit(){
   const stops = stopsForSave();
   if(stops) t.stops = stops;
   else delete t.stops;
+
+  const om = document.getElementById('e-outmode');
+  if(om) t.outMode = om.value;
 
   // a trip's own coordinates follow its first stop, so the pin lands where
   // the trip actually started rather than at a stale earlier guess
@@ -5860,7 +6157,8 @@ async function saveTrip(){
     noteSk: gv('f-nsk2'),
     noteEn: gv('f-nen2') || gv('f-nsk2'),
     photos: photos,
-    stops: stopsForSave() || undefined
+    stops: stopsForSave() || undefined,
+    outMode: (document.getElementById('f-outmode') || {}).value || 'plane'
   });
 
   // if stops were given, the trip's pin belongs at the first of them
@@ -5992,10 +6290,23 @@ function refresh(){
   trips.forEach(t=>(t.countryEn||'').split(' / ').forEach(c=>c.trim()&&ctrs.add(c.trim())));
   const yrs = new Set(trips.map(t=>(t.dateFrom||'').slice(0,4)).filter(Boolean));
 
+  /* Kilometres, summed across whatever is currently in view. Derived from the
+     stops on every render, so it tracks edits without being stored anywhere. */
+  const totalKm = trips.reduce((sum, t)=>{
+    const d = tripDistance(t);
+    return sum + (d ? d.total : 0);
+  }, 0);
+
+  const loc = lang === 'sk' ? 'sk-SK' : 'en-GB';
+  const kmTxt = totalKm >= 100000
+    ? Math.round(totalKm / 1000) + 'k'      // six digits won't fit in the strip
+    : totalKm.toLocaleString(loc);
+
   document.getElementById('h-trips').textContent = trips.length;
   document.getElementById('h-ctrs').textContent  = ctrs.size;
   document.getElementById('h-days').textContent  = totalDays;
-  document.getElementById('h-yrs').textContent   = yrs.size;
+  const kmEl = document.getElementById('h-km');
+  if(kmEl) kmEl.textContent = kmTxt;
 
   // say so, when the numbers aren't the whole story
   const strip = document.getElementById('hero-slim');
