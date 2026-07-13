@@ -256,11 +256,32 @@ body.admin-mode #vadmin{padding-top:calc(var(--bh) + var(--safe-top))}
    connector. On phones there isn't room for two columns, so the spine
    shifts to the left edge and every card hangs off it on the same side —
    same structure, one column. */
+/* ══ TIMELINE ══
+   Phones get a single column with the road down the left edge. From tablet
+   width the road runs down the middle and cards sit either side.
+
+   The two sides are independent columns, not rows of a grid. That distinction
+   is the whole point: as a grid, a card on the left forced an empty cell on
+   the right, so a short note next to a long one left a hole. As columns, each
+   side flows on its own and the cards pack tightly — they overlap vertically,
+   which is what makes it read as a road with stuff along it rather than a
+   ladder. */
 .tl-spine{
   position:relative;
-  padding:.5rem 0 1rem;
+  padding:.5rem 0 2rem;
 }
-/* the line itself */
+
+/* The road itself. On phones it's a straight rule; on wider screens it's an
+   SVG that curves gently down the middle, drawn to whatever height the
+   content turns out to be. */
+.tl-road{
+  display:none;
+  position:absolute;
+  top:0;bottom:0;left:0;right:0;
+  z-index:0;
+  pointer-events:none;
+  overflow:visible;
+}
 .tl-spine::before{
   content:'';
   position:absolute;top:0;bottom:0;
@@ -268,18 +289,51 @@ body.admin-mode #vadmin{padding-top:calc(var(--bh) + var(--safe-top))}
   width:2px;
   background:var(--e);
   opacity:.35;
-}
-@media(min-width:820px){
-  .tl-spine::before{ left:50%; transform:translateX(-1px); }
+  z-index:0;
 }
 
-/* ── year marker sitting on the spine ── */
+@media(min-width:820px){
+  .tl-spine::before{ display:none; }   /* the SVG road takes over */
+  .tl-road{ display:block; }
+}
+
+/* the asphalt, and the dashes down the middle of it */
+.road-surface{
+  fill:none;
+  stroke:var(--bm);
+  stroke-width:22;
+  stroke-linecap:round;
+  opacity:.28;
+}
+.road-edge{
+  fill:none;
+  stroke:var(--e);
+  stroke-width:24;
+  stroke-linecap:round;
+  opacity:.16;
+}
+.road-dashes{
+  fill:none;
+  stroke:var(--s);
+  stroke-width:2.5;
+  stroke-dasharray:10 14;
+  stroke-linecap:round;
+  opacity:.75;
+}
+/* things travelling along it */
+.road-vehicle{
+  font-size:19px;
+  dominant-baseline:central;
+  text-anchor:middle;
+}
+
+/* ── year marker ── */
 .year-hdr{
   position:relative;
   display:flex;align-items:center;gap:.6rem;
-  margin:1.6rem 0 1rem;
+  margin:1.8rem 0 1.1rem;
   padding-left:52px;
-  z-index:2;
+  z-index:3;
 }
 @media(min-width:820px){
   .year-hdr{
@@ -299,51 +353,86 @@ body.admin-mode #vadmin{padding-top:calc(var(--bh) + var(--safe-top))}
   background:var(--c);padding:.1rem .4rem;
 }
 
-/* ── one row on the spine ── */
-.tl-row{
+/* ── the two lanes of cards ── */
+.tl-lanes{
   position:relative;
-  padding-left:52px;
-  margin-bottom:1rem;
+  z-index:2;
 }
 @media(min-width:820px){
-  .tl-row{
-    display:grid;
-    grid-template-columns:1fr 60px 1fr;
-    padding-left:0;
-    align-items:start;
+  .tl-lanes{
+    display:flex;
+    align-items:flex-start;
+    gap:96px;                 /* the road runs through this gap */
   }
-  .tl-row .tc{ grid-column:1; }
-  .tl-row.right .tc{ grid-column:3; }
+}
+.tl-lane{
+  display:flex;
+  flex-direction:column;
+  gap:1rem;
+  min-width:0;
+}
+@media(min-width:820px){
+  .tl-lane{ flex:1; }
+  /* nudging one lane down staggers the two sides, so cards interleave
+     rather than lining up in pairs */
+  .tl-lane.right{ margin-top:72px; }
 }
 
-/* the node dot on the spine */
-.tl-node{
-  position:absolute;
-  left:22px;top:26px;
-  width:13px;height:13px;
-  transform:translate(-50%,-50%) rotate(45deg);
-  background:var(--w);
-  border:2.5px solid var(--e);
-  z-index:3;
+/* on phones there is only one lane, and the road is at the left edge */
+@media(max-width:819px){
+  .tl-lane.right{ margin-top:0; }
+  .tl-lanes{ display:flex; flex-direction:column; gap:1rem; }
 }
-@media(min-width:820px){
-  .tl-node{ left:50%; }
+
+/* a card's stub connecting it to the road */
+.tl-item{
+  position:relative;
 }
-/* short connector from spine to card */
-.tl-arm{
-  position:absolute;
-  left:22px;top:26px;
-  width:30px;height:2px;
-  background:var(--e);opacity:.35;
-  z-index:1;
-}
-@media(min-width:820px){
-  .tl-arm{
-    left:auto;right:50%;
-    width:30px;
-    margin-right:0;
+@media(max-width:819px){
+  .tl-item{ padding-left:52px; }
+  .tl-item::before{      /* the node */
+    content:'';
+    position:absolute;
+    left:22px;top:26px;
+    width:13px;height:13px;
+    transform:translate(-50%,-50%) rotate(45deg);
+    background:var(--w);
+    border:2.5px solid var(--e);
+    z-index:3;
   }
-  .tl-row.right .tl-arm{ left:50%;right:auto; }
+  .tl-item::after{       /* the arm */
+    content:'';
+    position:absolute;
+    left:22px;top:26px;
+    width:30px;height:2px;
+    background:var(--e);opacity:.35;
+    z-index:1;
+  }
+}
+@media(min-width:820px){
+  .tl-item::before{
+    content:'';
+    position:absolute;
+    top:26px;
+    width:11px;height:11px;
+    transform:rotate(45deg);
+    background:var(--w);
+    border:2.5px solid var(--e);
+    z-index:3;
+  }
+  .tl-lane.left  .tl-item::before{ right:-56px; }
+  .tl-lane.right .tl-item::before{ left:-56px; }
+
+  .tl-item::after{
+    content:'';
+    position:absolute;
+    top:31px;
+    width:46px;height:2px;
+    background:var(--e);opacity:.3;
+    z-index:1;
+  }
+  .tl-lane.left  .tl-item::after{ right:-46px; }
+  .tl-lane.right .tl-item::after{ left:-46px; }
 }
 
 /* ══ TRIP CARD ══
@@ -403,8 +492,12 @@ body.admin-mode #vadmin{padding-top:calc(var(--bh) + var(--safe-top))}
    No photo, and none coming until the trip happens. The flag carries the
    card instead — at 50%, not the 15% wash used when a photo is merely
    missing, and with only a light scrim so it stays legible. */
-.tc.upcoming .tc-flag{opacity:.5}
-.tc.upcoming:hover .tc-flag{opacity:.62}
+/* Match the height of a card that has a photo, so the flag has room to read
+   as an image rather than a stripe behind the text. */
+.tc.upcoming{min-height:190px}
+.tc.upcoming .tc-body{margin-top:auto}
+.tc.upcoming .tc-flag{opacity:.6}
+.tc.upcoming:hover .tc-flag{opacity:.72}
 .tc.upcoming::before{
   background:linear-gradient(to bottom,
     rgba(253,250,242,.82) 0%,
@@ -1550,6 +1643,122 @@ select.fi{
 .stop-pick-btn:hover{background:var(--fl);transform:translate(-1px,-1px);box-shadow:3px 3px 0 var(--e)}
 .stop-pick-btn:active{transform:translate(0,0);box-shadow:1px 1px 0 var(--e)}
 
+
+/* ══ STATS: CROSS-FILTERING ══ */
+.stat-title{position:relative;display:flex;align-items:center;justify-content:space-between}
+.stat-hint{
+  font-size:.5rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--go);opacity:.7;
+  border:1px solid var(--go);
+  padding:.08rem .3rem;
+  margin-left:.5rem;
+}
+
+/* the active slice */
+.stat-filter{
+  display:flex;align-items:center;gap:.5rem;flex-wrap:wrap;
+  background:var(--e);
+  border:2px solid var(--go);
+  box-shadow:3px 3px 0 var(--s);
+  padding:.6rem .8rem;
+  margin-bottom:1.2rem;
+  position:sticky;
+  top:calc(var(--bh) + var(--th) + var(--safe-top) + .4rem);
+  z-index:500;
+}
+.sf-lbl{
+  font-size:.52rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;
+  color:var(--gh);
+}
+.sf-val{
+  font-family:var(--ff-d);
+  font-size:1rem;font-weight:900;
+  color:var(--go);
+}
+.sf-n{
+  font-size:.62rem;font-weight:600;
+  color:var(--sl);opacity:.75;
+  margin-left:auto;
+}
+.sf-clear{
+  font-size:.55rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;
+  background:var(--r);color:var(--s);
+  border:1px solid var(--s);
+  padding:.25rem .5rem;
+  cursor:pointer;
+}
+.sf-clear:hover{background:var(--rl)}
+.stat-empty{
+  padding:2rem 1rem;text-align:center;
+  color:var(--gh);font-size:.78rem;
+}
+
+/* clickable bars */
+.bar-lbl,.bar-track,.bar-val{cursor:pointer;transition:opacity .15s,color .15s}
+.bar-lbl.on{color:var(--r);font-weight:800}
+.bar-lbl.dim,.bar-val.dim{opacity:.35}
+.bar-track.on{
+  border-color:var(--r);
+  box-shadow:0 0 0 2px rgba(181,53,10,.2);
+}
+.bar-track.dim{opacity:.4}
+.bar-click:hover{border-color:var(--r)}
+
+.yoy-card{cursor:pointer}
+.ctry-row{cursor:pointer;transition:background .12s}
+.ctry-row.on td{background:var(--sl);font-weight:700;color:var(--r)}
+
+/* ══ STATS: FACT CARDS ══ */
+.fact-grid{
+  display:grid;
+  grid-template-columns:1fr;
+  gap:.6rem;
+}
+@media(min-width:600px){ .fact-grid{grid-template-columns:repeat(2,1fr)} }
+@media(min-width:960px){ .fact-grid{grid-template-columns:repeat(3,1fr)} }
+
+.fact{
+  display:flex;gap:.7rem;
+  background:var(--w);
+  border:2px solid var(--e);
+  box-shadow:3px 3px 0 var(--s);
+  padding:.85rem;
+}
+/* the engagement isn't a statistic, so it doesn't look like one */
+.fact:first-child{
+  background:var(--b);
+  border-color:var(--go);
+  box-shadow:3px 3px 0 var(--e);
+  grid-column:1 / -1;
+}
+.fact:first-child .fact-ttl{color:var(--go)}
+.fact:first-child .fact-body{color:var(--sl)}
+.fact:first-child .fact-body b{color:var(--s)}
+.fact:first-child .fact-body i{color:var(--s);opacity:.85}
+
+.fact-ico{
+  font-size:1.3rem;line-height:1;
+  flex-shrink:0;
+}
+.fact-ttl{
+  font-size:.55rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;
+  color:var(--bm);
+  margin-bottom:.3rem;
+}
+.fact-body{
+  font-size:.76rem;
+  color:var(--e);
+  line-height:1.6;
+}
+.fact-body b{font-weight:700;color:var(--r)}
+.fact-body i{font-style:italic;color:var(--gh)}
+.fact-since{
+  display:block;
+  font-size:.62rem;
+  color:var(--gh);
+  margin-top:.25rem;
+}
+
 /* ══ TOAST ══ */
 .toast{position:fixed;bottom:1.3rem;left:50%;z-index:2000;transform:translateX(-50%) translateY(55px);background:var(--f);color:var(--c);border:2px solid var(--fl);padding:.52rem 1.1rem;font-size:.7rem;font-weight:600;letter-spacing:.04em;white-space:nowrap;transition:transform .28s cubic-bezier(.22,1,.36,1)}
 .toast.on{transform:translateX(-50%) translateY(0)}
@@ -1577,7 +1786,7 @@ select.fi{
 </nav>
 
 <div class="tabbar">
-  <button class="tab on" data-tab="map" onclick="showTab('map')">
+  <button class="tab" data-tab="map" onclick="showTab('map')">
     <span class="tab-ico">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"
            stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -1591,7 +1800,7 @@ select.fi{
     </span>
     <span class="t-sk">Mapa</span><span class="t-en">Map</span>
   </button>
-  <button class="tab" data-tab="tl" onclick="showTab('tl')">
+  <button class="tab on" data-tab="tl" onclick="showTab('tl')">
     <span class="tab-ico">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"
            stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -1633,7 +1842,7 @@ select.fi{
 <div class="page-wrap">
 
   <!-- MAP -->
-  <div class="view on" id="vmap" style="position:relative">
+  <div class="view" id="vmap" style="position:relative">
     <!-- one slim strip: the numbers, nothing else. The headline and the
          "together since" line were pretty but they were eating the map. -->
     <div class="hero-slim" id="hero-slim">
@@ -1673,7 +1882,7 @@ select.fi{
   </div>
 
   <!-- TIMELINE -->
-  <div class="view" id="vtl">
+  <div class="view on" id="vtl">
     <div class="tl-search-bar">
       <input class="tl-search" id="tl-q" type="search"
         placeholder="Hľadať krajinu, mesto, kapelu, rok…" oninput="buildTl()">
@@ -2055,7 +2264,7 @@ const SEED = [
 /* ═══════════ VERSION ═══════════
    Bump this on every iteration that ships — shown in the topbar next
    to the app icon, same pattern as Kvašung. One place to update. */
-const APP_VERSION = 'v2.12.1';
+const APP_VERSION = 'v2.14.0';
 
 /* ═══════════ PLURALS ═══════════
    Slovak splits nouns three ways by count: 1 takes the singular, 2–4 take
@@ -3128,7 +3337,7 @@ function setLang(l){
 }
 
 /* ═══════════ TABS ═══════════ */
-let curTab = 'map';
+let curTab = 'tl';   // the timeline is the landing view
 function showTab(t){
   tap();
   curTab = t;
@@ -3896,6 +4105,106 @@ function annBanner(){
   '</div>';
 }
 
+/* ═══════════ THE ROAD ═══════════
+   Drawn once the cards are in the document, because it has to be exactly as
+   tall as they turned out to be — which we can't know in advance. It's a
+   gentle S-curve down the middle, with a few vehicles parked along it. */
+function drawRoad(){
+  const spine = document.querySelector('.tl-spine');
+  if(!spine) return;
+
+  const old = spine.querySelector('.tl-road');
+  if(old) old.remove();
+
+  // only on tablet and up; the phone layout uses a plain rule
+  if(window.innerWidth < 820) return;
+
+  const w = spine.offsetWidth;
+  const h = spine.offsetHeight;
+  if(!w || !h) return;
+
+  const mid = w / 2;
+  const amp = Math.min(46, w * 0.045);   // how far the road wanders
+
+  /* One bend roughly every 420px, so the curve keeps its rhythm whether
+     there are five trips or fifty. */
+  const bends = Math.max(2, Math.round(h / 420));
+  const step = h / bends;
+
+  let d = 'M ' + mid + ' 0';
+  for(let i = 0; i < bends; i++){
+    const y0 = i * step;
+    const y1 = y0 + step;
+    const dir = (i % 2 === 0) ? 1 : -1;
+    const cx1 = mid + amp * dir;
+    const cx2 = mid + amp * dir;
+    d += ' C ' + cx1 + ' ' + (y0 + step * 0.35) +
+         ', ' + cx2 + ' ' + (y1 - step * 0.35) +
+         ', ' + mid + ' ' + y1;
+  }
+
+  const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+  svg.setAttribute('class', 'tl-road');
+  svg.setAttribute('viewBox', '0 0 ' + w + ' ' + h);
+  svg.setAttribute('preserveAspectRatio', 'none');
+  svg.setAttribute('width', w);
+  svg.setAttribute('height', h);
+
+  const path = (cls, dd) => {
+    const p = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    p.setAttribute('class', cls);
+    p.setAttribute('d', dd);
+    return p;
+  };
+
+  svg.appendChild(path('road-edge', d));
+  svg.appendChild(path('road-surface', d));
+  svg.appendChild(path('road-dashes', d));
+
+  /* Vehicles, spaced down the road and rotated to follow it. getPointAtLength
+     gives us both the position and, by sampling just ahead, the heading. */
+  /* Keep one path around purely to measure against — creating and destroying
+     one per vehicle was needless. It stays in the SVG but draws nothing. */
+  const ruler = path('road-measure', d);
+  ruler.setAttribute('fill', 'none');
+  ruler.setAttribute('stroke', 'none');
+  svg.appendChild(ruler);
+
+  let len = 0;
+  try{ len = ruler.getTotalLength(); }catch(e){ len = 0; }
+
+  if(len > 0){
+    const FLEET = ['\uD83D\uDE97','\u2708\uFE0F','\uD83D\uDE90','\uD83D\uDEE5\uFE0F','\uD83D\uDEB2'];
+    const count = Math.max(2, Math.min(6, Math.round(h / 700)));
+
+    for(let i = 0; i < count; i++){
+      const at = len * ((i + 0.5) / count);
+      const pt    = ruler.getPointAtLength(at);
+      const ahead = ruler.getPointAtLength(Math.min(at + 12, len));
+      const angle = Math.atan2(ahead.y - pt.y, ahead.x - pt.x) * 180 / Math.PI;
+
+      const v = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+      v.setAttribute('class', 'road-vehicle');
+      v.setAttribute('x', pt.x);
+      v.setAttribute('y', pt.y);
+      // emoji point right by default; +90° turns them to face down the road
+      v.setAttribute('transform', 'rotate(' + (angle + 90) + ' ' + pt.x + ' ' + pt.y + ')');
+      v.textContent = FLEET[i % FLEET.length];
+      svg.appendChild(v);
+    }
+  }
+
+  spine.insertBefore(svg, spine.firstChild);
+}
+
+/* The road depends on the rendered height of the cards, so it has to be
+   redrawn whenever that changes — a resize, or a lane reflow. */
+let roadTimer = null;
+window.addEventListener('resize', ()=>{
+  clearTimeout(roadTimer);
+  roadTimer = setTimeout(drawRoad, 180);
+});
+
 function buildTl(){
   const box = document.getElementById('tl-body');
   const qEl = document.getElementById('tl-q');
@@ -3933,7 +4242,6 @@ function buildTl(){
     (byYear[y] || (byYear[y]=[])).push(t);
   });
 
-  let sideFlip = 0;   // alternates cards left/right of the spine
 
   Object.keys(byYear).sort((a,b)=>b.localeCompare(a)).forEach(yr=>{
     const list = byYear[yr].slice().sort((a,b)=> b.dateFrom.localeCompare(a.dateFrom));
@@ -3952,6 +4260,21 @@ function buildTl(){
       (meta ? '<span class="year-meta">'+meta+'</span>' : '');
     spine.appendChild(hdr);
 
+    /* Two lanes per year, filled independently. */
+    const lanesEl = document.createElement('div');
+    lanesEl.className = 'tl-lanes';
+    const lanes = {
+      left:  document.createElement('div'),
+      right: document.createElement('div')
+    };
+    lanes.left.className  = 'tl-lane left';
+    lanes.right.className = 'tl-lane right';
+    lanesEl.appendChild(lanes.left);
+    lanesEl.appendChild(lanes.right);
+    spine.appendChild(lanesEl);
+
+    const laneHeight = { left: 0, right: 72 };   // the right lane starts lower
+
     list.filter(t=>t.cat!=='origin').forEach(t=>{
       const d = days(t);
       const pics = photosOf(t);
@@ -3959,7 +4282,7 @@ function buildTl(){
       const fUrl = flagUrl(t);
 
       const row = document.createElement('div');
-      row.className = 'tl-row' + ((sideFlip++ % 2) ? ' right' : '');
+      row.className = 'tl-item';
 
       /* A trip in the future has no photos and never will until it happens,
          so the faint flag wash used for "no photo yet" reads as an empty
@@ -4007,9 +4330,20 @@ function buildTl(){
         if(e.key==='Enter'||e.key===' '){ e.preventDefault(); open(); }
       });
 
-      row.innerHTML = '<span class="tl-arm"></span><span class="tl-node"></span>';
       row.appendChild(card);
-      spine.appendChild(row);
+
+      /* Put the card in whichever lane is currently shorter, rather than
+         strictly alternating. Alternating is what left the gaps: a tall card
+         on the left forced the next one to start below it on the right, even
+         though there was room higher up. Measuring as we go keeps both sides
+         packed. */
+      const target = (laneHeight.left <= laneHeight.right) ? 'left' : 'right';
+      lanes[target].appendChild(row);
+
+      // an estimate is enough — the card isn't in the document yet, so we
+      // can't measure it, but photo/no-photo is the dominant factor
+      laneHeight[target] += hasPhoto ? 210 : (upcoming ? 210 : 145);
+      laneHeight[target] += nt(t) ? 22 : 0;
     });
 
     /* The origin card closes out its year. The timeline is newest-first, so
@@ -4033,40 +4367,332 @@ function buildTl(){
       o.addEventListener('keydown', e=>{
         if(e.key==='Enter'||e.key===' '){ e.preventDefault(); open(); }
       });
-      spine.appendChild(o);
+      spine.appendChild(o);   // full width, below the lanes
     });
   });
 
   box.appendChild(spine);
+
+  // now that the cards are laid out we know how tall the road has to be
+  requestAnimationFrame(()=>{
+    requestAnimationFrame(drawRoad);
+  });
 }
 
-/* ═══════════ STATS ═══════════ */
+
+/* ═══════════ STATS ═══════════
+   Cross-filtering, the way a BI dashboard does it: click a category, a year, a
+   month or a country, and everything else recalculates around that slice.
+   Click it again to let go. */
+let statFilter = null;   // {kind:'cat'|'year'|'month'|'country', value}
+
+function statFilterLabel(){
+  if(!statFilter) return '';
+  const sk = lang === 'sk';
+  switch(statFilter.kind){
+    case 'cat':     return catLabel(statFilter.value);
+    case 'year':    return statFilter.value;
+    case 'month':   return (sk ? MON_SK : MON_EN)[statFilter.value];
+    case 'country': return statFilter.value;
+  }
+  return '';
+}
+
+function setStatFilter(kind, value){
+  tap();
+  if(statFilter && statFilter.kind === kind && String(statFilter.value) === String(value)){
+    statFilter = null;          // clicking the same thing twice clears it
+  } else {
+    statFilter = { kind, value };
+  }
+  buildStats();
+  const el = document.getElementById('stats-body');
+  if(el) el.scrollIntoView({ block:'start', behavior:'smooth' });
+}
+
+function clearStatFilter(){
+  tap();
+  statFilter = null;
+  buildStats();
+}
+
+/* The slice everything is computed from. */
+function statTrips(){
+  let t = getT().filter(x=>x.cat !== 'origin');
+  if(!statFilter) return t;
+  switch(statFilter.kind){
+    case 'cat':
+      return t.filter(x=>x.cat === statFilter.value);
+    case 'year':
+      return t.filter(x=>(x.dateFrom||'').slice(0,4) === String(statFilter.value));
+    case 'month':
+      return t.filter(x=>parseInt((x.dateFrom||'').slice(5,7),10) - 1 === statFilter.value);
+    case 'country':
+      return t.filter(x=>(x.countryEn||'').split(' / ').some(c=>c.trim() === statFilter.value));
+  }
+  return t;
+}
+
 const MON_SK = ['Jan','Feb','Mar','Apr','Máj','Jún','Júl','Aug','Sep','Okt','Nov','Dec'];
 const MON_EN = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 
 function bstat(n,l){
   return '<div class="bstat"><span class="bstat-n">'+n+'</span><span class="bstat-l">'+l+'</span></div>';
 }
-/* three grid cells: label | track | value. The value never sits inside
-   the bar, so every row reads on the same vertical line. */
-function bar(label, pct, color, val){
-  return '<div class="bar-lbl">'+label+'</div>'+
-    '<div class="bar-track"><div class="bar-fill" style="width:'+Math.max(pct,2)+'%;background:'+color+'"></div></div>'+
-    '<div class="bar-val">'+val+'</div>';
+
+/* A bar that can be clicked to filter by whatever it represents. */
+function bar(label, pct, color, val, kind, value){
+  const active = statFilter && statFilter.kind === kind && String(statFilter.value) === String(value);
+  const dim    = statFilter && !active;
+  const cls = 'bar-lbl' + (active ? ' on' : '') + (dim ? ' dim' : '');
+  const click = kind ? ' onclick="setStatFilter(\''+kind+'\',\''+value+'\')"' : '';
+  const rowCls = 'bar-click' + (active ? ' on' : '') + (dim ? ' dim' : '');
+  return '<div class="'+cls+'"'+click+'>'+label+'</div>'+
+    '<div class="bar-track '+rowCls+'"'+click+'>'+
+      '<div class="bar-fill" style="width:'+Math.max(pct,2)+'%;background:'+color+'"></div>'+
+    '</div>'+
+    '<div class="bar-val'+(dim?' dim':'')+'"'+click+'>'+val+'</div>';
+}
+
+/* The details, written as things worth knowing rather than a list of maxima.
+   Everything is derived live, so a new trip rewrites the story on its own —
+   and when a slice is filtered, the facts describe that slice. */
+function funFacts(trips, all, ctx){
+  const { sk, loc, cat, ymap, yKeys, ctrs, totalDays, daysTogether, pctTravelling } = ctx;
+
+  const geo = trips.filter(t=> typeof t.lat==='number' && typeof t.lng==='number');
+  if(!geo.length) return '';
+
+  const HOME = { lat:48.1486, lng:17.1077 };
+  function haversine(lat1,lng1,lat2,lng2){
+    const R = 6371;
+    const dLat = (lat2-lat1)*Math.PI/180;
+    const dLng = (lng2-lng1)*Math.PI/180;
+    const a = Math.sin(dLat/2)**2 +
+              Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLng/2)**2;
+    return Math.round(R * 2*Math.atan2(Math.sqrt(a), Math.sqrt(1-a)));
+  }
+  geo.forEach(t=>{ t._dist = haversine(HOME.lat,HOME.lng,t.lat,t.lng); });
+
+  const longest  = trips.reduce((m,t)=> days(t)>days(m)?t:m, trips[0]);
+  const farthest = geo.reduce((m,t)=> t._dist>m._dist?t:m, geo[0]);
+  const north = geo.reduce((m,t)=> t.lat>m.lat?t:m, geo[0]);
+  const south = geo.reduce((m,t)=> t.lat<m.lat?t:m, geo[0]);
+  const east  = geo.reduce((m,t)=> t.lng>m.lng?t:m, geo[0]);
+  const west  = geo.reduce((m,t)=> t.lng<m.lng?t:m, geo[0]);
+  const totalKm = geo.reduce((s,t)=>s+t._dist*2, 0);
+
+  const chrono = trips.slice().sort((a,b)=>(a.dateFrom||'').localeCompare(b.dateFrom||''));
+  const first = chrono[0];
+  const latest = chrono[chrono.length-1];
+
+  /* the longest we ever went without going anywhere */
+  let gap = 0, gapA = null, gapB = null;
+  for(let i = 1; i < chrono.length; i++){
+    const prevEnd = new Date((chrono[i-1].dateTo || chrono[i-1].dateFrom) + 'T00:00:00');
+    const thisStart = new Date(chrono[i].dateFrom + 'T00:00:00');
+    const d = Math.round((thisStart - prevEnd) / 86400000);
+    if(d > gap){ gap = d; gapA = chrono[i-1]; gapB = chrono[i]; }
+  }
+
+  /* which day of the week we tend to leave on */
+  const dow = new Array(7).fill(0);
+  trips.forEach(t=>{
+    if(!t.dateFrom) return;
+    dow[new Date(t.dateFrom + 'T00:00:00').getDay()]++;
+  });
+  const topDow = dow.indexOf(Math.max(...dow));
+  const DOW_SK = ['nedeľu','pondelok','utorok','stredu','štvrtok','piatok','sobotu'];
+  const DOW_EN = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+
+  /* places we've been back to */
+  const placeCount = {};
+  trips.forEach(t=>{
+    const key = nm(t).trim();
+    if(key) placeCount[key] = (placeCount[key]||0) + 1;
+  });
+  const repeats = Object.entries(placeCount).filter(([,n])=>n>1).sort((a,b)=>b[1]-a[1]);
+
+  const bestYear    = yKeys.slice().sort((a,b)=> ymap[b].d-ymap[a].d)[0];
+  const busiestYear = yKeys.slice().sort((a,b)=> ymap[b].n-ymap[a].n)[0];
+  const abroad = trips.filter(t=>(t.countryEn||'')!=='Slovakia').length;
+  const home   = trips.length - abroad;
+  const skiSeasons = new Set(trips.filter(t=>t.cat==='ski').map(t=>(t.dateFrom||'').slice(0,4))).size;
+
+  /* The engagement. Found by looking for it, not by a hard-coded id, so it
+     survives an edit — and it's told as the story it is, rather than reduced
+     to a date and a place name like every other line. */
+  /* The 💍 flag is the reliable signal — it was put there deliberately. The
+     text search is only a fallback for a trip added later without one.
+     
+     Word boundaries matter here more than they look: an earlier version
+     matched /ring/ and cheerfully reported that the engagement happened on a
+     ski trip to the Tatras, because "Spring skiing" contains "ring". */
+  const RING_FLAG = '\uD83D\uDC8D';
+  const proposal =
+    trips.find(t => (t.flag||'') === RING_FLAG) ||
+    trips.find(t => /\bprsteň|\bzásnub|povedala áno|\bring\b|said yes|\bengaged\b|\bproposed\b/i
+      .test((t.noteSk||'') + ' ' + (t.noteEn||'')));
+
+  const card = (icon, title, body) =>
+    '<div class="fact"><span class="fact-ico">'+icon+'</span>'+
+    '<div><div class="fact-ttl">'+title+'</div>'+
+    '<div class="fact-body">'+body+'</div></div></div>';
+
+  let h = '<div class="stat-section"><div class="stat-title">'+
+    (sk?'Zaujímavosti':'The details')+'</div><div class="fact-grid">';
+
+  /* the engagement comes first — it's the only fact here that isn't a number */
+  if(proposal){
+    const place = (proposal.places || '').split(',')[0].trim();
+    h += card('\uD83D\uDC8D',
+      sk ? 'Prsteň' : 'The ring',
+      sk
+        ? '<b>' + esc(fmt(proposal.dateFrom, proposal.dateTo)) + '</b> — ' +
+          esc(nm(proposal)) + (place ? ', ' + esc(place) : '') + '.<br>' +
+          (nt(proposal) ? '<i>' + esc(nt(proposal)) + '</i>' : '') +
+          '<br><span class="fact-since">' +
+          Math.floor((Date.now() - new Date(proposal.dateFrom+'T00:00:00')) / 86400000).toLocaleString(loc) +
+          ' dní odvtedy</span>'
+        : '<b>' + esc(fmt(proposal.dateFrom, proposal.dateTo)) + '</b> — ' +
+          esc(nm(proposal)) + (place ? ', ' + esc(place) : '') + '.<br>' +
+          (nt(proposal) ? '<i>' + esc(nt(proposal)) + '</i>' : '') +
+          '<br><span class="fact-since">' +
+          Math.floor((Date.now() - new Date(proposal.dateFrom+'T00:00:00')) / 86400000).toLocaleString(loc) +
+          ' days ago</span>'
+    );
+  }
+
+  if(!statFilter){
+    h += card('\u2665',
+      sk ? 'Spolu' : 'Together',
+      sk
+        ? '<b>' + daysTogether.toLocaleString(loc) + ' ' + plural(daysTogether,'day') + '</b> od 6. apríla 2018.<br>' +
+          totalDays + ' z nich na cestách — <b>' + pctTravelling + ' %</b> nášho času.'
+        : '<b>' + daysTogether.toLocaleString(loc) + ' days</b> since 6 April 2018.<br>' +
+          totalDays + ' of them away — <b>' + pctTravelling + '%</b> of our time.'
+    );
+  }
+
+  h += card('\uD83C\uDF0D',
+    sk ? 'Najďalej' : 'Furthest',
+    sk
+      ? '<b>' + esc(nm(farthest)) + '</b> (' + esc(ct(farthest)) + ')<br>' +
+        farthest._dist.toLocaleString(loc) + ' km vzdušnou čiarou.<br>' +
+        '<span class="fact-since">Spolu ~' + totalKm.toLocaleString(loc) + ' km tam a späť.</span>'
+      : '<b>' + esc(nm(farthest)) + '</b> (' + esc(ct(farthest)) + ')<br>' +
+        farthest._dist.toLocaleString(loc) + ' km as the crow flies.<br>' +
+        '<span class="fact-since">~' + totalKm.toLocaleString(loc) + ' km in total, there and back.</span>'
+  );
+
+  h += card('\uD83E\uDDED',
+    sk ? 'Štyri strany sveta' : 'The four corners',
+    (sk ? 'Sever: <b>' : 'North: <b>') + esc(nm(north)) + '</b><br>' +
+    (sk ? 'Juh: <b>'   : 'South: <b>') + esc(nm(south)) + '</b><br>' +
+    (sk ? 'Východ: <b>': 'East: <b>')  + esc(nm(east))  + '</b><br>' +
+    (sk ? 'Západ: <b>' : 'West: <b>')  + esc(nm(west))  + '</b>'
+  );
+
+  h += card('\u23F1',
+    sk ? 'Najdlhší výlet' : 'Longest trip',
+    '<b>' + esc(nm(longest)) + '</b> (' + esc(ct(longest)) + ')<br>' +
+    qty(days(longest), 'day') + '.'
+  );
+
+  if(gap > 30 && gapA && gapB){
+    h += card('\uD83D\uDD52',
+      sk ? 'Najdlhšia pauza' : 'The longest wait',
+      sk
+        ? '<b>' + qty(gap,'day') + '</b> bez cestovania.<br>' +
+          'Medzi <b>' + esc(nm(gapA)) + '</b> a <b>' + esc(nm(gapB)) + '</b>.<br>' +
+          '<span class="fact-since">' + esc(gapA.dateTo || gapA.dateFrom) + ' → ' + esc(gapB.dateFrom) + '</span>'
+        : '<b>' + qty(gap,'day') + '</b> without going anywhere.<br>' +
+          'Between <b>' + esc(nm(gapA)) + '</b> and <b>' + esc(nm(gapB)) + '</b>.<br>' +
+          '<span class="fact-since">' + esc(gapA.dateTo || gapA.dateFrom) + ' → ' + esc(gapB.dateFrom) + '</span>'
+    );
+  }
+
+  if(repeats.length){
+    h += card('\uD83D\uDD01',
+      sk ? 'Kam sa vraciame' : 'Places we go back to',
+      repeats.slice(0,4).map(([p,n])=>
+        '<b>' + esc(p) + '</b> — ' + n + '×'
+      ).join('<br>')
+    );
+  }
+
+  h += card('\uD83D\uDCC5',
+    sk ? 'Kedy vyrážame' : 'When we set off',
+    sk
+      ? 'Najčastejšie v <b>' + DOW_SK[topDow] + '</b> (' + dow[topDow] + '×).<br>' +
+        'Najbohatší rok: <b>' + bestYear + '</b> (' + qty(ymap[bestYear].d,'day') + ').<br>' +
+        'Najrušnejší: <b>' + busiestYear + '</b> (' + qty(ymap[busiestYear].n,'trip') + ').'
+      : 'Usually a <b>' + DOW_EN[topDow] + '</b> (' + dow[topDow] + '×).<br>' +
+        'Biggest year: <b>' + bestYear + '</b> (' + qty(ymap[bestYear].d,'day') + ').<br>' +
+        'Busiest: <b>' + busiestYear + '</b> (' + qty(ymap[busiestYear].n,'trip') + ').'
+  );
+
+  h += card('\uD83C\uDFE0',
+    sk ? 'Doma vs. vonku' : 'Home vs. away',
+    sk
+      ? '<b>' + qty(home,'trip') + '</b> po Slovensku.<br>' +
+        '<b>' + abroad + '</b> do zahraničia.<br>' +
+        (cat.ski.d ? '<span class="fact-since">' + qty(cat.ski.d,'day') + ' na lyžiach počas ' + skiSeasons + ' sezón.</span>' : '')
+      : '<b>' + qty(home,'trip') + '</b> in Slovakia.<br>' +
+        '<b>' + abroad + '</b> abroad.<br>' +
+        (cat.ski.d ? '<span class="fact-since">' + qty(cat.ski.d,'day') + ' on skis across ' + skiSeasons + ' seasons.</span>' : '')
+  );
+
+  h += card('\uD83D\uDEEC',
+    sk ? 'Prvý a posledný' : 'First and latest',
+    sk
+      ? 'Začalo sa to v <b>' + esc(nm(first)) + '</b><br>' +
+        '<span class="fact-since">' + esc(fmt(first.dateFrom, first.dateTo)) + '</span><br>' +
+        'Naposledy: <b>' + esc(nm(latest)) + '</b><br>' +
+        '<span class="fact-since">' + esc(fmt(latest.dateFrom, latest.dateTo)) + '</span>'
+      : 'It began in <b>' + esc(nm(first)) + '</b><br>' +
+        '<span class="fact-since">' + esc(fmt(first.dateFrom, first.dateTo)) + '</span><br>' +
+        'Most recent: <b>' + esc(nm(latest)) + '</b><br>' +
+        '<span class="fact-since">' + esc(fmt(latest.dateFrom, latest.dateTo)) + '</span>'
+  );
+
+  h += '</div></div>';
+  return h;
 }
 
 function buildStats(){
   const box = document.getElementById('stats-body');
   if(!box) return;
   const sk = lang === 'sk';
-  const trips = getT().filter(t=>t.cat!=='origin');
-  if(!trips.length){ box.innerHTML = ''; return; }
+
+  const all = getT().filter(t=>t.cat !== 'origin');
+  const trips = statTrips();
+  if(!all.length){ box.innerHTML = ''; return; }
+
+  const loc = sk ? 'sk-SK' : 'en-GB';
+  let h = '';
+
+  /* the active slice, and how to get out of it */
+  if(statFilter){
+    h += '<div class="stat-filter">'+
+      '<span class="sf-lbl">'+(sk ? 'Filter' : 'Filtered by')+'</span>'+
+      '<span class="sf-val">'+esc(statFilterLabel())+'</span>'+
+      '<span class="sf-n">'+qty(trips.length,'trip')+'</span>'+
+      '<button class="sf-clear" onclick="clearStatFilter()">&#10005; '+
+        (sk ? 'Zrušiť' : 'Clear')+'</button>'+
+    '</div>';
+  }
+
+  if(!trips.length){
+    h += '<div class="stat-empty">'+(sk ? 'Nič v tomto výbere.' : 'Nothing in this slice.')+'</div>';
+    box.innerHTML = h;
+    return;
+  }
 
   const totalDays = trips.reduce((s,t)=>s+days(t),0);
   const ctrs = new Set();
   trips.forEach(t=>(t.countryEn||'').split(' / ').forEach(c=>c.trim()&&ctrs.add(c.trim())));
 
-  /* by category */
   const catOrder = ['holiday','gig','weekend','ski','trip'];
   const cat = {};
   catOrder.forEach(k=>cat[k]={n:0,d:0});
@@ -4076,7 +4702,6 @@ function buildStats(){
   });
   const maxCat = Math.max(...catOrder.map(k=>cat[k].n), 1);
 
-  /* by year */
   const ymap = {};
   trips.forEach(t=>{
     const y = (t.dateFrom||'').slice(0,4);
@@ -4089,7 +4714,6 @@ function buildStats(){
   const yKeys = Object.keys(ymap).sort();
   const maxYd = Math.max(...yKeys.map(y=>ymap[y].d), 1);
 
-  /* seasonality */
   const mon = new Array(12).fill(0);
   trips.forEach(t=>{
     const m = parseInt((t.dateFrom||'').slice(5,7), 10);
@@ -4097,54 +4721,9 @@ function buildStats(){
   });
   const maxMon = Math.max(...mon, 1);
 
-  /* superlatives */
-  const longest = trips.reduce((m,t)=> days(t)>days(m)?t:m, trips[0]);
-  const bestYear = yKeys.slice().sort((a,b)=> ymap[b].d-ymap[a].d)[0];
-  const busiestYear = yKeys.slice().sort((a,b)=> ymap[b].n-ymap[a].n)[0];
-  const abroad = trips.filter(t=>(t.countryEn||'')!=='Slovakia').length;
-  const home = trips.length - abroad;
   const since = new Date('2018-04-06');
   const daysTogether = Math.floor((Date.now()-since)/86400000);
   const pctTravelling = ((totalDays/daysTogether)*100).toFixed(1);
-
-  /* repeat destinations */
-  const placeCount = {};
-  trips.forEach(t=>{
-    const key = (t.places||'').split(',')[0].trim();
-    if(key) placeCount[key] = (placeCount[key]||0)+1;
-  });
-  const repeats = Object.entries(placeCount).filter(([,n])=>n>1).sort((a,b)=>b[1]-a[1]);
-
-  /* ── GEOGRAPHIC EXTREMES ──
-     Nothing here is hard-coded — north/south/east/west and the farthest
-     trip are recomputed from live coordinates, so adding a trip updates
-     every one of these sentences on its own. Note the filter uses a type
-     check, not truthiness: a longitude of exactly 0 is falsy in JS and
-     would silently drop the point. */
-  const geo = trips.filter(t=> typeof t.lat==='number' && typeof t.lng==='number');
-  const north = geo.reduce((m,t)=> t.lat>m.lat?t:m, geo[0]);
-  const south = geo.reduce((m,t)=> t.lat<m.lat?t:m, geo[0]);
-  const east  = geo.reduce((m,t)=> t.lng>m.lng?t:m, geo[0]);
-  const west  = geo.reduce((m,t)=> t.lng<m.lng?t:m, geo[0]);
-
-  const HOME = {lat:48.1486, lng:17.1077};
-  function haversine(lat1,lng1,lat2,lng2){
-    const R = 6371;
-    const dLat = (lat2-lat1)*Math.PI/180;
-    const dLng = (lng2-lng1)*Math.PI/180;
-    const a = Math.sin(dLat/2)**2 +
-              Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLng/2)**2;
-    return Math.round(R * 2*Math.atan2(Math.sqrt(a), Math.sqrt(1-a)));
-  }
-  geo.forEach(t=>{ t._dist = haversine(HOME.lat,HOME.lng,t.lat,t.lng); });
-  const farthest = geo.reduce((m,t)=> t._dist>m._dist?t:m, geo[0]);
-  const nearest  = geo.filter(t=>t.countryEn!=='Slovakia')
-                      .reduce((m,t)=> (m==null||t._dist<m._dist)?t:m, null);
-  const totalKm = geo.reduce((s,t)=>s+t._dist*2, 0);
-  const proposal = trips.find(t => (t.noteSk||'').includes('rsteň') || (t.flag||'')==='💍');
-
-  const loc = sk ? 'sk-SK' : 'en-GB';
-  let h = '';
 
   /* headline numbers */
   h += '<div class="stat-section"><div class="big-stats">'+
@@ -4154,65 +4733,73 @@ function buildStats(){
   '</div><div class="big-stats">'+
     bstat(yKeys.length,   sk?'rokov':'years')+
     bstat(cat.gig.n,      sk?'koncertov':'gigs')+
-    bstat(pctTravelling+'%', sk?'času na cestách':'of time away')+
+    bstat(statFilter ? Math.round(totalDays/trips.length) : pctTravelling+'%',
+          statFilter ? (sk?'dní / výlet':'days / trip') : (sk?'času na cestách':'of time away'))+
   '</div></div>';
 
   /* by type */
-  h += '<div class="stat-section"><div class="stat-title">'+(sk?'Podľa typu':'By type')+'</div><div class="bar-chart">';
+  h += '<div class="stat-section"><div class="stat-title">'+(sk?'Podľa typu':'By type')+
+    '<span class="stat-hint">'+(sk?'klikni':'click')+'</span></div><div class="bar-chart">';
   catOrder.forEach(k=>{
     const v = cat[k], pct = Math.round(v.n/maxCat*100);
-    h += bar(catLabel(k), pct, CAT_VAR[k], v.n+'× <em>'+v.d+'d</em>');
+    h += bar(catLabel(k), pct, CAT_VAR[k], v.n+'× <em>'+v.d+'d</em>', 'cat', k);
   });
   h += '</div></div>';
 
   /* year by year */
-  h += '<div class="stat-section"><div class="stat-title">'+(sk?'Rok po roku':'Year by year')+'</div><div class="bar-chart">';
+  h += '<div class="stat-section"><div class="stat-title">'+(sk?'Rok po roku':'Year by year')+
+    '<span class="stat-hint">'+(sk?'klikni':'click')+'</span></div><div class="bar-chart">';
   yKeys.forEach(y=>{
     const v = ymap[y], pct = Math.round(v.d/maxYd*100);
-    h += bar(y, pct, 'var(--r)', v.n+'× <em>'+v.d+'d</em>');
+    h += bar(y, pct, 'var(--r)', v.n+'× <em>'+v.d+'d</em>', 'year', y);
   });
-  h += '</div><div class="yoy-grid">';
+  h += '</div>';
 
-  yKeys.slice().reverse().forEach(y=>{
-    const v = ymap[y];
-    const prev = ymap[String(+y-1)];
-    const pct = Math.round(v.d/maxYd*100);
+  if(!statFilter || statFilter.kind !== 'year'){
+    h += '<div class="yoy-grid">';
+    yKeys.slice().reverse().forEach(y=>{
+      const v = ymap[y];
+      const prev = ymap[String(+y-1)];
+      const pct = Math.round(v.d/maxYd*100);
 
-    let trend = '<span class="yoy-trend flat">–</span>';
-    if(prev){
-      const diff = v.d - prev.d;
-      if(diff > 0)      trend = '<span class="yoy-trend up">&#9650; '+diff+'d</span>';
-      else if(diff < 0) trend = '<span class="yoy-trend down">&#9660; '+Math.abs(diff)+'d</span>';
-    }
+      let trend = '<span class="yoy-trend flat">–</span>';
+      if(prev){
+        const diff = v.d - prev.d;
+        if(diff > 0)      trend = '<span class="yoy-trend up">&#9650; '+diff+'d</span>';
+        else if(diff < 0) trend = '<span class="yoy-trend down">&#9660; '+Math.abs(diff)+'d</span>';
+      }
 
-    const yTrips = trips.filter(t=>(t.dateFrom||'').slice(0,4)===y);
-    const yLong  = yTrips.reduce((m,t)=>days(t)>days(m)?t:m, yTrips[0]);
-    const yCat = {};
-    yTrips.forEach(t=>{ yCat[t.cat]=(yCat[t.cat]||0)+1; });
-    const topCat = Object.entries(yCat).sort((a,b)=>b[1]-a[1])[0];
+      const yTrips = trips.filter(t=>(t.dateFrom||'').slice(0,4)===y);
+      const yLong  = yTrips.reduce((m,t)=>days(t)>days(m)?t:m, yTrips[0]);
+      const yCat = {};
+      yTrips.forEach(t=>{ yCat[t.cat]=(yCat[t.cat]||0)+1; });
+      const topCat = Object.entries(yCat).sort((a,b)=>b[1]-a[1])[0];
 
-    h += '<div class="yoy-card">'+
-      '<div class="yoy-head"><span class="yoy-yr">'+y+'</span>'+trend+'</div>'+
-      '<div class="yoy-row"><span>'+(sk?'dní preč':'days away')+'</span><b>'+v.d+'</b></div>'+
-      '<div class="yoy-row"><span>'+(sk?'výletov':'trips')+'</span><b>'+v.n+'</b></div>'+
-      '<div class="yoy-row"><span>'+(sk?'krajín':'countries')+'</span><b>'+v.c.size+'</b></div>'+
-      '<div class="yoy-bar"><i style="width:'+pct+'%"></i></div>'+
-      (yLong ? '<div class="yoy-top">'+(sk?'najdlhší':'longest')+': <b>'+esc(nm(yLong))+'</b> ('+days(yLong)+'d)</div>' : '')+
-      (topCat ? '<div class="yoy-top">'+(sk?'najčastejšie':'mostly')+': <b>'+esc(catLabel(topCat[0]))+'</b></div>' : '')+
-      '<div class="yoy-ctrs">'+esc([...v.c].join(', '))+'</div>'+
-    '</div>';
-  });
-  h += '</div></div>';
+      h += '<div class="yoy-card" onclick="setStatFilter(\'year\',\''+y+'\')">'+
+        '<div class="yoy-head"><span class="yoy-yr">'+y+'</span>'+trend+'</div>'+
+        '<div class="yoy-row"><span>'+(sk?'dní preč':'days away')+'</span><b>'+v.d+'</b></div>'+
+        '<div class="yoy-row"><span>'+(sk?'výletov':'trips')+'</span><b>'+v.n+'</b></div>'+
+        '<div class="yoy-row"><span>'+(sk?'krajín':'countries')+'</span><b>'+v.c.size+'</b></div>'+
+        '<div class="yoy-bar"><i style="width:'+pct+'%"></i></div>'+
+        (yLong ? '<div class="yoy-top">'+(sk?'najdlhší':'longest')+': <b>'+esc(nm(yLong))+'</b> ('+days(yLong)+'d)</div>' : '')+
+        (topCat ? '<div class="yoy-top">'+(sk?'najčastejšie':'mostly')+': <b>'+esc(catLabel(topCat[0]))+'</b></div>' : '')+
+        '<div class="yoy-ctrs">'+esc([...v.c].join(', '))+'</div>'+
+      '</div>';
+    });
+    h += '</div>';
+  }
+  h += '</div>';
 
   /* seasonality */
-  h += '<div class="stat-section"><div class="stat-title">'+(sk?'Kedy cestujeme':'When we travel')+'</div><div class="bar-chart">';
+  h += '<div class="stat-section"><div class="stat-title">'+(sk?'Kedy cestujeme':'When we travel')+
+    '<span class="stat-hint">'+(sk?'klikni':'click')+'</span></div><div class="bar-chart">';
   mon.forEach((v,i)=>{
     const pct = Math.round(v/maxMon*100);
-    h += bar((sk?MON_SK:MON_EN)[i], pct, 'var(--f)', v+'×');
+    h += bar((sk?MON_SK:MON_EN)[i], pct, 'var(--f)', v+'×', 'month', i);
   });
   h += '</div></div>';
 
-  /* countries table */
+  /* countries */
   const ctab = {};
   trips.forEach(t=>{
     (t.countryEn||'').split(' / ').forEach(cRaw=>{
@@ -4224,52 +4811,25 @@ function buildStats(){
     });
   });
   const crows = Object.entries(ctab).sort((a,b)=> b[1].d - a[1].d);
-  h += '<div class="stat-section"><div class="stat-title">'+(sk?'Krajiny':'Countries')+'</div>'+
+  h += '<div class="stat-section"><div class="stat-title">'+(sk?'Krajiny':'Countries')+
+    '<span class="stat-hint">'+(sk?'klikni':'click')+'</span></div>'+
     '<table class="ctry-table"><thead><tr>'+
       '<th>'+(sk?'Krajina':'Country')+'</th>'+
       '<th>'+(sk?'Výletov':'Trips')+'</th>'+
       '<th>'+(sk?'Dní':'Days')+'</th>'+
     '</tr></thead><tbody>';
   crows.forEach(([c,v])=>{
-    h += '<tr><td>'+esc(c)+'</td><td>'+v.n+'</td><td>'+v.d+'</td></tr>';
+    const active = statFilter && statFilter.kind === 'country' && statFilter.value === c;
+    h += '<tr class="ctry-row'+(active?' on':'')+'" onclick="setStatFilter(\'country\',\''+
+      c.replace(/'/g,"\\'")+'\')"><td>'+esc(c)+'</td><td>'+v.n+'</td><td>'+v.d+'</td></tr>';
   });
   h += '</tbody></table></div>';
 
-  /* fun facts — every line derived from the live trip list */
-  h += '<div class="stat-section"><div class="stat-title">'+(sk?'Zaujímavosti':'The details')+'</div><div class="hl-box"><p>';
-  const skiSeasons = new Set(trips.filter(t=>t.cat==='ski').map(t=>(t.dateFrom||'').slice(0,4))).size;
-
-  if(sk){
-    h += '<strong>Spolu</strong> — '+daysTogether.toLocaleString(loc)+' '+plural(daysTogether,'day')+', z toho '+totalDays+' na cestách ('+pctTravelling+' %).<br>';
-    h += '<strong>Najdlhší výlet</strong> — '+esc(nm(longest))+' ('+esc(ct(longest))+'), '+qty(days(longest),'day')+'.<br>';
-    h += '<strong>Najbohatší rok</strong> — '+bestYear+' ('+qty(ymap[bestYear].d,'day')+'), <strong>najrušnejší</strong> '+busiestYear+' ('+qty(ymap[busiestYear].n,'trip')+').<br>';
-    h += '<strong>Doma vs. vonku</strong> — '+qty(home,'trip')+' po Slovensku, '+abroad+' do zahraničia.<br>';
-    if(cat.ski.d) h += '<strong>'+qty(cat.ski.d,'day')+' na lyžiach</strong> počas '+skiSeasons+' '+(skiSeasons===1?'sezóny':(skiSeasons<5?'sezón':'sezón'))+'.<br>';
-    if(repeats.length) h += '<strong>Kam sa vraciame</strong> — '+repeats.slice(0,3).map(([p,n])=>esc(p)+' ('+n+'× spolu)').join(', ')+'.<br>';
-    if(farthest) h += '<strong>Najďalej</strong> — '+esc(nm(farthest))+' ('+esc(ct(farthest))+'), '+farthest._dist.toLocaleString(loc)+' km vzdušnou čiarou.<br>';
-    if(nearest)  h += '<strong>Najbližšie v zahraničí</strong> — '+esc(nm(nearest))+' ('+esc(ct(nearest))+'), '+nearest._dist+' km.<br>';
-    if(north) h += '<strong>Najsevernejšie</strong> — '+esc(nm(north))+' &middot; <strong>najjužnejšie</strong> — '+esc(nm(south))+'.<br>';
-    if(east)  h += '<strong>Najvýchodnejšie</strong> — '+esc(nm(east))+' &middot; <strong>najzápadnejšie</strong> — '+esc(nm(west))+'.<br>';
-    h += '<strong>Spolu prejdené</strong> — približne '+totalKm.toLocaleString(loc)+' km (tam a späť, vzdušnou čiarou).<br>';
-    if(proposal) h += '<strong>'+esc(fmt(proposal.dateFrom,proposal.dateTo))+'</strong> — '+esc(nm(proposal))+'.';
-  } else {
-    h += '<strong>Together</strong> — '+daysTogether.toLocaleString(loc)+' days, '+totalDays+' of them away ('+pctTravelling+'%).<br>';
-    h += '<strong>Longest trip</strong> — '+esc(nm(longest))+' ('+esc(ct(longest))+'), '+days(longest)+' days.<br>';
-    h += '<strong>Biggest year</strong> — '+bestYear+' ('+ymap[bestYear].d+' days), <strong>busiest</strong> '+busiestYear+' ('+ymap[busiestYear].n+' trips).<br>';
-    h += '<strong>Home vs. away</strong> — '+home+' trips in Slovakia, '+abroad+' abroad.<br>';
-    if(cat.ski.d) h += '<strong>'+cat.ski.d+' days on skis</strong> across '+skiSeasons+' seasons.<br>';
-    if(repeats.length) h += '<strong>Places we keep returning to</strong> — '+repeats.slice(0,3).map(([p,n])=>esc(p)+' ('+n+'× together)').join(', ')+'.<br>';
-    if(farthest) h += '<strong>Furthest</strong> — '+esc(nm(farthest))+' ('+esc(ct(farthest))+'), '+farthest._dist.toLocaleString(loc)+' km as the crow flies.<br>';
-    if(nearest)  h += '<strong>Closest trip abroad</strong> — '+esc(nm(nearest))+' ('+esc(ct(nearest))+'), '+nearest._dist+' km.<br>';
-    if(north) h += '<strong>Northernmost</strong> — '+esc(nm(north))+' &middot; <strong>southernmost</strong> — '+esc(nm(south))+'.<br>';
-    if(east)  h += '<strong>Easternmost</strong> — '+esc(nm(east))+' &middot; <strong>westernmost</strong> — '+esc(nm(west))+'.<br>';
-    h += '<strong>Total distance</strong> — roughly '+totalKm.toLocaleString(loc)+' km (there and back, as the crow flies).<br>';
-    if(proposal) h += '<strong>'+esc(fmt(proposal.dateFrom,proposal.dateTo))+'</strong> — '+esc(nm(proposal))+'.';
-  }
-  h += '</p></div></div>';
+  h += funFacts(trips, all, { sk, loc, cat, ymap, yKeys, ctrs, totalDays, daysTogether, pctTravelling, mon });
 
   box.innerHTML = h;
 }
+
 
 /* ═══════════ MODAL ═══════════ */
 let openId = null;
@@ -5650,6 +6210,7 @@ function wireDates(prefix){
 /* Paint immediately from cache/seed so the app is never blank, then
    reconcile with Supabase when it answers. */
 refresh();
+buildTl();          // the landing tab, so it must be painted on boot
 updateAdminUi();
 
 // the add form and the edit form both get place autofill and date flow
