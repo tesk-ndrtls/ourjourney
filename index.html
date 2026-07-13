@@ -158,7 +158,11 @@ body.admin-mode #vadmin{padding-top:calc(var(--bh) + var(--safe-top))}
   border-bottom:2px solid var(--r);
   padding:.55rem .5rem;
   gap:.3rem;
+  transition:border-color .2s;
 }
+/* the numbers describe a subset, not everything — say so quietly */
+.hero-slim.filtered{border-bottom-color:var(--go)}
+.hero-slim.filtered .hs-stat b{color:var(--go)}
 .hs-stat{
   flex:1;
   display:flex;flex-direction:column;align-items:center;
@@ -613,6 +617,19 @@ body.admin-mode #vadmin{padding-top:calc(var(--bh) + var(--safe-top))}
    on the home screen. Swipe is the real control; the dots just say where
    you are and how much is left. */
 .ts-dots.off{display:none}
+
+/* Scroll down and the dots throw themselves upward out of the way; scroll
+   back to the top and they drop in again. They're only useful when you're
+   looking at the trip's head — once you're reading the notes or the gallery
+   they're just something in front of the content. */
+.ts-dots.hidden{
+  transform:translateX(-50%) translateY(140%);
+  opacity:0;
+  pointer-events:none;
+}
+.ts-dots{
+  transition:transform .3s cubic-bezier(.4,0,.2,1), opacity .22s ease;
+}
 .ts-dots{
   position:fixed;z-index:2100;
   left:50%;bottom:calc(env(safe-area-inset-bottom, 0px) + 1rem);
@@ -678,6 +695,8 @@ body.admin-mode #vadmin{padding-top:calc(var(--bh) + var(--safe-top))}
   pointer-events:none;
 }
 .ts-hint.on{opacity:1}
+.ts-dots.hidden ~ .ts-hint,
+.trip-sheet.dots-hidden .ts-hint{opacity:0}
 
 /* ── hero ── */
 .ts-hero{
@@ -967,20 +986,16 @@ body:not(.is-admin) .ts-actions .mbtn:not(:last-child){display:none}
 .play-btn:disabled{opacity:.6;cursor:default}
 .play-ico{font-size:.75rem;line-height:1}
 
-/* only shown once you've drilled into a country */
-.reset-btn{
-  position:absolute;z-index:600;
-  left:.7rem;top:.75rem;
+/* Sits at the head of the filter rail, not floating over the map — as a
+   floating button it covered the numbers strip underneath it. Only appears
+   when there's actually something to clear. */
+.reset-chip{
   display:none;
-  background:var(--e);color:var(--s);
-  border:2px solid var(--go);
-  box-shadow:2px 2px 0 rgba(26,15,5,.5);
-  padding:.45rem .7rem;
-  font-family:var(--ff-b);font-size:.58rem;font-weight:700;
-  letter-spacing:.08em;text-transform:uppercase;cursor:pointer;
+  align-items:center;gap:.25rem;
+  background:var(--e);border-color:var(--go);color:var(--go);
 }
-.reset-btn.on{display:block}
-.reset-btn:hover{background:var(--bm)}
+.reset-chip.on{display:flex}
+.reset-chip:hover{background:var(--bm);color:var(--s)}
 
 /* country hover tooltip */
 .ctry-tip{
@@ -1346,6 +1361,117 @@ select.fi{
 }
 .exif-note.on{display:block}
 
+
+/* ══ STOPS EDITOR ══ */
+.stops-list{margin-bottom:.6rem}
+.stops-empty{
+  border:2px dashed var(--s);
+  background:var(--cd);
+  padding:.7rem;
+  text-align:center;
+  font-size:.66rem;color:var(--gh);
+}
+.stop-row{
+  display:flex;align-items:center;gap:.5rem;
+  background:var(--w);
+  border:2px solid var(--e);
+  box-shadow:2px 2px 0 var(--s);
+  padding:.45rem .55rem;
+  margin-bottom:.35rem;
+}
+.stop-row.unresolved{border-color:var(--r);border-style:dashed}
+.stop-num{
+  flex-shrink:0;
+  width:20px;height:20px;
+  display:flex;align-items:center;justify-content:center;
+  background:var(--e);color:var(--s);
+  font-size:.6rem;font-weight:700;
+}
+.stop-body{flex:1;min-width:0}
+.stop-name{
+  font-family:var(--ff-d);
+  font-size:.82rem;font-weight:700;color:var(--e);
+  line-height:1.2;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+.stop-coords{
+  font-size:.58rem;color:var(--gh);
+  margin-top:.1rem;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+.stop-warn{color:var(--r);font-weight:600}
+.stop-up,.stop-del{
+  flex-shrink:0;
+  width:24px;height:24px;
+  padding:0;line-height:1;
+  border:1.5px solid var(--s);
+  background:var(--w);color:var(--gh);
+  font-size:.6rem;
+  display:flex;align-items:center;justify-content:center;
+  cursor:pointer;
+}
+.stop-up:hover{border-color:var(--e);color:var(--e)}
+.stop-del:hover{background:var(--r);color:var(--w);border-color:var(--r)}
+.stop-up:disabled{opacity:.3;cursor:default}
+
+.stop-add{margin-bottom:.4rem}
+.stop-in-name{margin-bottom:.35rem}
+.stop-coord-row{display:flex;gap:.35rem}
+.stop-in-co{flex:1;min-width:0}
+.stop-add-btn{
+  flex-shrink:0;
+  width:44px;
+  border:2px solid var(--e);
+  background:var(--r);color:var(--s);
+  font-size:1rem;font-weight:700;
+  cursor:pointer;
+  box-shadow:2px 2px 0 var(--e);
+  transition:transform .1s,box-shadow .1s;
+}
+.stop-add-btn:hover{background:var(--rl);transform:translate(-1px,-1px);box-shadow:3px 3px 0 var(--e)}
+.stop-add-btn:active{transform:translate(0,0);box-shadow:1px 1px 0 var(--e)}
+
+/* ══ LIGHTBOX (swipeable) ══ */
+.lb-stage{
+  display:flex;align-items:center;justify-content:center;
+  width:100%;height:100%;
+  touch-action:pan-y pinch-zoom;
+}
+.lb.swiping{touch-action:none}
+.lb-count{
+  display:none;
+  position:absolute;top:1rem;left:1rem;
+  background:rgba(26,15,5,.75);
+  border:1px solid rgba(226,207,160,.3);
+  backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);
+  color:var(--sl);
+  font-size:.6rem;font-weight:700;letter-spacing:.08em;
+  padding:.28rem .5rem;
+  font-variant-numeric:tabular-nums;
+}
+.lb-count.on{display:block}
+.lb-dots{
+  display:none;
+  position:absolute;bottom:calc(env(safe-area-inset-bottom, 0px) + 1.1rem);
+  left:50%;transform:translateX(-50%);
+  gap:6px;
+  padding:.45rem .75rem;
+  background:rgba(26,15,5,.72);
+  border:1px solid rgba(226,207,160,.28);
+  backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);
+  max-width:calc(100vw - 2.5rem);
+  overflow:hidden;
+}
+.lb-dots.on{display:flex;align-items:center}
+.lb-dot{
+  width:7px;height:7px;border-radius:50%;
+  background:var(--sl);opacity:.4;
+  border:none;padding:0;flex-shrink:0;
+  cursor:pointer;
+  transition:width .2s,opacity .2s,background .2s;
+}
+.lb-dot.on{width:20px;border-radius:4px;background:var(--go);opacity:1}
+
 /* ══ TOAST ══ */
 .toast{position:fixed;bottom:1.3rem;left:50%;z-index:2000;transform:translateX(-50%) translateY(55px);background:var(--f);color:var(--c);border:2px solid var(--fl);padding:.52rem 1.1rem;font-size:.7rem;font-weight:600;letter-spacing:.04em;white-space:nowrap;transition:transform .28s cubic-bezier(.22,1,.36,1)}
 .toast.on{transform:translateX(-50%) translateY(0)}
@@ -1432,7 +1558,7 @@ select.fi{
   <div class="view on" id="vmap" style="position:relative">
     <!-- one slim strip: the numbers, nothing else. The headline and the
          "together since" line were pretty but they were eating the map. -->
-    <div class="hero-slim">
+    <div class="hero-slim" id="hero-slim">
       <div class="hs-stat"><b id="h-trips">–</b><span class="t-sk">výletov</span><span class="t-en">trips</span></div>
       <div class="hs-stat"><b id="h-ctrs">–</b><span class="t-sk">krajín</span><span class="t-en">countries</span></div>
       <div class="hs-stat"><b id="h-days">–</b><span class="t-sk">dní</span><span class="t-en">days</span></div>
@@ -1442,6 +1568,9 @@ select.fi{
     <!-- filters and Play share one scrollable rail, so Play sits in the
          controls instead of floating over the map -->
     <div class="map-filters">
+      <button class="fchip reset-chip" id="reset-btn" onclick="resetMap()">
+        &#10005; <span class="t-sk">Zrušiť</span><span class="t-en">Clear</span>
+      </button>
       <button class="fchip play-chip" id="play-btn" onclick="playJourney()">
         <span class="play-ico">&#9654;</span>
         <span class="t-sk">Prehrať</span><span class="t-en">Play</span>
@@ -1457,9 +1586,6 @@ select.fi{
     <div id="map">
       <div class="skel-map skel" id="map-skel"><span>Načítavam mapu…</span></div>
     </div>
-    <button class="reset-btn" id="reset-btn" onclick="resetMap()">
-      <span class="t-sk">Späť na mapu</span><span class="t-en">Back to map</span>
-    </button>
     <div class="play-hud" id="play-hud">
       <div class="hud-name" id="hud-name"></div>
       <div class="hud-date" id="hud-date"></div>
@@ -1530,6 +1656,30 @@ select.fi{
         </div>
       </div>
       <div class="fr"><label class="flbl"><span class="t-sk">Miesta</span><span class="t-en">Places</span></label><input class="fi" id="f-places" placeholder="Agadir, Taghazout, Marrakesh"></div>
+      <div class="fr">
+        <label class="flbl">
+          <span class="t-sk">Zastávky</span><span class="t-en">Stops</span>
+          <span class="auto-tag">GPS auto</span>
+        </label>
+        <div class="stops-list" id="f-stops-list"></div>
+        <div class="stop-add">
+          <input class="fi stop-in-name" id="f-stop-name"
+                 placeholder="Benátky, Club Lucia, pláž…" autocomplete="off">
+          <datalist id="f-stop-list"></datalist>
+          <div class="stop-coord-row">
+            <input class="fi stop-in-co" id="f-stop-lat"
+                   type="number" step="0.0001" placeholder="lat">
+            <input class="fi stop-in-co" id="f-stop-lng"
+                   type="number" step="0.0001" placeholder="lng">
+            <button class="stop-add-btn" onclick="addStop('f-')">+</button>
+          </div>
+        </div>
+        <div class="fhint">
+          <span class="t-sk">Známe mesto nájdeme sami. Podnik alebo pláž — doplň súradnice (pravý klik v Google Maps).</span>
+          <span class="t-en">We'll find a known town. For a venue or a beach, add coordinates (right-click in Google Maps).</span>
+        </div>
+      </div>
+
       <div class="fl2">
         <div class="fr"><label class="flbl"><span class="t-sk">Kategória</span><span class="t-en">Category</span></label>
           <select class="fi" id="f-cat">
@@ -1637,6 +1787,30 @@ select.fi{
           <label class="elbl"><span class="t-sk">Miesta</span><span class="t-en">Places</span></label>
           <input class="einput" id="e-places">
         </div>
+      <div class="efield">
+        <label class="elbl">
+          <span class="t-sk">Zastávky</span><span class="t-en">Stops</span>
+          <span class="auto-tag">GPS auto</span>
+        </label>
+        <div class="stops-list" id="e-stops-list"></div>
+        <div class="stop-add">
+          <input class="einput stop-in-name" id="e-stop-name"
+                 placeholder="Benátky, Club Lucia…" autocomplete="off">
+          <datalist id="e-stop-list"></datalist>
+          <div class="stop-coord-row">
+            <input class="einput stop-in-co" id="e-stop-lat"
+                   type="number" step="0.0001" placeholder="lat">
+            <input class="einput stop-in-co" id="e-stop-lng"
+                   type="number" step="0.0001" placeholder="lng">
+            <button class="stop-add-btn" onclick="addStop('e-')">+</button>
+          </div>
+        </div>
+        <div class="fhint">
+          <span class="t-sk">Známe mesto nájdeme sami. Podnik alebo pláž — doplň súradnice (pravý klik v Google Maps).</span>
+          <span class="t-en">We'll find a known town. For a venue or a beach, add coordinates (right-click in Google Maps).</span>
+        </div>
+      </div>
+
         <div class="erow">
           <div class="efield">
             <label class="elbl"><span class="t-sk">Kategória</span><span class="t-en">Category</span></label>
@@ -1704,9 +1878,13 @@ select.fi{
 </div>
 
 <!-- LIGHTBOX -->
-<div class="lb" id="lightbox" onclick="closeLb()">
-  <button class="lb-close" onclick="closeLb()">&#10005;</button>
-  <img id="lb-img" src="" alt="">
+<div class="lb" id="lightbox">
+  <button class="lb-close" onclick="closeLb()" aria-label="Close">&#10005;</button>
+  <div class="lb-stage" id="lb-stage">
+    <img id="lb-img" src="" alt="">
+  </div>
+  <div class="lb-count" id="lb-count"></div>
+  <div class="lb-dots" id="lb-dots"></div>
 </div>
 
 <div class="toast" id="toast"></div>
@@ -1725,7 +1903,7 @@ const SEED = [
 {id:8,nameSk:"Kanárske ostrovy",nameEn:"Canary Islands",countrySk:"Španielsko",countryEn:"Spain",dateFrom:"2019-10-29",dateTo:"2019-11-08",lat:28.2916,lng:-16.6291,places:"Tenerife, Fuerteventura",cat:"holiday",flag:"🇪🇸",noteSk:"Dva ostrovy, jedenásť dní. Sopky, duny a atlantický vietor.",noteEn:"Two islands, eleven days. Volcanoes, dunes and Atlantic wind.",photo:null},
 {id:9,nameSk:"Turček",nameEn:"Turček",countrySk:"Slovensko",countryEn:"Slovakia",dateFrom:"2019-12-28",dateTo:"2019-12-28",lat:48.6800,lng:18.9200,places:"Turček, Krahule",cat:"ski",flag:"🇸🇰",noteSk:"Prvá lyžovačka spolu. Krátka, studená, dobrá.",noteEn:"Our first day on skis together. Short, cold, good.",photo:null},
 {id:10,nameSk:"Hochkar",nameEn:"Hochkar",countrySk:"Rakúsko",countryEn:"Austria",dateFrom:"2020-01-10",dateTo:"2020-01-12",lat:47.6230,lng:14.9350,places:"Hochkar",cat:"ski",flag:"🇦🇹",noteSk:"Prvé rakúske svahy. Sneh, aký sme doma nevideli.",noteEn:"First Austrian slopes. Snow we don't get at home.",photo:null},
-{id:11,nameSk:"Drážďany",nameEn:"Dresden",countrySk:"Nemecko",countryEn:"Germany",dateFrom:"2020-01-23",dateTo:"2020-01-23",lat:51.0504,lng:13.7373,places:"Drážďany — Backyard Babies, The Bones",cat:"gig",flag:"🇩🇪",noteSk:"Backyard Babies a The Bones. Posledný koncert pred tým, ako sa svet zavrel.",noteEn:"Backyard Babies and The Bones. The last gig before the world shut down.",photo:null},
+{id:11,nameSk:"Drážďany",nameEn:"Dresden",countrySk:"Nemecko",countryEn:"Germany",dateFrom:"2020-01-23",dateTo:"2020-01-23",lat:51.0623,lng:13.7375,places:"Drážďany — Backyard Babies, The Bones",cat:"gig",flag:"🇩🇪",noteSk:"Backyard Babies a The Bones. Posledný koncert pred tým, ako sa svet zavrel.",noteEn:"Backyard Babies and The Bones. The last gig before the world shut down.",photo:null},
 {id:12,nameSk:"Veľká Homoľa",nameEn:"Veľká Homoľa",countrySk:"Slovensko",countryEn:"Slovakia",dateFrom:"2020-08-02",dateTo:"2020-08-02",lat:48.4090,lng:17.2680,places:"Veľká Homoľa",cat:"trip",flag:"🇸🇰",noteSk:"Covidové leto. Rozhľadňa, výhľad a nič iné sa nedalo robiť.",noteEn:"The covid summer. A lookout tower, a view, and not much else on offer.",photo:null},
 {id:13,nameSk:"Krížna",nameEn:"Krížna",countrySk:"Slovensko",countryEn:"Slovakia",dateFrom:"2020-08-20",dateTo:"2020-08-20",lat:48.8470,lng:19.5260,places:"Krížna, Veľká Fatra",cat:"trip",flag:"🇸🇰",noteSk:"Hrebeň Veľkej Fatry. Dlhý výstup, ešte dlhší výhľad.",noteEn:"The Veľká Fatra ridge. A long climb, an even longer view.",photo:null},
 {id:14,nameSk:"Vrátna",nameEn:"Vrátna",countrySk:"Slovensko",countryEn:"Slovakia",dateFrom:"2021-07-03",dateTo:"2021-07-04",lat:49.2380,lng:18.9540,places:"Vrátna dolina",cat:"trip",flag:"🇸🇰",noteSk:"Malá Fatra s Karinkinými rodičmi. Lanovka a horský vzduch.",noteEn:"Malá Fatra with Karinka's parents. Cable car and mountain air.",photo:null},
@@ -1734,9 +1912,9 @@ const SEED = [
 {id:17,nameSk:"Orava a Čičmany",nameEn:"Orava and Čičmany",countrySk:"Slovensko",countryEn:"Slovakia",dateFrom:"2021-09-12",dateTo:"2021-09-15",lat:49.2610,lng:19.3550,stops:[{n:"Oravský hrad",lat:49.2536,lng:19.34,iso:"sk"},{n:"Oravská priehrada",lat:49.3167,lng:19.5,iso:"sk"},{n:"Čičmany",lat:49.0333,lng:18.6167,iso:"sk"}],places:"Oravský hrad, Oravská priehrada, Oravská Polhora, Čičmany",cat:"weekend",flag:"🇸🇰",noteSk:"Oravský hrad nad riekou. A potom maľované domy v Čičmanoch.",noteEn:"Orava Castle above the river. Then the painted houses of Čičmany.",photo:null},
 {id:18,nameSk:"Ždiar a Liptovská Mara",nameEn:"Ždiar and Liptovská Mara",countrySk:"Slovensko",countryEn:"Slovakia",dateFrom:"2021-11-01",dateTo:"2021-11-05",lat:49.2568,lng:20.1413,stops:[{n:"Ždiar",lat:49.2568,lng:20.2192,iso:"sk"},{n:"Liptovská Mara",lat:49.0833,lng:19.5333,iso:"sk"}],places:"Ždiar, Liptovská Mara",cat:"weekend",flag:"🇸🇰",noteSk:"Novembrové hory. Prázdno, ticho a hmla nad priehradou.",noteEn:"November in the mountains. Empty, quiet, fog over the reservoir.",photo:null},
 {id:19,nameSk:"Katschberg",nameEn:"Katschberg",countrySk:"Rakúsko",countryEn:"Austria",dateFrom:"2022-03-08",dateTo:"2022-03-13",lat:47.0598,lng:13.5534,places:"Katschberg",cat:"ski",flag:"🇦🇹",noteSk:"Prvý Katschberg s Lukyho rodinou. Šesť dní na svahoch.",noteEn:"First Katschberg with Luky's family. Six days on the slopes.",photo:null},
-{id:20,nameSk:"Barcelona",nameEn:"Barcelona",countrySk:"Španielsko",countryEn:"Spain",dateFrom:"2022-06-03",dateTo:"2022-06-08",lat:41.3851,lng:2.1734,places:"Tarragona, Barcelona — Red Hot Chili Peppers",cat:"gig",flag:"🇪🇸",noteSk:"RHCP v Barcelone. Tarragona ako bonus a šesť dní slnka.",noteEn:"RHCP in Barcelona. Tarragona as a bonus and six days of sun.",photo:null},
+{id:20,nameSk:"Barcelona",nameEn:"Barcelona",countrySk:"Španielsko",countryEn:"Spain",dateFrom:"2022-06-03",dateTo:"2022-06-08",lat:41.1189,lng:1.2445,places:"Tarragona, Barcelona — Red Hot Chili Peppers",cat:"gig",flag:"🇪🇸",noteSk:"RHCP v Barcelone. Tarragona ako bonus a šesť dní slnka.",noteEn:"RHCP in Barcelona. Tarragona as a bonus and six days of sun.",photo:null},
 {id:21,nameSk:"Bratislava",nameEn:"Bratislava",countrySk:"Slovensko",countryEn:"Slovakia",dateFrom:"2022-07-02",dateTo:"2022-07-02",lat:48.1486,lng:17.1077,places:"Bratislava — prvé korčuľovanie",cat:"trip",flag:"🇸🇰",noteSk:"Prvé korčuľovanie spolu. V júli.",noteEn:"Our first time skating together. In July.",photo:null},
-{id:22,nameSk:"Viedeň",nameEn:"Vienna",countrySk:"Rakúsko",countryEn:"Austria",dateFrom:"2022-07-05",dateTo:"2022-07-05",lat:48.2082,lng:16.3738,places:"Haus des Meeres, Viedeň",cat:"trip",flag:"🇦🇹",noteSk:"Haus des Meeres. Žraloky vo vojnovom bunkri.",noteEn:"Haus des Meeres. Sharks inside a wartime flak tower.",photo:null},
+{id:22,nameSk:"Viedeň",nameEn:"Vienna",countrySk:"Rakúsko",countryEn:"Austria",dateFrom:"2022-07-05",dateTo:"2022-07-05",lat:48.1936,lng:16.3517,places:"Haus des Meeres, Viedeň",cat:"trip",flag:"🇦🇹",noteSk:"Haus des Meeres. Žraloky vo vojnovom bunkri.",noteEn:"Haus des Meeres. Sharks inside a wartime flak tower.",photo:null},
 {id:23,nameSk:"Balaton",nameEn:"Lake Balaton",countrySk:"Maďarsko",countryEn:"Hungary",dateFrom:"2022-08-19",dateTo:"2022-08-21",lat:46.8160,lng:17.8136,places:"Balaton",cat:"weekend",flag:"🇭🇺",noteSk:"Víkend pri Balatone. Plytká teplá voda a langoše.",noteEn:"A weekend at Balaton. Shallow warm water and lángos.",photo:null},
 {id:24,nameSk:"Trenčín",nameEn:"Trenčín",countrySk:"Slovensko",countryEn:"Slovakia",dateFrom:"2022-08-26",dateTo:"2022-08-27",lat:48.8944,lng:18.0416,places:"Trenčín — Punkáči deťom, The Bones",cat:"gig",flag:"🇸🇰",noteSk:"Punkáči deťom. The Bones druhýkrát — a tentoraz doma.",noteEn:"Punkáči deťom festival. The Bones for the second time — this time at home.",photo:null},
 {id:25,nameSk:"Terchová",nameEn:"Terchová",countrySk:"Slovensko",countryEn:"Slovakia",dateFrom:"2022-09-01",dateTo:"2022-09-03",lat:49.2617,lng:18.9689,places:"Terchová — Rastova štyridsiatka",cat:"weekend",flag:"🇸🇰",noteSk:"Chata v Terchovej a Rastove štyridsiate narodeniny.",noteEn:"A chalet in Terchová and Rasto's fortieth birthday.",photo:null},
@@ -1744,10 +1922,10 @@ const SEED = [
 {id:27,nameSk:"Barcelona",nameEn:"Barcelona",countrySk:"Španielsko",countryEn:"Spain",dateFrom:"2022-12-02",dateTo:"2022-12-04",lat:41.3851,lng:2.1734,places:"Barcelona — Cock Sparrer",cat:"gig",flag:"🇪🇸",noteSk:"Cock Sparrer po prvý raz. Barcelona v decembri.",noteEn:"Cock Sparrer for the first time. Barcelona in December.",photo:null},
 {id:28,nameSk:"Katschberg",nameEn:"Katschberg",countrySk:"Rakúsko",countryEn:"Austria",dateFrom:"2023-03-01",dateTo:"2023-03-04",lat:47.0598,lng:13.5534,places:"Katschberg",cat:"ski",flag:"🇦🇹",noteSk:"Katschberg druhýkrát. Kariny aj Lukyho rodičia. Už je to zvyk.",noteEn:"Katschberg again. Both sets of parents. It's becoming a habit.",photo:null},
 {id:29,nameSk:"Tatranská Lomnica",nameEn:"Tatranská Lomnica",countrySk:"Slovensko",countryEn:"Slovakia",dateFrom:"2023-04-29",dateTo:"2023-05-01",lat:49.1656,lng:20.2771,places:"Tatranská Lomnica, Skalnaté pleso",cat:"ski",flag:"🇸🇰",noteSk:"Jarné lyžovanie na Skalnatom plese. Sneh v máji.",noteEn:"Spring skiing at Skalnaté pleso. Snow in May.",photo:null},
-{id:30,nameSk:"Tábor",nameEn:"Tábor",countrySk:"Česko",countryEn:"Czech Republic",dateFrom:"2023-06-22",dateTo:"2023-06-23",lat:49.4144,lng:14.6578,stops:[{n:"Dvůr Králové",lat:50.4326,lng:15.8181,iso:"cz"},{n:"Tábor",lat:49.4144,lng:14.6578,iso:"cz"}],places:"Dvůr Králové ZOO, Tábor — Mighty Sounds, Rancid",cat:"gig",flag:"🇨🇿",noteSk:"Cez deň zoo vo Dvore Králové, večer Rancid na Mighty Sounds.",noteEn:"Dvůr Králové zoo by day, Rancid at Mighty Sounds by night.",photo:null},
+{id:30,nameSk:"Tábor",nameEn:"Tábor",countrySk:"Česko",countryEn:"Czech Republic",dateFrom:"2023-06-22",dateTo:"2023-06-23",lat:50.4326,lng:15.8181,stops:[{n:"Dvůr Králové",lat:50.4326,lng:15.8181,iso:"cz"},{n:"Tábor",lat:49.4144,lng:14.6578,iso:"cz"}],places:"Dvůr Králové ZOO, Tábor — Mighty Sounds, Rancid",cat:"gig",flag:"🇨🇿",noteSk:"Cez deň zoo vo Dvore Králové, večer Rancid na Mighty Sounds.",noteEn:"Dvůr Králové zoo by day, Rancid at Mighty Sounds by night.",photo:null},
 {id:31,nameSk:"Taliansko, Chorvátsko, Rumunsko",nameEn:"Italy, Croatia, Romania",countrySk:"Taliansko / Chorvátsko / Rumunsko",countryEn:"Italy / Croatia / Romania",dateFrom:"2023-07-29",dateTo:"2023-08-11",lat:45.4654,lng:12.3589,stops:[{n:"Benátky",lat:45.4408,lng:12.3155,iso:"it"},{n:"Novigrad",lat:45.3167,lng:13.5667,iso:"hr"},{n:"Novi Vinodolski",lat:45.1333,lng:14.7833,iso:"hr"},{n:"Transfăgărășan",lat:45.6,lng:24.6167,iso:"ro"}],places:"Sever Talianska, Novigrad, Novi Vinodolski, Transfagaraš",cat:"holiday",flag:"🇮🇹",noteSk:"Štrnásť dní a tri krajiny. Benátky, Jadran a Transfagaraš na koniec.",noteEn:"Fourteen days, three countries. Venice, the Adriatic, and the Transfăgărășan to finish.",photo:null},
-{id:32,nameSk:"Viedeň — prírodovedné múzeum",nameEn:"Vienna",countrySk:"Rakúsko",countryEn:"Austria",dateFrom:"2023-11-02",dateTo:"2023-11-02",lat:48.2082,lng:16.3738,places:"Naturhistorisches Museum, Viedeň",cat:"trip",flag:"🇦🇹",noteSk:"Naturhistorisches Museum. Kostry, meteority a Venuša z Willendorfu.",noteEn:"The Naturhistorisches. Skeletons, meteorites and the Venus of Willendorf.",photo:null},
-{id:33,nameSk:"Londýn",nameEn:"London",countrySk:"Veľká Británia",countryEn:"United Kingdom",dateFrom:"2023-12-15",dateTo:"2023-12-17",lat:51.5074,lng:-0.1278,places:"100 Club, Oxford Street — Cockney Rejects",cat:"gig",flag:"🇬🇧",noteSk:"Cockney Rejects v 100 Clube na Oxford Street. Presne tam, kde majú byť.",noteEn:"Cockney Rejects at the 100 Club on Oxford Street. Exactly where they belong.",photo:null},
+{id:32,nameSk:"Viedeň — prírodovedné múzeum",nameEn:"Vienna",countrySk:"Rakúsko",countryEn:"Austria",dateFrom:"2023-11-02",dateTo:"2023-11-02",lat:48.2053,lng:16.3595,places:"Naturhistorisches Museum, Viedeň",cat:"trip",flag:"🇦🇹",noteSk:"Naturhistorisches Museum. Kostry, meteority a Venuša z Willendorfu.",noteEn:"The Naturhistorisches. Skeletons, meteorites and the Venus of Willendorf.",photo:null},
+{id:33,nameSk:"Londýn",nameEn:"London",countrySk:"Veľká Británia",countryEn:"United Kingdom",dateFrom:"2023-12-15",dateTo:"2023-12-17",lat:51.515,lng:-0.14,places:"100 Club, Oxford Street — Cockney Rejects",cat:"gig",flag:"🇬🇧",noteSk:"Cockney Rejects v 100 Clube na Oxford Street. Presne tam, kde majú byť.",noteEn:"Cockney Rejects at the 100 Club on Oxford Street. Exactly where they belong.",photo:null},
 {id:34,nameSk:"Katschberg",nameEn:"Katschberg",countrySk:"Rakúsko",countryEn:"Austria",dateFrom:"2024-03-03",dateTo:"2024-03-06",lat:47.0598,lng:13.5534,places:"Katschberg",cat:"ski",flag:"🇦🇹",noteSk:"Katschberg tretíkrát. Oficiálne je to tradícia.",noteEn:"Katschberg for the third time. Officially a tradition now.",photo:null},
 {id:35,nameSk:"Oslo",nameEn:"Oslo",countrySk:"Nórsko",countryEn:"Norway",dateFrom:"2024-04-29",dateTo:"2024-05-01",lat:59.9139,lng:10.7522,places:"Oslo — Tenacious D",cat:"gig",flag:"🇳🇴",noteSk:"Tenacious D v Osle. Najsevernejší bod našej mapy.",noteEn:"Tenacious D in Oslo. The northernmost point on our map.",photo:null},
 {id:36,nameSk:"Senj",nameEn:"Senj",countrySk:"Chorvátsko",countryEn:"Croatia",dateFrom:"2024-07-04",dateTo:"2024-07-07",lat:44.9906,lng:14.9058,places:"Senj",cat:"weekend",flag:"🇭🇷",noteSk:"Senj druhýkrát spolu. Vieme presne, kam ísť na kávu.",noteEn:"Senj together for the second time. We know exactly where to get coffee.",photo:null},
@@ -1762,19 +1940,19 @@ const SEED = [
 {id:45,nameSk:"Kostarika",nameEn:"Costa Rica",countrySk:"Kostarika",countryEn:"Costa Rica",dateFrom:"2025-07-03",dateTo:"2025-07-16",lat:9.7489,lng:-83.7534,stops:[{n:"La Fortuna",lat:10.4713,lng:-84.6428,iso:"cr"},{n:"Lake Arenal",lat:10.5,lng:-84.9167,iso:"cr"},{n:"Santa Teresa",lat:9.6425,lng:-85.1667,iso:"cr"},{n:"Montezuma",lat:9.65,lng:-85.0667,iso:"cr"},{n:"Tortuga Island",lat:9.7833,lng:-84.9167,iso:"cr"},{n:"Uvita",lat:9.1667,lng:-83.7333,iso:"cr"},{n:"Drake Bay",lat:8.7,lng:-83.65,iso:"cr"},{n:"Corcovado NP",lat:8.55,lng:-83.5833,iso:"cr"}],places:"La Fortuna, Arenal, Manzanillo, Santa Teresa, Montezuma, Tortuga, Uvita, Drake Bay, Corcovado",cat:"holiday",flag:"🇨🇷",noteSk:"Štrnásť dní a najďalej, ako sme kedy boli. Džungľa, opice, pura vida.",noteEn:"Fourteen days and the furthest we've ever been. Jungle, monkeys, pura vida.",photo:null},
 {id:46,nameSk:"Senj",nameEn:"Senj",countrySk:"Chorvátsko",countryEn:"Croatia",dateFrom:"2025-08-15",dateTo:"2025-08-19",lat:44.9906,lng:14.9058,places:"Senj",cat:"weekend",flag:"🇭🇷",noteSk:"Senj počtvrté spolu. Netreba nič plánovať, len prísť.",noteEn:"Senj together for the fourth time. Nothing left to plan, just turn up.",photo:null},
 {id:47,nameSk:"Brno",nameEn:"Brno",countrySk:"Česko",countryEn:"Czech Republic",dateFrom:"2025-10-03",dateTo:"2025-10-03",lat:49.1951,lng:16.6068,places:"Brno — HC Kometa vs. Rytíři Kladno",cat:"trip",flag:"🇨🇿",noteSk:"HC Kometa Brno proti Rytířom Kladno, s Lukyho rodičmi.",noteEn:"HC Kometa Brno versus Rytíři Kladno, with Luky's parents.",photo:null},
-{id:48,nameSk:"Lipsko",nameEn:"Leipzig",countrySk:"Nemecko",countryEn:"Germany",dateFrom:"2025-12-05",dateTo:"2025-12-06",lat:51.3397,lng:12.3731,places:"Hellraiser, Lipsko — A.C.A.B.",cat:"gig",flag:"🇩🇪",noteSk:"A.C.A.B. v Hellraiseri. Advent v Lipsku.",noteEn:"A.C.A.B. at the Hellraiser. Advent in Leipzig.",photo:null},
-{id:49,nameSk:"Praha",nameEn:"Prague",countrySk:"Česko",countryEn:"Czech Republic",dateFrom:"2026-01-10",dateTo:"2026-01-11",lat:50.0755,lng:14.4378,places:"Futurum, Praha — The Protest",cat:"gig",flag:"🇨🇿",noteSk:"The Protest vo Futurum.",noteEn:"The Protest at Futurum.",photo:null},
+{id:48,nameSk:"Lipsko",nameEn:"Leipzig",countrySk:"Nemecko",countryEn:"Germany",dateFrom:"2025-12-05",dateTo:"2025-12-06",lat:51.3272,lng:12.345,places:"Hellraiser, Lipsko — A.C.A.B.",cat:"gig",flag:"🇩🇪",noteSk:"A.C.A.B. v Hellraiseri. Advent v Lipsku.",noteEn:"A.C.A.B. at the Hellraiser. Advent in Leipzig.",photo:null},
+{id:49,nameSk:"Praha",nameEn:"Prague",countrySk:"Česko",countryEn:"Czech Republic",dateFrom:"2026-01-10",dateTo:"2026-01-11",lat:50.0999,lng:14.4416,places:"Futurum, Praha — The Protest",cat:"gig",flag:"🇨🇿",noteSk:"The Protest vo Futurum.",noteEn:"The Protest at Futurum.",photo:null},
 {id:50,nameSk:"Viedeň",nameEn:"Vienna",countrySk:"Rakúsko",countryEn:"Austria",dateFrom:"2026-02-13",dateTo:"2026-02-13",lat:48.2082,lng:16.3738,places:"Viedeň — korčuľovanie",cat:"trip",flag:"🇦🇹",noteSk:"Korčule vo Viedni, deň pred Valentínom.",noteEn:"Skating in Vienna, the day before Valentine's.",photo:null},
 {id:51,nameSk:"Solún",nameEn:"Thessaloniki",countrySk:"Grécko",countryEn:"Greece",dateFrom:"2026-03-20",dateTo:"2026-03-23",lat:40.6401,lng:22.9444,places:"Solún — Perkele",cat:"gig",flag:"🇬🇷",noteSk:"Perkele v Solúne. Späť v Grécku, tentoraz na jar.",noteEn:"Perkele in Thessaloniki. Back in Greece, this time in spring.",photo:null},
 {id:52,nameSk:"Sardínia",nameEn:"Sardinia",countrySk:"Taliansko",countryEn:"Italy",dateFrom:"2026-05-14",dateTo:"2026-05-18",lat:40.1209,lng:9.0129,places:"Sardínia",cat:"holiday",flag:"🇮🇹",noteSk:"Sardínia. Skaly, tyrkysová voda a takmer nikto.",noteEn:"Sardinia. Rock, turquoise water, and almost nobody around.",photo:null},
-{id:53,nameSk:"Praha",nameEn:"Prague",countrySk:"Česko",countryEn:"Czech Republic",dateFrom:"2026-05-31",dateTo:"2026-05-31",lat:50.0755,lng:14.4378,places:"Lucerna, Praha — Cock Sparrer",cat:"gig",flag:"🇨🇿",noteSk:"Cock Sparrer druhýkrát — tentoraz v Lucerne.",noteEn:"Cock Sparrer for the second time — this time at Lucerna.",photo:null},
-{id:54,nameSk:"Viedeň",nameEn:"Vienna",countrySk:"Rakúsko",countryEn:"Austria",dateFrom:"2026-06-25",dateTo:"2026-06-25",lat:48.2082,lng:16.3738,places:"Club Lucia, Viedeň — Dune Rats",cat:"gig",flag:"🇦🇹",noteSk:"Dune Rats v Club Lucia.",noteEn:"Dune Rats at Club Lucia.",photo:null}
+{id:53,nameSk:"Praha",nameEn:"Prague",countrySk:"Česko",countryEn:"Czech Republic",dateFrom:"2026-05-31",dateTo:"2026-05-31",lat:50.0813,lng:14.4262,places:"Lucerna, Praha — Cock Sparrer",cat:"gig",flag:"🇨🇿",noteSk:"Cock Sparrer druhýkrát — tentoraz v Lucerne.",noteEn:"Cock Sparrer for the second time — this time at Lucerna.",photo:null},
+{id:54,nameSk:"Viedeň",nameEn:"Vienna",countrySk:"Rakúsko",countryEn:"Austria",dateFrom:"2026-06-25",dateTo:"2026-06-25",lat:48.1889,lng:16.3395,places:"Club Lucia, Viedeň — Dune Rats",cat:"gig",flag:"🇦🇹",noteSk:"Dune Rats v Club Lucia.",noteEn:"Dune Rats at Club Lucia.",photo:null}
 ];
 
 /* ═══════════ VERSION ═══════════
    Bump this on every iteration that ships — shown in the topbar next
    to the app icon, same pattern as Kvašung. One place to update. */
-const APP_VERSION = 'v2.8.0';
+const APP_VERSION = 'v2.10.0';
 
 /* ═══════════ PLURALS ═══════════
    Slovak splits nouns three ways by count: 1 takes the singular, 2–4 take
@@ -2415,6 +2593,145 @@ function wireAutofill(prefix, listId){
   });
 }
 
+/* ═══════════ STOPS EDITOR ═══════════
+   A trip is a list of places. Type one and we look it up in the gazetteer;
+   if we know it, we take its coordinates. If we don't — a club, a beach, a
+   friend's cabin — you can paste coordinates yourself, and the stop is just
+   as valid. The gazetteer is a convenience, not a gate. */
+
+let editStops = [];   // the working copy while a form is open
+
+function stopsFromTrip(t){
+  if(!t || !Array.isArray(t.stops)) return [];
+  return t.stops.map(p=>({ n:p.n, lat:p.lat, lng:p.lng, iso:p.iso || null }));
+}
+
+/* Try to resolve a place name to a point. Returns null when we simply don't
+   know it, which is a normal outcome, not an error. */
+function resolveStop(name){
+  const hit = findPlace(name);
+  if(!hit) return null;
+  return { n: (lang === 'sk' ? hit.sk : hit.en), lat: hit.lat, lng: hit.lng, iso: hit.iso };
+}
+
+function renderStops(prefix){
+  const box = document.getElementById(prefix + 'stops-list');
+  if(!box) return;
+
+  if(!editStops.length){
+    box.innerHTML = '<div class="stops-empty">'+
+      (lang === 'sk'
+        ? 'Žiadne zastávky. Bez nich má výlet jeden pin.'
+        : 'No stops yet. Without them the trip gets a single pin.')+
+      '</div>';
+    return;
+  }
+
+  box.innerHTML = editStops.map((p, i)=>{
+    const known = typeof p.lat === 'number' && typeof p.lng === 'number';
+    return '<div class="stop-row'+(known ? '' : ' unresolved')+'">'+
+      '<span class="stop-num">'+(i+1)+'</span>'+
+      '<div class="stop-body">'+
+        '<div class="stop-name">'+esc(p.n)+'</div>'+
+        '<div class="stop-coords">'+
+          (known
+            ? '&#128205; ' + p.lat.toFixed(4) + ', ' + p.lng.toFixed(4) +
+              (p.iso && COUNTRY_INFO[p.iso] ? ' &middot; ' + esc(COUNTRY_INFO[p.iso][lang === 'sk' ? 'sk' : 'en']) : '')
+            : '<span class="stop-warn">'+(lang === 'sk' ? 'Bez súradníc — nezobrazí sa na mape' : 'No coordinates — won\'t show on the map')+'</span>')+
+        '</div>'+
+      '</div>'+
+      '<button class="stop-up" onclick="moveStop(\''+prefix+'\','+i+',-1)" '+
+        (i === 0 ? 'disabled' : '')+' title="'+(lang==='sk'?'Vyššie':'Move up')+'">&#9650;</button>'+
+      '<button class="stop-del" onclick="delStop(\''+prefix+'\','+i+')" '+
+        'title="'+(lang==='sk'?'Vymazať':'Delete')+'">&#10005;</button>'+
+    '</div>';
+  }).join('');
+}
+
+function addStop(prefix){
+  const nameEl = document.getElementById(prefix + 'stop-name');
+  const latEl  = document.getElementById(prefix + 'stop-lat');
+  const lngEl  = document.getElementById(prefix + 'stop-lng');
+
+  const name = nameEl.value.trim();
+  if(!name){
+    showToast(lang === 'sk' ? 'Napíš názov miesta' : 'Enter a place name');
+    return;
+  }
+
+  const manualLat = parseFloat(latEl.value);
+  const manualLng = parseFloat(lngEl.value);
+  const hasManual = !isNaN(manualLat) && !isNaN(manualLng);
+
+  let stop;
+  if(hasManual){
+    // coordinates you typed always win — you know the place, we might not
+    stop = { n: name, lat: +manualLat.toFixed(4), lng: +manualLng.toFixed(4), iso: null };
+    const near = nearestPlace(stop.lat, stop.lng, 120);
+    if(near) stop.iso = near.place.iso;   // still worth knowing the country
+  } else {
+    const found = resolveStop(name);
+    if(found){
+      stop = { n: name, lat: found.lat, lng: found.lng, iso: found.iso };
+    } else {
+      // keep it anyway, flagged, rather than silently dropping what was typed
+      stop = { n: name, lat: null, lng: null, iso: null };
+      showToast(lang === 'sk'
+        ? 'Miesto nepoznáme — doplň súradnice'
+        : "Don't know that place — add coordinates");
+    }
+  }
+
+  editStops.push(stop);
+  nameEl.value = '';
+  latEl.value = '';
+  lngEl.value = '';
+  renderStops(prefix);
+  tap();
+}
+
+function delStop(prefix, i){
+  editStops.splice(i, 1);
+  renderStops(prefix);
+  tap();
+}
+
+function moveStop(prefix, i, dir){
+  const j = i + dir;
+  if(j < 0 || j >= editStops.length) return;
+  const tmp = editStops[i];
+  editStops[i] = editStops[j];
+  editStops[j] = tmp;
+  renderStops(prefix);
+  tap();
+}
+
+/* Only stops with real coordinates can go on the map, so that's all we keep.
+   A stop typed but never located is dropped on save rather than stored as a
+   broken record. */
+function stopsForSave(){
+  const good = editStops.filter(p=>typeof p.lat === 'number' && typeof p.lng === 'number');
+  return good.length ? good : null;
+}
+
+/* Suggestions for the stop name box, same gazetteer as the trip name. */
+function wireStopSuggest(prefix){
+  const el = document.getElementById(prefix + 'stop-name');
+  const list = document.getElementById(prefix + 'stop-list');
+  if(!el || !list) return;
+  el.setAttribute('list', prefix + 'stop-list');
+  el.addEventListener('input', ()=>{
+    list.innerHTML = suggestPlaces(el.value, 8).map(g=>{
+      const label = (lang === 'sk') ? g.sk : g.en;
+      const c = COUNTRY_INFO[g.iso];
+      return '<option value="'+esc(label)+'">'+(c ? esc(c[lang === 'sk' ? 'sk' : 'en']) : '')+'</option>';
+    }).join('');
+  });
+  el.addEventListener('keydown', e=>{
+    if(e.key === 'Enter'){ e.preventDefault(); addStop(prefix); }
+  });
+}
+
 /* ═══════════ CATEGORIES ═══════════ */
 const CAT_FILL = {holiday:'#B5350A', ski:'#2A4420', gig:'#C49020', trip:'#5C3410', weekend:'#3D2208', origin:'#C49020'};
 const CAT_VAR  = {holiday:'var(--r)', ski:'var(--f)', gig:'var(--go)', trip:'var(--bm)', weekend:'var(--b)', origin:'var(--go)'};
@@ -2651,11 +2968,13 @@ function filterMap(cat){
   tap();
   curFilter = cat;
   openCountry = null;   // a category filter replaces any country drill-down
+  lastClusterZoom = null;
   document.querySelectorAll('.fchip').forEach(c=>c.classList.remove('on'));
   const btn = document.querySelector('.fchip[data-cat="'+cat+'"]');
   if(btn) btn.classList.add('on');
   expandedId = null;
   drawMarkers();
+  refresh();   // the strip above the map now describes this filter, not the whole set
 }
 
 function clearSubMarkers(){
@@ -2721,12 +3040,22 @@ function pointsFor(trips, isoFilter){
 /* Points within ~12km of each other are the same place. Katschberg three
    winters running is one pin, not three stacked on top of each other —
    and clicking it should offer all three trips, not silently pick one. */
-function clusterPoints(pts){
+function clusterPoints(pts, zoom){
   const clusters = [];
+  /* Cluster radius shrinks as you zoom in. A fixed 12km merged Lucerna and
+     Futurum — two Prague venues 2km apart — into one pin no matter how far
+     you zoomed. Now they separate once you're close enough to tell them
+     apart, and still merge at world zoom where two dots would just overlap. */
+  const z = (typeof zoom === 'number') ? zoom : 5;
+  const radiusKm = z >= 12 ? 0.4
+                 : z >= 10 ? 1.5
+                 : z >= 8  ? 5
+                 : z >= 6  ? 12
+                 : 25;
   const near = (a,b)=>{
     const dLat = (a.lat-b.lat) * 111;
     const dLng = (a.lng-b.lng) * 111 * Math.cos(a.lat*Math.PI/180);
-    return Math.sqrt(dLat*dLat + dLng*dLng) < 12;
+    return Math.sqrt(dLat*dLat + dLng*dLng) < radiusKm;
   };
   pts.forEach(p=>{
     const hit = clusters.find(c=>near(c, p));
@@ -2776,8 +3105,9 @@ function clusterPopup(c){
 
 let pinsMode = null;
 
-function drawMarkers(){
+function drawMarkers(opts){
   if(!mapOk || !map) return;
+  const keepView = !!(opts && opts.keepView);
   markers.forEach(m=>map.removeLayer(m));
   markers = [];
   clearSubMarkers();
@@ -2798,7 +3128,7 @@ function drawMarkers(){
     pts = [];   // clean country map
   }
 
-  const clusters = clusterPoints(pts);
+  const clusters = clusterPoints(pts, zoom);
 
   clusters.forEach(c=>{
     // colour by the most common category in the cluster
@@ -2817,10 +3147,13 @@ function drawMarkers(){
     markers.push(m);
   });
 
-  if(clusters.length > 1){
-    map.fitBounds(L.latLngBounds(clusters.map(c=>[c.lat,c.lng])).pad(0.15));
-  } else if(clusters.length === 1){
-    map.setView([clusters[0].lat, clusters[0].lng], 8);
+  // a re-cluster triggered by zooming must not fight the zoom that caused it
+  if(!keepView){
+    if(clusters.length > 1){
+      map.fitBounds(L.latLngBounds(clusters.map(c=>[c.lat,c.lng])).pad(0.15));
+    } else if(clusters.length === 1){
+      map.setView([clusters[0].lat, clusters[0].lng], 8);
+    }
   }
 
   safeMap(()=>{ drawCountryFill(); refreshCapitals(); });
@@ -2834,10 +3167,12 @@ function resetMap(){
   tap();
   openCountry = null;
   curFilter = 'all';
+  lastClusterZoom = null;
   document.querySelectorAll('.fchip').forEach(c=>c.classList.remove('on'));
   const allChip = document.querySelector('.fchip[data-cat="all"]');
   if(allChip) allChip.classList.add('on');
   drawMarkers();
+  refresh();   // without this the numbers stay stuck on the filter you just cleared
   safeMap(()=>map.setView([47,12], 4));
 }
 
@@ -2848,9 +3183,23 @@ function resetMap(){
    Each marker carries the data it needs to redraw itself at a new zoom.
    Note this only ever calls setIcon — never drawMarkers(), which would
    fitBounds, change the zoom, and fire this handler again in a loop. */
+let lastClusterZoom = null;
 function refreshPinSizes(){
   if(!mapOk || !map) return;
   const zoom = map.getZoom();
+
+  /* Crossing a cluster threshold changes which points merge, so the pins
+     have to be rebuilt — resizing the old ones would keep two venues stuck
+     under one marker. Guarded so we only redraw when the bucket changes,
+     never on every wheel tick. */
+  const bucket = z => z >= 12 ? 4 : z >= 10 ? 3 : z >= 8 ? 2 : z >= 6 ? 1 : 0;
+  if(lastClusterZoom !== null && bucket(zoom) !== bucket(lastClusterZoom)){
+    lastClusterZoom = zoom;
+    drawMarkers({ keepView: true });
+    return;
+  }
+  lastClusterZoom = zoom;
+
   markers.forEach(m=>{
     const d = m._pinData;
     if(!d) return;
@@ -2964,7 +3313,9 @@ function renderCountryFill(topo, counts){
           tap();
           // tapping the open country again closes it back to the clean map
           openCountry = (openCountry === iso) ? null : iso;
+          lastClusterZoom = null;
           drawMarkers();
+          refresh();          // the counters follow the selection
           if(!openCountry){
             map.setView([47,12], 4);
           }
@@ -3626,6 +3977,9 @@ function openModal(id){
   document.body.style.overflow = 'hidden';
   // each trip opens at the top, not wherever the last one was scrolled to
   inner.scrollTop = 0;
+  const dotsEl = document.getElementById('ts-dots');
+  if(dotsEl) dotsEl.classList.remove('hidden');
+  document.getElementById('modal').classList.remove('dots-hidden');
   maybeHint();
 }
 
@@ -3730,6 +4084,33 @@ function jumpTrip(idx){
   tap();
   openModal(t.id);
 }
+
+/* Hide the dots once you've scrolled past the hero, bring them back when you
+   return to the top. Bound to the sheet's own scroller, not the window — the
+   sheet scrolls internally, so window.scrollY never moves. */
+(function(){
+  const inner = document.getElementById('modal-inner');
+  const dots  = document.getElementById('ts-dots');
+  if(!inner || !dots) return;
+
+  const THRESHOLD = 60;   // px of scroll before they duck away
+  let hidden = false;
+  let ticking = false;
+
+  inner.addEventListener('scroll', ()=>{
+    if(ticking) return;
+    ticking = true;
+    requestAnimationFrame(()=>{
+      const shouldHide = inner.scrollTop > THRESHOLD;
+      if(shouldHide !== hidden){
+        hidden = shouldHide;
+        dots.classList.toggle('hidden', hidden);
+        document.getElementById('modal').classList.toggle('dots-hidden', hidden);
+      }
+      ticking = false;
+    });
+  }, {passive:true});
+})();
 
 /* Shown once, the first time the sheet is opened, then never again. */
 let hintShown = false;
@@ -4110,23 +4491,183 @@ function setCover(i){
 }
 
 /* ═══════════ LIGHTBOX ═══════════ */
-function openLb(i){
+/* ═══════════ LIGHTBOX ═══════════
+   Same gesture as the trip sheet: drag the photo and it follows your finger,
+   let go past the threshold and it pages. The axis is locked once the drag
+   commits, so a horizontal swipe can't also scroll the page behind it. */
+let lbIndex = 0;
+
+function lbPics(){
   const t = getT().find(x=>x.id===openId);
-  if(!t) return;
-  const pics = photosOf(t);
-  if(!pics[i]) return;
-  document.getElementById('lb-img').src = pics[i];
-  document.getElementById('lightbox').classList.add('on');
+  return t ? photosOf(t) : [];
 }
+
+function openLb(i){
+  const pics = lbPics();
+  if(!pics[i]) return;
+  lbIndex = i;
+  renderLb();
+  document.getElementById('lightbox').classList.add('on');
+  document.body.style.overflow = 'hidden';
+}
+
+function renderLb(){
+  const pics = lbPics();
+  const img = document.getElementById('lb-img');
+  const stage = document.getElementById('lb-stage');
+
+  img.src = pics[lbIndex] || '';
+  stage.style.transition = 'none';
+  stage.style.transform = 'translateX(0)';
+  stage.style.opacity = '1';
+
+  const count = document.getElementById('lb-count');
+  if(count){
+    count.textContent = pics.length > 1 ? (lbIndex + 1) + ' / ' + pics.length : '';
+    count.classList.toggle('on', pics.length > 1);
+  }
+
+  const dots = document.getElementById('lb-dots');
+  if(dots){
+    if(pics.length > 1){
+      dots.innerHTML = pics.map((_, i)=>
+        '<button class="lb-dot'+(i === lbIndex ? ' on' : '')+'" onclick="jumpLb('+i+')"></button>'
+      ).join('');
+      dots.classList.add('on');
+    } else {
+      dots.innerHTML = '';
+      dots.classList.remove('on');
+    }
+  }
+}
+
+function navLb(dir){
+  const pics = lbPics();
+  const next = lbIndex + dir;
+  if(next < 0 || next >= pics.length) return false;
+  lbIndex = next;
+  renderLb();
+  tap();
+  return true;
+}
+
+function jumpLb(i){
+  const pics = lbPics();
+  if(i < 0 || i >= pics.length || i === lbIndex) return;
+  lbIndex = i;
+  renderLb();
+  tap();
+}
+
 function closeLb(){
   document.getElementById('lightbox').classList.remove('on');
+  // the trip sheet is still open behind it, so it keeps the scroll lock
+  if(!document.getElementById('modal').classList.contains('on')){
+    document.body.style.overflow = '';
+  }
 }
+
+/* Swipe between photos. Bound to the stage, not the backdrop, so a tap on the
+   dark area still closes — and a drag never does. */
+(function(){
+  const lb = document.getElementById('lightbox');
+  const stage = document.getElementById('lb-stage');
+  if(!lb || !stage) return;
+
+  let x0 = 0, y0 = 0, dx = 0;
+  let axis = null, dragging = false, moved = false;
+
+  const THRESHOLD = 60;
+  const RESIST = 0.3;
+
+  stage.addEventListener('touchstart', e=>{
+    if(e.touches.length !== 1) return;
+    x0 = e.touches[0].clientX;
+    y0 = e.touches[0].clientY;
+    dx = 0;
+    axis = null;
+    dragging = true;
+    moved = false;
+    stage.style.transition = 'none';
+  }, {passive:true});
+
+  stage.addEventListener('touchmove', e=>{
+    if(!dragging) return;
+    const mx = e.touches[0].clientX - x0;
+    const my = e.touches[0].clientY - y0;
+
+    if(axis === null){
+      if(Math.abs(mx) < 8 && Math.abs(my) < 8) return;
+      axis = (Math.abs(mx) > Math.abs(my) * 1.25) ? 'x' : 'y';
+      if(axis === 'y'){ dragging = false; return; }
+      lb.classList.add('swiping');
+    }
+    if(axis !== 'x') return;
+    e.preventDefault();          // stops the page scrolling under the photo
+    moved = true;
+
+    const pics = lbPics();
+    dx = mx;
+    const atStart = lbIndex === 0;
+    const atEnd = lbIndex === pics.length - 1;
+    if((dx > 0 && atStart) || (dx < 0 && atEnd)) dx *= RESIST;
+
+    stage.style.transform = 'translateX(' + dx + 'px)';
+    stage.style.opacity = String(1 - Math.min(Math.abs(dx) / 500, 0.3));
+  }, {passive:false});
+
+  stage.addEventListener('touchend', ()=>{
+    lb.classList.remove('swiping');
+    if(!dragging) return;
+    dragging = false;
+    if(axis !== 'x'){ snapBack(); return; }
+
+    if(Math.abs(dx) > THRESHOLD){
+      const dir = dx < 0 ? 1 : -1;
+      const w = window.innerWidth || 400;
+      stage.style.transition = 'transform .18s ease-out, opacity .18s ease-out';
+      stage.style.transform = 'translateX(' + (dir === 1 ? -w : w) + 'px)';
+      stage.style.opacity = '0';
+      setTimeout(()=>{
+        if(!navLb(dir)){ snapBack(); return; }   // nothing there — spring back
+        stage.style.transition = 'none';
+        stage.style.transform = 'translateX(' + (dir === 1 ? w : -w) + 'px)';
+        stage.style.opacity = '0';
+        requestAnimationFrame(()=>{
+          requestAnimationFrame(()=>{
+            stage.style.transition = 'transform .28s cubic-bezier(.22,1,.36,1), opacity .28s';
+            stage.style.transform = 'translateX(0)';
+            stage.style.opacity = '1';
+          });
+        });
+      }, 170);
+    } else {
+      snapBack();
+    }
+  }, {passive:true});
+
+  function snapBack(){
+    stage.style.transition = 'transform .25s cubic-bezier(.22,1,.36,1), opacity .25s';
+    stage.style.transform = 'translateX(0)';
+    stage.style.opacity = '1';
+  }
+
+  /* Tap the dark backdrop to close — but only a tap. Without the `moved`
+     check, every swipe would end by closing the lightbox. */
+  lb.addEventListener('click', e=>{
+    if(moved){ moved = false; return; }
+    if(e.target === lb) closeLb();
+  });
+})();
 
 /* ═══════════ EDIT ═══════════ */
 function startEdit(){
   if(!requireAdmin()) return;
   const t = getT().find(x=>x.id===openId);
   if(!t) return;
+  // load the trip's stops into the working copy, or saving would wipe them
+  editStops = stopsFromTrip(t);
+  renderStops('e-');
   const set = (id,v)=>{ document.getElementById(id).value = v || ''; };
   set('e-nsk', t.nameSk);      set('e-nen', t.nameEn);
   set('e-csk', t.countrySk);   set('e-cen', t.countryEn);
@@ -4141,6 +4682,7 @@ function startEdit(){
 function cancelEdit(){
   document.getElementById('modal-inner').classList.remove('editing');
   document.getElementById('modal').classList.remove('editing');
+  editStops = [];   // discard unsaved changes
 }
 
 function saveEdit(){
@@ -4168,6 +4710,17 @@ function saveEdit(){
   t.noteSk    = g('e-nsk2');
   t.noteEn    = g('e-nen2') || g('e-nsk2');
 
+  const stops = stopsForSave();
+  if(stops) t.stops = stops;
+  else delete t.stops;
+
+  // a trip's own coordinates follow its first stop, so the pin lands where
+  // the trip actually started rather than at a stale earlier guess
+  if(stops && stops.length){
+    t.lat = stops[0].lat;
+    t.lng = stops[0].lng;
+  }
+
   saveT(trips);
   openModal(openId);   // re-render in view mode
   refresh();
@@ -4188,9 +4741,15 @@ document.addEventListener('keydown', e=>{
     return;
   }
 
-  // arrow keys page through trips, but not while typing in the edit form
+  // in the lightbox the arrows page through photos, not trips
+  if(lb && lb.classList.contains('on')){
+    if(e.key === 'ArrowLeft')  navLb(-1);
+    if(e.key === 'ArrowRight') navLb(1);
+    return;
+  }
+
+  // otherwise they page through trips, unless you're typing in the edit form
   if(!sheetOpen || editing) return;
-  if(lb && lb.classList.contains('on')) return;
   if(e.key === 'ArrowLeft')  navTrip(-1);
   if(e.key === 'ArrowRight') navTrip(1);
 });
@@ -4325,13 +4884,25 @@ async function saveTrip(){
     flag: gv('f-flag'),
     noteSk: gv('f-nsk2'),
     noteEn: gv('f-nen2') || gv('f-nsk2'),
-    photos: photos
+    photos: photos,
+    stops: stopsForSave() || undefined
   });
+
+  // if stops were given, the trip's pin belongs at the first of them
+  const savedStops = stopsForSave();
+  if(savedStops && savedStops.length){
+    const last = trips[trips.length - 1];
+    last.lat = savedStops[0].lat;
+    last.lng = savedStops[0].lng;
+  }
   saveT(trips);
 
-  ['f-nsk','f-nen','f-csk','f-cen','f-d1','f-d2','f-lat','f-lng','f-places','f-flag','f-nsk2','f-nen2']
-    .forEach(id=>{ document.getElementById(id).value=''; });
+  ['f-nsk','f-nen','f-csk','f-cen','f-d1','f-d2','f-lat','f-lng','f-places','f-flag','f-nsk2','f-nen2',
+   'f-stop-name','f-stop-lat','f-stop-lng']
+    .forEach(id=>{ const el = document.getElementById(id); if(el) el.value=''; });
   document.getElementById('f-cat').value = 'holiday';
+  editStops = [];                  // or the next trip inherits these stops
+  renderStops('f-');
   document.getElementById('fphoto').value = '';
   const prev = document.getElementById('photo-prev');
   prev.classList.remove('on');
@@ -4361,8 +4932,12 @@ function delTrip(id){
 }
 
 function refreshAdmList(){
+  /* The origin card ("where it began") isn't a trip, so it shouldn't be
+     counted as one — it was inflating the total by one everywhere. It still
+     appears in the list, just marked as what it is. */
   const trips = getT().slice().sort((a,b)=> b.dateFrom.localeCompare(a.dateFrom));
-  document.getElementById('adm-cnt').textContent = trips.length;
+  const nTrips = trips.filter(t=>t.cat !== 'origin').length;
+  document.getElementById('adm-cnt').textContent = nTrips;
   const box = document.getElementById('adm-list');
   if(!trips.length){
     box.innerHTML = '<div class="adm-empty">'+(lang==='sk'?'Zatiaľ nič.':'Nothing yet.')+'</div>';
@@ -4393,8 +4968,22 @@ function showToast(msg){
 }
 
 /* ═══════════ REFRESH ═══════════ */
+/* The strip above the map counts whatever the map is currently showing. Pick
+   "Dovolenka" and it counts holidays; open a country and it counts that
+   country. Reporting the full total while the map shows a subset was just
+   quietly wrong. */
+function visibleTrips(){
+  let trips = getT().filter(t=>t.cat!=='origin');
+  if(curFilter !== 'all'){
+    trips = trips.filter(t=>t.cat === curFilter);
+  } else if(openCountry){
+    trips = trips.filter(t=>isosOf(t).includes(openCountry));
+  }
+  return trips;
+}
+
 function refresh(){
-  const trips = getT().filter(t=>t.cat!=='origin');
+  const trips = visibleTrips();
   const totalDays = trips.reduce((s,t)=>s+days(t),0);
   const ctrs = new Set();
   trips.forEach(t=>(t.countryEn||'').split(' / ').forEach(c=>c.trim()&&ctrs.add(c.trim())));
@@ -4404,6 +4993,10 @@ function refresh(){
   document.getElementById('h-ctrs').textContent  = ctrs.size;
   document.getElementById('h-days').textContent  = totalDays;
   document.getElementById('h-yrs').textContent   = yrs.size;
+
+  // say so, when the numbers aren't the whole story
+  const strip = document.getElementById('hero-slim');
+  if(strip) strip.classList.toggle('filtered', curFilter !== 'all' || !!openCountry);
 
   try{ drawMarkers(); }catch(e){}
   try{ if(curTab==='tl') buildTl(); }catch(e){}
@@ -4621,6 +5214,9 @@ wireAutofill('f-', 'f-places-list');
 wireAutofill('e-', 'e-places-list');
 wireDates('f-');
 wireDates('e-');
+wireStopSuggest('f-');
+wireStopSuggest('e-');
+renderStops('f-');
 
 async function boot(){
   const sub = document.getElementById('adm-sub');
