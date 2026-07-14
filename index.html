@@ -289,13 +289,16 @@ body.admin-mode #vadmin{padding-top:calc(var(--bh) + var(--safe-top))}
   padding-left:52px;
   z-index:3;
 }
-/* When the countdown or the on-this-day banner sits directly above the first
-   year marker, their own bottom margins were stacking with this one — 1.2rem
-   plus 1.8rem read as a hole with nothing in it. The banner already put the
-   right amount of air below itself; the year header doesn't need to add more
-   on top of that specific case. */
-.countdown + .year-hdr,
-.ann-banner + .year-hdr{
+/* When the countdown or the on-this-day banner sits above the first year
+   marker, their own bottom margins were stacking with this one — 1.2rem
+   plus 1.8rem read as a hole with nothing in it.
+
+   The `+` sibling selector never matched here: .countdown is a direct
+   child of #tl-body, but .year-hdr lives one level deeper, inside
+   .tl-spine — they aren't siblings, so the rule silently did nothing.
+   Targeting .tl-spine's OWN first child fixes it regardless of how deep
+   the banners sit, and only touches the very first year of the list. */
+.tl-spine > .year-hdr:first-child{
   margin-top:.3rem;
 }
 @media(min-width:820px){
@@ -812,27 +815,39 @@ body.admin-mode #vadmin{padding-top:calc(var(--bh) + var(--safe-top))}
   position:absolute;left:0;right:0;bottom:0;
   padding:1.2rem 1.1rem 1.3rem;
 }
-.ts-tri{
-  display:flex;width:44px;height:5px;
-  border:1px solid rgba(26,15,5,.6);
-  margin-bottom:.7rem;
+/* Flag and title share a row, rather than the flag sitting on its own line
+   above the text — at 80% opacity and cropped in beside the name it reads
+   as a detail of the layout, not as a competing headline over the photo. */
+.ts-title-row{
+  display:flex;
+  align-items:center;
+  gap:.55rem;
+  margin-bottom:.35rem;
+  flex-wrap:wrap;
 }
-.ts-tri i{flex:1;display:block}
-/* the full flag, shown when we know the ISO code */
 .ts-flag-img{
   display:block;
-  height:26px;width:auto;
-  border:1.5px solid rgba(226,207,160,.5);
-  box-shadow:0 2px 8px rgba(0,0,0,.4);
+  height:1.5em;              /* scales with the title's own font-size */
+  width:auto;
+  flex-shrink:0;
+  opacity:.8;
+  border:1.5px solid rgba(226,207,160,.55);
+  box-shadow:0 2px 10px rgba(0,0,0,.45);
 }
+.ts-tri{
+  display:flex;width:36px;height:5px;
+  flex-shrink:0;
+  border:1px solid rgba(26,15,5,.6);
+}
+.ts-tri i{flex:1;display:block}
 .ts-title{
   font-family:var(--ff-d);
   font-size:2rem;font-weight:900;
   color:var(--s);
   line-height:1.05;
   letter-spacing:-.02em;
-  margin-bottom:.35rem;
   text-shadow:0 2px 12px rgba(0,0,0,.5);
+  min-width:0;
 }
 @media(min-width:700px){ .ts-title{font-size:2.6rem} }
 .ts-date{
@@ -2270,8 +2285,11 @@ select.fi{
         <div class="ts-hero-img" id="ts-hero-img"></div>
         <div class="ts-hero-scrim"></div>
         <div class="ts-hero-txt">
-          <div class="ts-tri" id="ts-tri"></div>
-          <h2 class="ts-title" id="m-title"></h2>
+          <div class="ts-title-row">
+            <img class="ts-flag-img" id="ts-flag-img" alt="" style="display:none">
+            <span class="ts-tri" id="ts-tri"></span>
+            <h2 class="ts-title" id="m-title"></h2>
+          </div>
           <div class="ts-date" id="ts-date"></div>
           <div class="ts-chips" id="m-meta"></div>
         </div>
@@ -2528,7 +2546,7 @@ const SEED = [
 /* ═══════════ VERSION ═══════════
    Bump this on every iteration that ships — shown in the topbar next
    to the app icon, same pattern as Kvašung. One place to update. */
-const APP_VERSION = 'v2.19.0';
+const APP_VERSION = 'v2.19.1';
 
 /* ═══════════ PLURALS ═══════════
    Slovak splits nouns three ways by count: 1 takes the singular, 2–4 take
@@ -5525,9 +5543,18 @@ function openModal(id){
   }
 
   const headerFlagUrl = flagUrl(t);
-  document.getElementById('ts-tri').innerHTML = headerFlagUrl
-    ? '<img src="'+headerFlagUrl+'" alt="" class="ts-flag-img">'
-    : triInner(t);   // no ISO match — fall back to the tricolour swatch
+  const flagImg = document.getElementById('ts-flag-img');
+  const triEl = document.getElementById('ts-tri');
+  if(headerFlagUrl){
+    flagImg.src = headerFlagUrl;
+    flagImg.style.display = 'block';
+    triEl.innerHTML = '';
+  } else {
+    // no ISO match — fall back to the small tricolour swatch
+    flagImg.style.display = 'none';
+    flagImg.src = '';
+    triEl.innerHTML = triInner(t);
+  }
   document.getElementById('m-title').textContent = nm(t);
   document.getElementById('ts-date').textContent = fmt(t.dateFrom, t.dateTo);
 
