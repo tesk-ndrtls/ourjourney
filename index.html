@@ -205,6 +205,14 @@ body.admin-mode #vadmin{padding-top:calc(var(--bh) + var(--safe-top))}
 .play-chip:hover{background:var(--rl);border-color:var(--rl)}
 .play-chip:disabled{opacity:.55;cursor:default}
 .play-chip.playing{background:var(--e);border-color:var(--go);color:var(--go)}
+.speed-chip{
+  background:var(--w);
+  border-color:var(--bm);
+  color:var(--bm);
+  font-variant-numeric:tabular-nums;
+  min-width:34px;
+}
+.speed-chip:hover{border-color:var(--r);color:var(--r)}
 .play-ico{font-size:.6rem;line-height:1}
 .fchip-sep{
   width:2px;flex-shrink:0;
@@ -2038,6 +2046,73 @@ select.fi{
 .tro-skip{background:var(--w);color:var(--gh)}
 .tro-skip:hover{background:var(--r);color:var(--w);border-color:var(--r)}
 
+
+/* ══ JOURNEY PLAYBACK ══ */
+.play-vehicle-icon{
+  background:none !important;
+  border:none !important;
+}
+.pv-emoji{
+  display:block;
+  font-size:22px;
+  line-height:30px;
+  text-align:center;
+  filter:drop-shadow(0 2px 4px rgba(0,0,0,.45));
+  transition:transform .1s linear;
+}
+
+/* the arrival card — where the vehicle just landed */
+.play-card{
+  position:absolute;
+  z-index:620;
+  left:.7rem;
+  bottom:.7rem;
+  width:min(300px, calc(100% - 1.4rem));
+  background:var(--w);
+  border:2px solid var(--e);
+  box-shadow:4px 4px 0 var(--s);
+  overflow:hidden;
+  opacity:0;
+  transform:translateY(14px);
+  pointer-events:none;
+  transition:opacity .3s ease, transform .3s cubic-bezier(.22,1,.36,1);
+}
+.play-card.on{
+  opacity:1;
+  transform:translateY(0);
+}
+.pc-photo{
+  width:100%;
+  height:120px;
+  background-size:cover;
+  background-position:center;
+  border-bottom:2px solid var(--e);
+}
+.pc-body{padding:.6rem .75rem}
+.pc-label{
+  display:inline-block;
+  font-size:.5rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;
+  background:var(--r);color:var(--s);
+  padding:.12rem .35rem;
+  margin-bottom:.3rem;
+}
+.pc-name{
+  font-family:var(--ff-d);
+  font-size:1.15rem;font-weight:900;
+  color:var(--e);
+  line-height:1.15;
+}
+.pc-date{
+  font-size:.68rem;font-weight:700;
+  color:var(--r);
+  margin-top:.15rem;
+}
+.pc-meta{
+  font-size:.62rem;
+  color:var(--gh);
+  margin-top:.2rem;
+}
+
 /* ══ TOAST ══ */
 .toast{position:fixed;bottom:1.3rem;left:50%;z-index:2000;transform:translateX(-50%) translateY(55px);background:var(--f);color:var(--c);border:2px solid var(--fl);padding:.52rem 1.1rem;font-size:.7rem;font-weight:600;letter-spacing:.04em;white-space:nowrap;transition:transform .28s cubic-bezier(.22,1,.36,1)}
 .toast.on{transform:translateX(-50%) translateY(0)}
@@ -2143,6 +2218,7 @@ select.fi{
         <span class="play-ico">&#9654;</span>
         <span class="t-sk">Prehrať</span><span class="t-en">Play</span>
       </button>
+      <button class="fchip speed-chip" id="speed-btn" onclick="cyclePlaySpeed()">1&#215;</button>
       <span class="fchip-sep"></span>
       <button class="fchip on" data-cat="all" onclick="filterMap('all')"><span class="t-sk">Všetko</span><span class="t-en">All</span></button>
       <button class="fchip" data-cat="holiday" onclick="filterMap('holiday')">&#127958;&#65039; <span class="t-sk">Dovolenka</span><span class="t-en">Holiday</span></button>
@@ -2159,6 +2235,8 @@ select.fi{
       <div class="hud-date" id="hud-date"></div>
       <div class="hud-bar"><i id="hud-bar"></i></div>
     </div>
+    <!-- shown each time the vehicle lands somewhere -->
+    <div class="play-card" id="play-card"></div>
     <div class="app-foot"><span class="foot-ver" id="ver-map"></span></div>
   </div>
 
@@ -2580,7 +2658,7 @@ const SEED = [
 /* ═══════════ VERSION ═══════════
    Bump this on every iteration that ships — shown in the topbar next
    to the app icon, same pattern as Kvašung. One place to update. */
-const APP_VERSION = 'v2.20.0';
+const APP_VERSION = 'v2.21.0';
 
 /* ═══════════ PLURALS ═══════════
    Slovak splits nouns three ways by count: 1 takes the singular, 2–4 take
@@ -4735,10 +4813,16 @@ let playLayers = [];
 function clearPlay(){
   playTimers.forEach(clearTimeout);
   playTimers = [];
+  if(playRaf){ cancelAnimationFrame(playRaf); playRaf = null; }
   safeMap(()=>{ playLayers.forEach(l=>map.removeLayer(l)); });
   playLayers = [];
   playing = false;
+  playVehicle = null;
+
   document.getElementById('play-hud').classList.remove('on');
+  const card = document.getElementById('play-card');
+  if(card) card.classList.remove('on');
+
   const btn = document.getElementById('play-btn');
   if(btn){
     btn.classList.remove('playing');
@@ -4747,79 +4831,414 @@ function clearPlay(){
   drawMarkers();   // back to whatever the current view should be
 }
 
-/* a gentle great-circle-ish arc between two points, as a polyline */
-function arcPoints(a, b, n){
+/* ═══════════ JOURNEY PLAYBACK ═══════════
+ *
+ * The old version was a chain of setTimeouts on a fixed 620ms tick: it drew a
+ * whole line at once, jumped the camera, and moved on whether or not anything
+ * had finished loading. Crossing an ocean it would be three hops ahead before
+ * the tiles arrived.
+ *
+ * This is a proper state machine instead. Each leg is animated frame by frame
+ * with a vehicle travelling along it, the camera is fitted to the leg BEFORE
+ * the vehicle sets off, and — the part that actually fixes the rushing — the
+ * next leg doesn't begin until the current one has finished and its arrival
+ * card has been read. Nothing is on a timer that can outrun the map.
+ */
+let playRaf = null;
+let playVehicle = null;
+
+/* Playback speed. The full overview is 50-odd trips — at a leisurely pace
+   that's a long sit, so you can wind it on. The trip-level playback is short
+   enough that the default is right. */
+let playSpeed = 1;
+let playScope = 'overview';   // 'overview' | 'trip'
+const PLAY_SPEEDS = [1, 2, 4];
+
+function cyclePlaySpeed(){
+  tap();
+  const i = PLAY_SPEEDS.indexOf(playSpeed);
+  playSpeed = PLAY_SPEEDS[(i + 1) % PLAY_SPEEDS.length];
+  const btn = document.getElementById('speed-btn');
+  if(btn) btn.textContent = playSpeed + '\u00D7';
+}
+
+/* How each mode looks and how fast it travels. Ground transport is slower
+   per-pixel than a flight, which is both true and reads better: a short drive
+   between two towns shouldn't flash past as quickly as a transatlantic hop. */
+const PLAY_MODES = {
+  plane: { icon:'\u2708\uFE0F', arc:0.24, speed:1.00, colour:'#B5350A', dash:'6,7' },
+  car:   { icon:'\uD83D\uDE97', arc:0.06, speed:0.55, colour:'#3D2208', dash:'3,5' },
+  train: { icon:'\uD83D\uDE86', arc:0.05, speed:0.65, colour:'#2A4420', dash:'4,5' },
+  bus:   { icon:'\uD83D\uDE8C', arc:0.06, speed:0.55, colour:'#5C3410', dash:'3,5' },
+  boat:  { icon:'\u26F4\uFE0F',  arc:0.12, speed:0.45, colour:'#0B4EA2', dash:'5,6' },
+  foot:  { icon:'\uD83E\uDD7E', arc:0.03, speed:0.30, colour:'#7A6A52', dash:'2,4' }
+};
+
+/* Points along a curve between two coordinates. Flights bow outward; a car
+   journey barely does, because roads don't arc across the sky. */
+function legCurve(a, b, arcAmount, n){
   const pts = [];
-  const [lat1,lng1] = a, [lat2,lng2] = b;
-  // lift the midpoint perpendicular to the chord, scaled by distance
-  const dx = lng2-lng1, dy = lat2-lat1;
-  const dist = Math.sqrt(dx*dx + dy*dy);
-  const lift = Math.min(dist * 0.22, 14);
-  const mx = (lng1+lng2)/2 - dy/(dist||1) * lift;
-  const my = (lat1+lat2)/2 + dx/(dist||1) * lift;
-  for(let i=0;i<=n;i++){
-    const t = i/n, u = 1-t;
-    // quadratic bezier through the lifted midpoint
-    const lat = u*u*lat1 + 2*u*t*my + t*t*lat2;
-    const lng = u*u*lng1 + 2*u*t*mx + t*t*lng2;
-    pts.push([lat,lng]);
+  const [lat1, lng1] = a, [lat2, lng2] = b;
+  const dx = lng2 - lng1, dy = lat2 - lat1;
+  const dist = Math.sqrt(dx*dx + dy*dy) || 1;
+  const lift = dist * (arcAmount || 0.2);
+
+  const mx = (lng1 + lng2) / 2 - (dy / dist) * lift;
+  const my = (lat1 + lat2) / 2 + (dx / dist) * lift;
+
+  for(let i = 0; i <= n; i++){
+    const t = i / n, u = 1 - t;
+    pts.push([
+      u*u*lat1 + 2*u*t*my + t*t*lat2,
+      u*u*lng1 + 2*u*t*mx + t*t*lng2
+    ]);
   }
   return pts;
 }
 
-function playJourney(){
+/* Wait for the map to actually be ready to show this leg: fit the camera to
+   it, then hold until the tiles for that view have loaded. This is the whole
+   reason the old version felt broken on long hops.
+
+   In overview mode the camera does NOT chase each leg. Flying to 106 separate
+   bounding boxes costs ~1.3s of fixed camera-and-tile overhead per leg — over
+   two minutes of pure staging before anything is even drawn, and no speed
+   setting can claw that back. The overview instead frames everything once and
+   lets the vehicle travel across a stable map, which is also just a better way
+   to see the shape of where you've been. */
+function stageLeg(from, to){
+  return new Promise(resolve=>{
+    if(!mapOk || !map){ resolve(); return; }
+
+    if(playScope === 'overview'){
+      resolve();   // the camera was already set once, before playback began
+      return;
+    }
+
+    const bounds = L.latLngBounds([from, to]).pad(0.35);
+    map.flyToBounds(bounds, { duration: 0.9, maxZoom: 11 });
+
+    let settled = false;
+    const done = ()=>{
+      if(settled) return;
+      settled = true;
+      map.off('moveend', onMoveEnd);
+      resolve();
+    };
+    const onMoveEnd = ()=>{
+      // camera has arrived; give the tiles a beat to fill in
+      playTimers.push(setTimeout(done, Math.max(220, 420 / playSpeed)));
+    };
+    map.on('moveend', onMoveEnd);
+
+    // never hang forever if the tiles are slow or a moveend never fires
+    playTimers.push(setTimeout(done, 3000));
+  });
+}
+
+/* Animate one leg: draw the route progressively while the vehicle rides along
+   it. Resolves when the vehicle reaches the far end. */
+function flyLeg(from, to, mode){
+  return new Promise(resolve=>{
+    if(!mapOk || !map || !playing){ resolve(); return; }
+
+    const cfg = PLAY_MODES[mode] || PLAY_MODES.car;
+    const pts = legCurve(from, to, cfg.arc, 120);
+
+    // the full route, faint, so you can see where it's going
+    const ghost = L.polyline(pts, {
+      color: cfg.colour, weight: 1.5, opacity: 0.2, dashArray: cfg.dash
+    }).addTo(map);
+    playLayers.push(ghost);
+
+    // the travelled portion, drawn as it goes
+    const trail = L.polyline([pts[0]], {
+      color: cfg.colour, weight: 3, opacity: 0.85
+    }).addTo(map);
+    playLayers.push(trail);
+
+    const vehicle = L.marker(pts[0], {
+      icon: L.divIcon({
+        className: 'play-vehicle-icon',
+        html: '<span class="pv-emoji">' + cfg.icon + '</span>',
+        iconSize: [30, 30],
+        iconAnchor: [15, 15]
+      }),
+      interactive: false,
+      zIndexOffset: 1000
+    }).addTo(map);
+    playLayers.push(vehicle);
+    playVehicle = vehicle;
+
+    /* Duration scales with how far the leg actually is on screen, so a hop
+       across a city and a flight across an ocean both take a sensible amount
+       of time rather than the same fixed tick. */
+    const px = map.latLngToContainerPoint(pts[0])
+                  .distanceTo(map.latLngToContainerPoint(pts[pts.length-1]));
+    let dur = (Math.max(1400, Math.min(4200, px * 4)) / cfg.speed) / playSpeed;
+    // the overview flies a lot of legs; keep each one brisk
+    if(playScope === 'overview') dur *= 0.45;
+
+    const t0 = performance.now();
+
+    function frame(now){
+      if(!playing){ resolve(); return; }
+
+      const p = Math.min(1, (now - t0) / dur);
+      // ease in and out, so it doesn't start and stop abruptly
+      const e = p < 0.5 ? 2*p*p : 1 - Math.pow(-2*p + 2, 2) / 2;
+
+      const idx = Math.floor(e * (pts.length - 1));
+      const at = pts[idx];
+
+      trail.setLatLngs(pts.slice(0, idx + 1));
+      vehicle.setLatLng(at);
+
+      // point the vehicle along its heading
+      const ahead = pts[Math.min(idx + 2, pts.length - 1)];
+      const angle = Math.atan2(ahead[0] - at[0], ahead[1] - at[1]) * 180 / Math.PI;
+      const el = vehicle.getElement();
+      if(el){
+        const em = el.querySelector('.pv-emoji');
+        if(em) em.style.transform = 'rotate(' + (-angle) + 'deg)';
+      }
+
+      if(p < 1){
+        playRaf = requestAnimationFrame(frame);
+      } else {
+        resolve();
+      }
+    }
+    playRaf = requestAnimationFrame(frame);
+  });
+}
+
+/* The arrival card: where we landed, when, and what it looked like. */
+function showArrival(t, placeName, isReturn){
+  const card = document.getElementById('play-card');
+  if(!card) return;
+
+  const pics = photosOf(t);
+  const sk = lang === 'sk';
+
+  if(isReturn){
+    card.innerHTML =
+      '<div class="pc-body">'+
+        '<div class="pc-label">'+(sk ? 'Domov' : 'Home')+'</div>'+
+        '<div class="pc-name">Bratislava</div>'+
+      '</div>';
+  } else {
+    const d = tripDistance(t);
+    card.innerHTML =
+      (pics.length
+        ? '<div class="pc-photo" style="background-image:url('+pics[0]+')"></div>'
+        : '')+
+      '<div class="pc-body">'+
+        '<div class="pc-label">'+esc(catLabel(t.cat))+'</div>'+
+        '<div class="pc-name">'+esc(placeName || nm(t))+'</div>'+
+        '<div class="pc-date">'+esc(fmt(t.dateFrom, t.dateTo))+'</div>'+
+        (ct(t) ? '<div class="pc-meta">'+esc(ct(t))+
+          (d && d.total ? ' &middot; ' + d.total.toLocaleString(sk?'sk-SK':'en-GB') + ' km' : '')+
+        '</div>' : '')+
+      '</div>';
+  }
+
+  card.classList.add('on');
+  tap(8);
+}
+
+function hideArrival(){
+  const card = document.getElementById('play-card');
+  if(card) card.classList.remove('on');
+}
+
+function pause(ms){
+  return new Promise(resolve=>{
+    playTimers.push(setTimeout(resolve, ms / playSpeed));
+  });
+}
+
+/* Build the list of legs to fly.
+ *
+ * Overview (no country open, no filter): one leg out to each trip and one back,
+ * so you see the shape of where we've been without every intermediate stop.
+ *
+ * A single trip: the real itinerary — flight out, then each stop in order by
+ * whatever mode was used to reach it, then the flight home. */
+function buildLegs(){
+  const HOME = [HOME_POINT.lat, HOME_POINT.lng];
+
+  // one trip drilled into: fly its actual itinerary
+  if(openCountry || curFilter !== 'all'){
+    const trips = statPlayTrips();
+    if(trips.length === 1) return legsForTrip(trips[0], HOME);
+  }
+
+  const trips = getT()
+    .filter(t => t.cat !== 'origin')
+    .filter(t => typeof t.lat === 'number' && typeof t.lng === 'number')
+    .sort((a,b) => (a.dateFrom||'').localeCompare(b.dateFrom||''));
+
+  const legs = [];
+  trips.forEach(t=>{
+    const stops = (t.stops || []).filter(p =>
+      typeof p.lat === 'number' && typeof p.lng === 'number');
+    const first = stops.length ? [stops[0].lat, stops[0].lng] : [t.lat, t.lng];
+    const last  = stops.length ? [stops[stops.length-1].lat, stops[stops.length-1].lng] : [t.lat, t.lng];
+    const mode = outModeFor(t, first);
+    const name = stops.length ? stops[0].n : nm(t);
+
+    legs.push({ from: HOME, to: first, mode, trip: t, place: name, arrive: true });
+    legs.push({ from: last, to: HOME, mode, trip: t, place: null, arrive: false, isReturn: true });
+  });
+  return legs;
+}
+
+/* How we got there. If it was recorded, use it. If not, don't just assume a
+   flight: Štúrovo is an hour up the road, and watching a plane take off for it
+   looks silly. Under 600km from home is almost certainly a drive. */
+function outModeFor(t, target){
+  if(t.outMode) return t.outMode;
+  const km = kmBetween(HOME_POINT, { lat: target[0], lng: target[1] });
+  return km < 600 ? 'car' : 'plane';
+}
+
+/* Which trips a filtered playback should cover. */
+function statPlayTrips(){
+  let trips = getT().filter(t => t.cat !== 'origin');
+  if(curFilter !== 'all') trips = trips.filter(t => t.cat === curFilter);
+  if(openCountry) trips = trips.filter(t => isosOf(t).includes(openCountry));
+  return trips;
+}
+
+/* The full itinerary of one trip: out, around, home. */
+function legsForTrip(t, HOME){
+  const stops = (t.stops || []).filter(p =>
+    typeof p.lat === 'number' && typeof p.lng === 'number');
+
+  const legs = [];
+  const firstPoint = stops.length ? [stops[0].lat, stops[0].lng] : [t.lat, t.lng];
+  const outMode = outModeFor(t, firstPoint);
+
+  if(!stops.length){
+    if(typeof t.lat !== 'number' || typeof t.lng !== 'number') return [];
+    legs.push({ from: HOME, to: [t.lat, t.lng], mode: outMode, trip: t, place: nm(t), arrive: true });
+    legs.push({ from: [t.lat, t.lng], to: HOME, mode: outMode, trip: t, arrive: false, isReturn: true });
+    return legs;
+  }
+
+  // out to the first stop
+  legs.push({
+    from: HOME, to: [stops[0].lat, stops[0].lng],
+    mode: outMode, trip: t, place: stops[0].n, arrive: true
+  });
+
+  // then stop to stop, each by the mode recorded on the arriving stop
+  for(let i = 1; i < stops.length; i++){
+    legs.push({
+      from: [stops[i-1].lat, stops[i-1].lng],
+      to: [stops[i].lat, stops[i].lng],
+      mode: stops[i].mode || 'car',
+      trip: t, place: stops[i].n, arrive: true
+    });
+  }
+
+  // and home
+  legs.push({
+    from: [stops[stops.length-1].lat, stops[stops.length-1].lng],
+    to: HOME, mode: outMode, trip: t, arrive: false, isReturn: true
+  });
+
+  return legs;
+}
+
+async function playJourney(){
   if(!mapOk || !map) return;
   if(playing){ clearPlay(); return; }
 
-  const trips = getT()
-    .filter(t=> typeof t.lat==='number' && typeof t.lng==='number')
-    .sort((a,b)=> (a.dateFrom||'').localeCompare(b.dateFrom||''));
-  if(trips.length < 2) return;
+  const legs = buildLegs();
+  if(!legs.length) return;
+
+  /* One trip drilled into -> follow it closely. Everything at once -> hold a
+     single wide view and let the journey draw itself across it. */
+  const single = (openCountry || curFilter !== 'all') && statPlayTrips().length === 1;
+  playScope = single ? 'trip' : 'overview';
 
   playing = true;
   tap(12);
   const pb = document.getElementById('play-btn');
-  if(pb) pb.classList.add('playing');   // tapping again stops it
+  if(pb) pb.classList.add('playing');
   document.getElementById('play-hud').classList.add('on');
 
-  // start from a clean map
-  markers.forEach(m=>map.removeLayer(m));
+  // clear the map down to nothing
+  markers.forEach(m => map.removeLayer(m));
   markers = [];
   clearSubMarkers();
 
-  const STEP = 620;   // ms per trip
-  let prev = null;
+  if(playScope === 'overview'){
+    // frame everything once and stay there
+    const all = [];
+    legs.forEach(l => { all.push(l.from); all.push(l.to); });
+    map.flyToBounds(L.latLngBounds(all).pad(0.15), { duration: 1.1 });
+    await pause(1300);
+    if(!playing) return;
+  }
 
-  trips.forEach((t, i)=>{
-    playTimers.push(setTimeout(()=>{
-      if(!playing) return;
-      const ll = mainLatLng(t);
+  const hudName = document.getElementById('hud-name');
+  const hudDate = document.getElementById('hud-date');
+  const hudBar  = document.getElementById('hud-bar');
 
-      if(prev){
-        const line = L.polyline(arcPoints(prev, ll, 36), {
-          color:'#B5350A', weight:2, opacity:.75, dashArray:'5,6'
-        }).addTo(map);
-        playLayers.push(line);
-      }
+  for(let i = 0; i < legs.length; i++){
+    if(!playing) break;
+    const leg = legs[i];
 
-      const pin = L.marker(ll, {icon: mkPin(t.cat, map.getZoom(), false)}).addTo(map);
+    hudName.textContent = nm(leg.trip);
+    hudDate.textContent = fmt(leg.trip.dateFrom, leg.trip.dateTo);
+    hudBar.style.width = Math.round(((i + 1) / legs.length) * 100) + '%';
+
+    hideArrival();
+
+    // frame the leg and let the tiles catch up BEFORE setting off
+    await stageLeg(leg.from, leg.to);
+    if(!playing) break;
+
+    await flyLeg(leg.from, leg.to, leg.mode);
+    if(!playing) break;
+
+    // drop a permanent pin where we landed
+    if(leg.arrive){
+      const pin = L.marker(leg.to, {
+        icon: mkPin(leg.trip.cat, map.getZoom(), false)
+      }).addTo(map);
       playLayers.push(pin);
+    }
 
-      document.getElementById('hud-name').textContent = nm(t);
-      document.getElementById('hud-date').textContent = fmt(t.dateFrom, t.dateTo);
-      document.getElementById('hud-bar').style.width =
-        Math.round(((i+1)/trips.length)*100) + '%';
+    if(playVehicle){
+      map.removeLayer(playVehicle);
+      playLayers = playLayers.filter(l => l !== playVehicle);
+      playVehicle = null;
+    }
 
-      map.panTo(ll, {animate:true, duration:.5});
-      tap(6);
+    /* Dwell on the arrival. In a single trip that's the point — you want to
+       look at the photo. In the overview there are 50-odd of them, so it's a
+       glance, not a stop; anything longer turns the whole thing into a
+       twelve-minute sit. */
+    if(playScope === 'trip'){
+      showArrival(leg.trip, leg.place, leg.isReturn);
+      await pause(leg.isReturn ? 900 : 2200);
+    } else if(leg.arrive){
+      showArrival(leg.trip, leg.place, false);
+      await pause(650);
+    } else {
+      await pause(120);   // the leg home needs no card at all
+    }
+  }
 
-      prev = ll;
-
-      if(i === trips.length - 1){
-        playTimers.push(setTimeout(()=>{ if(playing) clearPlay(); }, 1600));
-      }
-    }, i * STEP));
-  });
+  if(playing){
+    hideArrival();
+    await pause(600);
+    clearPlay();
+  }
 }
 
 /* ═══════════ COUNTDOWN ═══════════
