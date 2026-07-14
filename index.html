@@ -825,6 +825,11 @@ body.admin-mode #vadmin{padding-top:calc(var(--bh) + var(--safe-top))}
   margin-bottom:.35rem;
   flex-wrap:wrap;
 }
+.ts-flag-strip{
+  display:flex;
+  gap:.3rem;
+  flex-shrink:0;
+}
 .ts-flag-img{
   display:block;
   height:1.5em;              /* scales with the title's own font-size */
@@ -2006,6 +2011,33 @@ select.fi{
   background:var(--cd);
 }
 
+
+/* ══ AUTO-TRANSLATE OFFER ══ */
+.translate-offer{display:none;margin:-.4rem 0 .85rem}
+.translate-offer.on{display:block}
+.tro-text{
+  background:var(--w);
+  border:1.5px solid var(--go);
+  border-left:4px solid var(--go);
+  padding:.5rem .65rem;
+  font-size:.74rem;
+  color:var(--e);
+  font-style:italic;
+  line-height:1.5;
+  margin-bottom:.35rem;
+}
+.tro-actions{display:flex;gap:.4rem}
+.tro-use,.tro-skip{
+  font-size:.58rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;
+  padding:.3rem .55rem;
+  border:1.5px solid var(--e);
+  cursor:pointer;
+}
+.tro-use{background:var(--f);color:var(--s)}
+.tro-use:hover{background:var(--fl)}
+.tro-skip{background:var(--w);color:var(--gh)}
+.tro-skip:hover{background:var(--r);color:var(--w);border-color:var(--r)}
+
 /* ══ TOAST ══ */
 .toast{position:fixed;bottom:1.3rem;left:50%;z-index:2000;transform:translateX(-50%) translateY(55px);background:var(--f);color:var(--c);border:2px solid var(--fl);padding:.52rem 1.1rem;font-size:.7rem;font-weight:600;letter-spacing:.04em;white-space:nowrap;transition:transform .28s cubic-bezier(.22,1,.36,1)}
 .toast.on{transform:translateX(-50%) translateY(0)}
@@ -2245,6 +2277,7 @@ select.fi{
       </div>
       <div class="fr"><label class="flbl">Poznámka SK</label><textarea class="fta" id="f-nsk2" placeholder="Krátka spomienka…"></textarea></div>
       <div class="fr"><label class="flbl">Note EN</label><textarea class="fta" id="f-nen2" placeholder="Short memory…"></textarea></div>
+      <div class="translate-offer" id="f-translate-offer"></div>
       <div class="fr">
         <label class="flbl"><span class="t-sk">Fotka</span><span class="t-en">Photo</span></label>
         <div class="upz" onclick="document.getElementById('fphoto').click()">
@@ -2286,7 +2319,7 @@ select.fi{
         <div class="ts-hero-scrim"></div>
         <div class="ts-hero-txt">
           <div class="ts-title-row">
-            <img class="ts-flag-img" id="ts-flag-img" alt="" style="display:none">
+            <div class="ts-flag-strip" id="ts-flag-strip" style="display:none"></div>
             <span class="ts-tri" id="ts-tri"></span>
             <h2 class="ts-title" id="m-title"></h2>
           </div>
@@ -2401,6 +2434,7 @@ select.fi{
         <div class="efield">
           <label class="elbl">Poznámka SK</label>
           <textarea class="etext" id="e-nsk2"></textarea>
+          <div class="translate-offer" id="e-translate-offer"></div>
         </div>
         <div class="efield">
           <label class="elbl">Note EN</label>
@@ -2546,7 +2580,7 @@ const SEED = [
 /* ═══════════ VERSION ═══════════
    Bump this on every iteration that ships — shown in the topbar next
    to the app icon, same pattern as Kvašung. One place to update. */
-const APP_VERSION = 'v2.19.1';
+const APP_VERSION = 'v2.20.0';
 
 /* ═══════════ PLURALS ═══════════
    Slovak splits nouns three ways by count: 1 takes the singular, 2–4 take
@@ -3491,6 +3525,104 @@ function computeDistance(t){
     out, back, outMode,
     estimated: false
   };
+}
+
+/* ═══════════ AUTO-TRANSLATE ═══════════
+   Write the note in one language, get an offer to fill the other. MyMemory
+   needs no key or billing account — 5,000 chars/day per IP is generous for
+   two people writing short holiday notes, and it's called straight from the
+   browser (CORS-enabled by design).
+
+   Like everywhere else in the form, a translation is a suggestion, not an
+   overwrite: it only ever proposes filling a field that's still empty, and
+   you can dismiss it in one tap. */
+const translateCache = new Map();
+
+async function translateText(text, from, to){
+  const key = from + '|' + to + '|' + text;
+  if(translateCache.has(key)) return translateCache.get(key);
+  if(!text.trim() || text.length > 480) return null;   // MyMemory caps ~500 chars/request
+
+  try{
+    const url = 'https://api.mymemory.translated.net/get?q=' +
+      encodeURIComponent(text) + '&langpair=' + from + '|' + to;
+    const res = await fetch(url);
+    if(!res.ok) return null;
+    const data = await res.json();
+    if(data.responseStatus !== 200) return null;
+
+    const out = data.responseData.translatedText;
+    // MyMemory echoes the input back verbatim when it has nothing better —
+    // that's not a translation worth offering
+    if(!out || norm(out) === norm(text)) return null;
+
+    translateCache.set(key, out);
+    return out;
+  }catch(e){
+    return null;   // offline or blocked — the form still works without it
+  }
+}
+
+/* Wire a SK/EN pair of note fields so leaving one filled-in offers to
+   translate into the other, whichever direction was actually written. */
+function wireTranslate(prefix){
+  const skEl = document.getElementById(prefix + 'nsk2');
+  const enEl = document.getElementById(prefix + 'nen2');
+  if(!skEl || !enEl) return;
+
+  let lastEdited = null;
+  skEl.addEventListener('input', ()=>{ lastEdited = 'sk'; });
+  enEl.addEventListener('input', ()=>{ lastEdited = 'en'; });
+
+  skEl.addEventListener('blur', ()=> offerTranslation(prefix, 'sk', skEl, enEl));
+  enEl.addEventListener('blur', ()=> offerTranslation(prefix, 'en', enEl, skEl));
+
+  async function offerTranslation(pfx, fromLang, fromEl, toEl){
+    if(lastEdited !== fromLang) return;   // only the field just typed into offers anything
+    if(!fromEl.value.trim() || toEl.value.trim()) return;   // nothing to do, or the other one is already written
+
+    const toLang = fromLang === 'sk' ? 'en' : 'sk';
+    const translated = await translateText(fromEl.value.trim(), fromLang, toLang);
+    if(!translated) return;
+    if(toEl.value.trim()) return;   // it may have been filled in while we waited
+
+    showTranslateOffer(pfx, toEl, translated);
+  }
+}
+
+function showTranslateOffer(prefix, targetEl, text){
+  const box = document.getElementById(prefix + 'translate-offer');
+  if(!box){ targetEl.value = text; return; }   // no offer UI available — just fill it
+
+  box.classList.add('on');
+  box.innerHTML =
+    '<div class="tro-text">'+esc(text)+'</div>'+
+    '<div class="tro-actions">'+
+      '<button class="tro-use" onclick="acceptTranslation(\''+prefix+'\')">'+
+        (lang==='sk' ? 'Použiť preklad' : 'Use translation')+
+      '</button>'+
+      '<button class="tro-skip" onclick="dismissTranslation(\''+prefix+'\')">'+
+        (lang==='sk' ? 'Nechať prázdne' : 'Leave blank')+
+      '</button>'+
+    '</div>';
+  pendingTranslation[prefix] = { targetId: targetEl.id, text };
+}
+
+let pendingTranslation = {};
+
+function acceptTranslation(prefix){
+  const p = pendingTranslation[prefix];
+  if(!p) return;
+  const el = document.getElementById(p.targetId);
+  if(el && !el.value.trim()) el.value = p.text;
+  dismissTranslation(prefix);
+  tap();
+}
+
+function dismissTranslation(prefix){
+  const box = document.getElementById(prefix + 'translate-offer');
+  if(box){ box.classList.remove('on'); box.innerHTML = ''; }
+  delete pendingTranslation[prefix];
 }
 
 /* ═══════════ STOPS EDITOR ═══════════
@@ -5542,17 +5674,26 @@ function openModal(id){
     img.style.backgroundImage = fUrl ? 'url('+fUrl+')' : 'none';
   }
 
-  const headerFlagUrl = flagUrl(t);
-  const flagImg = document.getElementById('ts-flag-img');
+  /* Every country the trip touched gets its own flag, not just the first —
+     a roadtrip through Italy, Croatia and Romania shows all three. The old
+     single <img> couldn't do that, so it's now a small strip built fresh
+     each time. */
+  const flagStrip = document.getElementById('ts-flag-strip');
   const triEl = document.getElementById('ts-tri');
-  if(headerFlagUrl){
-    flagImg.src = headerFlagUrl;
-    flagImg.style.display = 'block';
+  const isos = Array.from(new Set(isosOf(t)));   // dedupe, preserve order
+
+  if(isos.length){
+    flagStrip.innerHTML = isos.map(iso =>
+      '<img src="https://flagcdn.com/w640/'+iso+'.png" alt="" class="ts-flag-img">'
+    ).join('');
+    flagStrip.style.display = 'flex';
     triEl.innerHTML = '';
+    triEl.style.display = 'none';
   } else {
-    // no ISO match — fall back to the small tricolour swatch
-    flagImg.style.display = 'none';
-    flagImg.src = '';
+    // no ISO match at all — fall back to the small tricolour swatch
+    flagStrip.style.display = 'none';
+    flagStrip.innerHTML = '';
+    triEl.style.display = 'flex';
     triEl.innerHTML = triInner(t);
   }
   document.getElementById('m-title').textContent = nm(t);
@@ -7113,6 +7254,8 @@ wireDates('f-');
 wireDates('e-');
 wireStopSuggest('f-');
 wireStopSuggest('e-');
+wireTranslate('f-');
+wireTranslate('e-');
 renderStops('f-');
 
 async function boot(){
