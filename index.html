@@ -1924,6 +1924,53 @@ select.fi{
 }
 .ss-all:hover{background:var(--r)}
 
+
+/* ══ NOMINATIM RESULTS ══ */
+.nom-results{display:none;margin-top:.4rem}
+.nom-results.on{display:block}
+.nom-results.on-loading::after{
+  content:'';
+  display:block;
+  height:2px;
+  background:linear-gradient(90deg, var(--go) 0%, transparent 50%, var(--go) 100%);
+  background-size:200% 100%;
+  animation:nom-load 1s linear infinite;
+}
+@keyframes nom-load{ to{ background-position:-200% 0; } }
+.nr-ttl{
+  font-size:.55rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--bm);
+  padding:.3rem .5rem .2rem;
+}
+.nr-item{
+  display:flex;flex-direction:column;align-items:flex-start;gap:.05rem;
+  width:100%;
+  background:var(--w);
+  border:1.5px solid var(--s);
+  border-top:none;
+  padding:.4rem .55rem;
+  text-align:left;
+  cursor:pointer;
+  transition:background .12s,border-color .12s;
+}
+.nr-item:first-of-type{border-top:1.5px solid var(--s)}
+.nr-item:hover{background:var(--sl);border-color:var(--go)}
+.nr-name{
+  font-family:var(--ff-d);font-size:.78rem;font-weight:700;
+  color:var(--e);line-height:1.25;
+}
+.nr-coords{
+  font-size:.56rem;color:var(--gh);
+  font-variant-numeric:tabular-nums;
+}
+.nr-attrib{
+  font-size:.52rem;color:var(--gh);
+  padding:.3rem .5rem;
+  border:1.5px solid var(--s);
+  border-top:none;
+  background:var(--cd);
+}
+
 /* ══ TOAST ══ */
 .toast{position:fixed;bottom:1.3rem;left:50%;z-index:2000;transform:translateX(-50%) translateY(55px);background:var(--f);color:var(--c);border:2px solid var(--fl);padding:.52rem 1.1rem;font-size:.7rem;font-weight:600;letter-spacing:.04em;white-space:nowrap;transition:transform .28s cubic-bezier(.22,1,.36,1)}
 .toast.on{transform:translateX(-50%) translateY(0)}
@@ -2133,6 +2180,7 @@ select.fi{
           <input class="fi stop-in-name" id="f-stop-name"
                  placeholder="Benátky, Club Lucia, pláž…" autocomplete="off">
           <datalist id="f-stop-list"></datalist>
+          <div class="nom-results" id="f-stop-remote"></div>
           <div class="stop-coord-row">
             <input class="fi stop-in-co" id="f-stop-lat"
                    type="number" step="0.0001" placeholder="lat">
@@ -2280,6 +2328,7 @@ select.fi{
           <input class="einput stop-in-name" id="e-stop-name"
                  placeholder="Benátky, Club Lucia…" autocomplete="off">
           <datalist id="e-stop-list"></datalist>
+          <div class="nom-results" id="e-stop-remote"></div>
           <div class="stop-coord-row">
             <input class="einput stop-in-co" id="e-stop-lat"
                    type="number" step="0.0001" placeholder="lat">
@@ -2459,7 +2508,7 @@ const SEED = [
 /* ═══════════ VERSION ═══════════
    Bump this on every iteration that ships — shown in the topbar next
    to the app icon, same pattern as Kvašung. One place to update. */
-const APP_VERSION = 'v2.17.0';
+const APP_VERSION = 'v2.18.0';
 
 /* ═══════════ PLURALS ═══════════
    Slovak splits nouns three ways by count: 1 takes the singular, 2–4 take
@@ -3186,6 +3235,73 @@ function autofillTrip(prefix){
 }
 
 /* Wire a name field so it offers suggestions and fills the rest in on blur. */
+/* ═══════════ NOMINATIM (OpenStreetMap search) ═══════════
+   The 155-place gazetteer only ever covers what we thought to type in by
+   hand. For anywhere else — a village, a trailhead, a street — this asks
+   OpenStreetMap's Nominatim service, which indexes essentially every named
+   place on the map.
+
+   The public instance is meant for exactly this: a person typing a search
+   and waiting for a result, not bulk processing. Their usage policy says so
+   directly — "Use that is directly triggered by the end-user... is ok,
+   provided that your number of users is moderate" — which describes this
+   app run by two people. The obligations that come with it are handled here:
+   a maximum of 1 request/second, a real User-Agent identifying the app
+   (not a library default), attribution shown wherever a result is used, and
+   every result cached so the same query never goes out twice. */
+const NOMINATIM_URL = 'https://nominatim.openstreetmap.org/search';
+const nominatimCache = new Map();
+let nominatimLastCall = 0;
+
+async function searchNominatim(q){
+  const n = norm(q);
+  if(!n || n.length < 3) return [];   // too short to be worth a network call
+  if(nominatimCache.has(n)) return nominatimCache.get(n);
+
+  // the 1 req/sec ceiling, enforced here rather than trusted to the caller
+  const wait = 1000 - (Date.now() - nominatimLastCall);
+  if(wait > 0) await new Promise(r => setTimeout(r, wait));
+  nominatimLastCall = Date.now();
+
+  const url = NOMINATIM_URL + '?format=jsonv2&limit=6&q=' + encodeURIComponent(q);
+  try{
+    const res = await fetch(url, {
+      headers: {
+        // a stock library User-Agent is exactly what the policy prohibits
+        'User-Agent': 'NasaCesta/1.0 (personal travel log, two users)',
+        'Accept-Language': lang === 'sk' ? 'sk' : 'en'
+      }
+    });
+    if(!res.ok) throw new Error('nominatim ' + res.status);
+    const data = await res.json();
+
+    const results = data.map(r => ({
+      label: r.display_name.split(',').slice(0, 3).join(','),
+      full: r.display_name,
+      lat: parseFloat(r.lat),
+      lng: parseFloat(r.lon),
+      type: r.type,
+      iso: (r.address && r.address.country_code) || guessIsoFromDisplayName(r.display_name)
+    }));
+
+    nominatimCache.set(n, results);
+    return results;
+  }catch(e){
+    return [];   // offline, blocked, or rate-limited elsewhere — fail quietly
+  }
+}
+
+/* Nominatim's country code is only in the response if addressdetails is
+   requested, which costs an extra round trip we'd rather not make for
+   every keystroke. This is a soft fallback: match the last comma-separated
+   segment of the display name against COUNTRY_INFO. */
+function guessIsoFromDisplayName(display){
+  const last = (display.split(',').pop() || '').trim();
+  const hit = Object.entries(COUNTRY_INFO).find(([,info]) =>
+    info.en === last || info.sk === last);
+  return hit ? hit[0] : null;
+}
+
 function wireAutofill(prefix, listId){
   const nsk = document.getElementById(prefix + 'nsk');
   const nen = document.getElementById(prefix + 'nen');
@@ -3455,8 +3571,13 @@ function addStop(prefix){
   if(hasManual){
     // coordinates you typed always win — you know the place, we might not
     stop = { n: name, lat: +manualLat.toFixed(4), lng: +manualLng.toFixed(4), iso: null };
-    const near = nearestPlace(stop.lat, stop.lng, 120);
-    if(near) stop.iso = near.place.iso;   // still worth knowing the country
+    if(lastNominatimIso){
+      stop.iso = lastNominatimIso;   // Nominatim already told us the country
+    } else {
+      const near = nearestPlace(stop.lat, stop.lng, 120);
+      if(near) stop.iso = near.place.iso;
+    }
+    lastNominatimIso = null;
   } else {
     const found = resolveStop(name);
     if(found){
@@ -3524,21 +3645,98 @@ function stopsForSave(){
 }
 
 /* Suggestions for the stop name box, same gazetteer as the trip name. */
+/* Local hits appear immediately, as before. If there are none, a short pause
+   after typing stops (debounced, so it doesn't fire on every keystroke) sends
+   one Nominatim request and the results appear as a pickable list beneath the
+   field — a name only ever resolves to a place once you choose one, exactly
+   like the "close match, you decide" behaviour asked for. */
+let nominatimTimer = null;
+const pendingPick = {};   // prefix -> the nominatim result last shown, for addStop to use
+
 function wireStopSuggest(prefix){
   const el = document.getElementById(prefix + 'stop-name');
   const list = document.getElementById(prefix + 'stop-list');
+  const remote = document.getElementById(prefix + 'stop-remote');
   if(!el || !list) return;
+
   el.setAttribute('list', prefix + 'stop-list');
+
   el.addEventListener('input', ()=>{
-    list.innerHTML = suggestPlaces(el.value, 8).map(g=>{
+    const q = el.value;
+    delete pendingPick[prefix];
+    if(remote){ remote.innerHTML = ''; remote.classList.remove('on'); }
+
+    const local = suggestPlaces(q, 8);
+    list.innerHTML = local.map(g=>{
       const label = (lang === 'sk') ? g.sk : g.en;
       const c = COUNTRY_INFO[g.iso];
       return '<option value="'+esc(label)+'">'+(c ? esc(c[lang === 'sk' ? 'sk' : 'en']) : '')+'</option>';
     }).join('');
+
+    clearTimeout(nominatimTimer);
+    if(local.length || norm(q).length < 3) return;   // enough locally, or too short to bother
+
+    nominatimTimer = setTimeout(async ()=>{
+      if(el.value !== q) return;   // typing moved on while we waited
+      if(remote) remote.classList.add('on-loading');
+      const hits = await searchNominatim(q);
+      if(el.value !== q) return;   // the answer arrived too late to matter
+      if(remote) remote.classList.remove('on-loading');
+      renderNominatimResults(prefix, hits);
+    }, 450);
   });
+
   el.addEventListener('keydown', e=>{
     if(e.key === 'Enter'){ e.preventDefault(); addStop(prefix); }
   });
+}
+
+function renderNominatimResults(prefix, hits){
+  const remote = document.getElementById(prefix + 'stop-remote');
+  if(!remote) return;
+
+  if(!hits.length){
+    remote.innerHTML = '';
+    remote.classList.remove('on');
+    return;
+  }
+
+  const sk = lang === 'sk';
+  remote.classList.add('on');
+  remote.innerHTML =
+    '<div class="nr-ttl">'+(sk ? 'Z OpenStreetMap:' : 'From OpenStreetMap:')+'</div>'+
+    hits.map((h,i)=>
+      '<button class="nr-item" onclick="pickNominatim(\''+prefix+'\','+i+')">'+
+        '<span class="nr-name">'+esc(h.label)+'</span>'+
+        '<span class="nr-coords">'+h.lat.toFixed(4)+', '+h.lng.toFixed(4)+'</span>'+
+      '</button>'
+    ).join('')+
+    '<div class="nr-attrib">&#169; OpenStreetMap contributors</div>';
+
+  pendingPick[prefix] = hits;
+}
+
+/* Choosing a Nominatim result fills the field and the hidden coordinates,
+   same shape as picking a gazetteer entry — addStop() doesn't need to know
+   which source it came from. */
+let lastNominatimIso = null;   // handed to addStop() for the one call right after
+
+function pickNominatim(prefix, i){
+  const hits = pendingPick[prefix];
+  if(!hits || !hits[i]) return;
+  const h = hits[i];
+
+  document.getElementById(prefix + 'stop-name').value = h.label;
+  document.getElementById(prefix + 'stop-lat').value = h.lat.toFixed(4);
+  document.getElementById(prefix + 'stop-lng').value = h.lng.toFixed(4);
+  lastNominatimIso = h.iso;
+
+  const remote = document.getElementById(prefix + 'stop-remote');
+  if(remote){ remote.innerHTML = ''; remote.classList.remove('on'); }
+  delete pendingPick[prefix];
+
+  tap();
+  addStop(prefix);
 }
 
 /* ═══════════ MAP PICKER ═══════════
@@ -3692,7 +3890,7 @@ function isosOf(t){
    the edge of a card. Not a literal flag — just enough to read the
    country at a glance without fighting the photo. */
 const FLAG_TRI = {
-  sk:['#0B4EA2','#FFFFFF','#EE1620'], hu:['#CE2939','#FFFFFF','#477050'],
+  sk:['#FFFFFF','#0B4EA2','#EE1620'], hu:['#CE2939','#FFFFFF','#477050'],
   ma:['#C1272D','#006233','#C1272D'], cy:['#FFFFFF','#D57800','#FFFFFF'],
   us:['#B22234','#FFFFFF','#3C3B6E'], si:['#FFFFFF','#0000FF','#FF0000'],
   hr:['#FF0000','#FFFFFF','#171796'], es:['#AA151B','#F1BF00','#AA151B'],
