@@ -255,8 +255,9 @@ body.admin-mode #vadmin{padding-top:calc(var(--bh) + var(--safe-top))}
    (or 22px on a phone), so they can't drift apart however the cards resize. */
 .tl-spine{
   position:relative;
-  padding:.5rem 0 2rem;
+  padding:.5rem .85rem 2rem 0;   /* right-side air so cards don't touch the screen edge */
 }
+@media(min-width:820px){ .tl-spine{ padding-right:0; } }
 
 /* the line: one dashed rule, nothing more */
 .tl-spine::before{
@@ -287,6 +288,15 @@ body.admin-mode #vadmin{padding-top:calc(var(--bh) + var(--safe-top))}
   margin:1.8rem 0 1.1rem;
   padding-left:52px;
   z-index:3;
+}
+/* When the countdown or the on-this-day banner sits directly above the first
+   year marker, their own bottom margins were stacking with this one — 1.2rem
+   plus 1.8rem read as a hole with nothing in it. The banner already put the
+   right amount of air below itself; the year header doesn't need to add more
+   on top of that specific case. */
+.countdown + .year-hdr,
+.ann-banner + .year-hdr{
+  margin-top:.3rem;
 }
 @media(min-width:820px){
   .year-hdr{
@@ -349,25 +359,28 @@ body.admin-mode #vadmin{padding-top:calc(var(--bh) + var(--safe-top))}
 }
 
 @media(min-width:820px){
-  /* Each card is (half the width, minus the gutter). Its inner edge therefore
-     sits exactly GUTTER px from the centre line — which gives the node and the
-     arm a fixed, known anchor. Everything below is measured from that edge, so
-     the node lands on the dashes no matter how the card resizes. */
+  /* On desktop the cards are taken out of normal flow and placed with an
+     exact top/left computed in JS (see positionTimeline()). Margin tricks
+     can't do this: a card's vertical position depends on how tall the
+     LAST card in its own column was, which changes with content and can
+     only be known after everything has rendered once. Each lane becomes
+     its own positioning context, sized to whatever height JS calculates. */
   .tl-spine{ --gutter:60px; }
 
+  .tl-lanes{
+    position:relative;
+    height:0;      /* JS sets this once the cards are measured and placed */
+  }
+
   .tl-item{
+    position:absolute;
+    top:0;         /* JS overrides this per card */
     padding-left:0;
     width:calc(50% - var(--gutter));
     margin-bottom:0;
   }
-  .tl-item.left { margin-right:auto; }
-  .tl-item.right{ margin-left:auto;  }
-
-  /* Pull each card up beside the previous one. Because the sides alternate, a
-     card only ever overlaps one across the line from it — never one in its own
-     column. That's what closes the gaps without touching the order. */
-  .tl-item + .tl-item{ margin-top:-64px; }
-  .tl-lanes > .tl-item:first-child{ margin-top:0; }
+  .tl-item.left { left:0; }
+  .tl-item.right{ right:0; }
 
   /* the node, on the line */
   .tl-item.left::before{
@@ -805,6 +818,13 @@ body.admin-mode #vadmin{padding-top:calc(var(--bh) + var(--safe-top))}
   margin-bottom:.7rem;
 }
 .ts-tri i{flex:1;display:block}
+/* the full flag, shown when we know the ISO code */
+.ts-flag-img{
+  display:block;
+  height:26px;width:auto;
+  border:1.5px solid rgba(226,207,160,.5);
+  box-shadow:0 2px 8px rgba(0,0,0,.4);
+}
 .ts-title{
   font-family:var(--ff-d);
   font-size:2rem;font-weight:900;
@@ -2508,7 +2528,7 @@ const SEED = [
 /* ═══════════ VERSION ═══════════
    Bump this on every iteration that ships — shown in the topbar next
    to the app icon, same pattern as Kvašung. One place to update. */
-const APP_VERSION = 'v2.18.0';
+const APP_VERSION = 'v2.19.0';
 
 /* ═══════════ PLURALS ═══════════
    Slovak splits nouns three ways by count: 1 takes the singular, 2–4 take
@@ -4876,7 +4896,80 @@ function buildTl(){
   });
 
   box.appendChild(spine);
+
+  // measure and close the gaps now that the cards are actually in the DOM
+  requestAnimationFrame(positionTimeline);
 }
+
+/* ═══════════ TIMELINE PACKING ═══════════
+   A fixed negative margin can't work here: how far a card should pull up
+   depends on how tall the PREVIOUS card was, and that's only known once
+   both are rendered. So this runs after the fact — walk the items in order,
+   and for each one (past the first) pull it up by however much clearance
+   there is below the item two positions back on the same side.
+
+   Concretely: item i sits on one side of the line; the item most likely to
+   leave dead space above it is i-1, which is on the OTHER side. Pull i up
+   until its top meets i-1's bottom, with a small gap, but never let it
+   climb past i-2's bottom (the last item on ITS OWN side) — that would
+   make it overlap a card in its own column, which reads as broken rather
+   than interleaved. */
+/* Compute an absolute top for every card in each year's lane.
+ *
+ * This replaced a margin-based approach that turned out not to work: on this
+ * layout, .tl-item elements are normal block children, so their offsetTop is
+ * always their position in DOCUMENT order — item 4's natural top includes
+ * the height of items 0-3 regardless of which side they're on. A negative
+ * margin computed from "the previous item" is therefore comparing against
+ * the wrong thing whenever two same-side cards appear in a row: the gap
+ * that actually needs closing is in one column, between non-adjacent items,
+ * and document-order neighbours can't see that.
+ *
+ * The fix is to stop asking CSS layout to answer a question about two
+ * independent columns and just place each card directly: walk the items in
+ * order, keep a running "next free y" for the left column and the right
+ * column separately, and put each card at max(its own column's floor, the
+ * OTHER column's floor + gap) — never above the last card in its own
+ * column (that would create the exact overlap being avoided), but pulled up
+ * to sit just under whatever the other side is currently doing. */
+function positionTimeline(){
+  const isDesktop = window.innerWidth >= 820;
+
+  document.querySelectorAll('.tl-lanes').forEach(lanes=>{
+    const items = Array.from(lanes.children).filter(el => el.classList.contains('tl-item'));
+    if(!items.length) return;
+
+    if(!isDesktop){
+      // phones stack in one column; static flow handles it, nothing to compute
+      items.forEach(el => { el.style.top = ''; });
+      lanes.style.height = '';
+      return;
+    }
+
+    const GAP = 18;
+    const floor = { left: 0, right: 0 };
+
+    /* Each column packs independently — a card goes directly under the last
+       card ON ITS OWN SIDE, full stop. No cross-column constraint. That IS
+       the fix: the gap in the screenshot was empty space in one column
+       while the other kept going, and the only way to close it is to let
+       the columns move at their own pace instead of tying them together. */
+    items.forEach(item=>{
+      const side = item.classList.contains('left') ? 'left' : 'right';
+      const y = floor[side];
+      item.style.top = y + 'px';
+      floor[side] = y + item.offsetHeight + GAP;
+    });
+
+    lanes.style.height = Math.max(floor.left, floor.right) + 'px';
+  });
+}
+
+let positionTimer = null;
+window.addEventListener('resize', ()=>{
+  clearTimeout(positionTimer);
+  positionTimer = setTimeout(positionTimeline, 200);
+});
 
 
 /* ═══════════ STATS ═══════════
@@ -5431,7 +5524,10 @@ function openModal(id){
     img.style.backgroundImage = fUrl ? 'url('+fUrl+')' : 'none';
   }
 
-  document.getElementById('ts-tri').innerHTML = triInner(t);
+  const headerFlagUrl = flagUrl(t);
+  document.getElementById('ts-tri').innerHTML = headerFlagUrl
+    ? '<img src="'+headerFlagUrl+'" alt="" class="ts-flag-img">'
+    : triInner(t);   // no ISO match — fall back to the tricolour swatch
   document.getElementById('m-title').textContent = nm(t);
   document.getElementById('ts-date').textContent = fmt(t.dateFrom, t.dateTo);
 
