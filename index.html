@@ -267,29 +267,28 @@ body.admin-mode #vadmin{padding-top:calc(var(--bh) + var(--safe-top))}
 }
 @media(min-width:820px){ .tl-spine{ padding-right:0; } }
 
-/* the line: one dashed rule, nothing more */
+/* On phones: a simple dashed rule down the left, cards hanging off it. */
 .tl-spine::before{
   content:'';
   position:absolute;
   top:0;bottom:0;
   left:var(--line-x);
   width:0;
-  border-left:2px dashed var(--e);
-  opacity:.4;
+  border-left:3px dashed var(--e);
+  opacity:.45;
   z-index:0;
+}
+@media(min-width:820px){
+  .tl-spine::before{ display:none; }   /* the SVG curve takes over */
 }
 
 .tl-spine{
-  --line-x:22px;      /* phone: the line hugs the left edge */
+  --line-x:22px;
   --node-size:13px;
-}
-@media(min-width:820px){
-  .tl-spine{
-    --line-x:50%;     /* tablet and up: down the middle */
-  }
+  --gutter:60px;
 }
 
-/* ── year marker, sitting on the line ── */
+/* ── year marker ── */
 .year-hdr{
   position:relative;
   display:flex;align-items:center;gap:.6rem;
@@ -297,15 +296,6 @@ body.admin-mode #vadmin{padding-top:calc(var(--bh) + var(--safe-top))}
   padding-left:52px;
   z-index:3;
 }
-/* When the countdown or the on-this-day banner sits above the first year
-   marker, their own bottom margins were stacking with this one — 1.2rem
-   plus 1.8rem read as a hole with nothing in it.
-
-   The `+` sibling selector never matched here: .countdown is a direct
-   child of #tl-body, but .year-hdr lives one level deeper, inside
-   .tl-spine — they aren't siblings, so the rule silently did nothing.
-   Targeting .tl-spine's OWN first child fixes it regardless of how deep
-   the banners sit, and only touches the very first year of the list. */
 .tl-spine > .year-hdr:first-child{
   margin-top:.3rem;
 }
@@ -335,28 +325,27 @@ body.admin-mode #vadmin{padding-top:calc(var(--bh) + var(--safe-top))}
 /* ── one trip ── */
 .tl-item{
   position:relative;
-  padding-left:52px;          /* phone: card sits right of the line */
+  padding-left:52px;
   margin-bottom:1rem;
+  z-index:2;
 }
 
-/* The node. Centred on the line by translating half its own width back —
-   this is what keeps it ON the line rather than beside it. */
+/* Phone: a round pin on the line, and a stub across to the card. */
 .tl-item::before{
   content:'';
   position:absolute;
   left:var(--line-x);
   top:28px;
-  width:var(--node-size);
-  height:var(--node-size);
-  margin-left:calc(var(--node-size) / -2);
-  margin-top:calc(var(--node-size) / -2);
-  transform:rotate(45deg);
-  background:var(--w);
+  width:15px;height:15px;
+  margin-left:-7.5px;
+  margin-top:-7.5px;
+  border-radius:50% 50% 50% 0;
+  transform:rotate(-45deg);
+  background:var(--r);
   border:2.5px solid var(--e);
+  box-shadow:2px 2px 0 rgba(26,15,5,.25);
   z-index:4;
 }
-
-/* the little arm from the line out to the card */
 .tl-item::after{
   content:'';
   position:absolute;
@@ -365,56 +354,58 @@ body.admin-mode #vadmin{padding-top:calc(var(--bh) + var(--safe-top))}
   width:30px;
   height:0;
   border-top:2px dashed var(--e);
-  opacity:.4;
+  opacity:.45;
   z-index:1;
 }
 
 @media(min-width:820px){
-  /* On desktop the cards are taken out of normal flow and placed with an
-     exact top/left computed in JS (see positionTimeline()). Margin tricks
-     can't do this: a card's vertical position depends on how tall the
-     LAST card in its own column was, which changes with content and can
-     only be known after everything has rendered once. Each lane becomes
-     its own positioning context, sized to whatever height JS calculates. */
-  .tl-spine{ --gutter:60px; }
-
-  .tl-lanes{
-    position:relative;
-    height:0;      /* JS sets this once the cards are measured and placed */
-  }
+  /* Desktop: cards are absolutely placed by JS, and the line + pins are drawn
+     as one SVG behind them (see drawTimelineCurve). The CSS pseudo-elements
+     are turned off — the SVG owns all of it, which is the only way the pins
+     can sit exactly on a curve whose shape depends on the cards. */
+  .tl-item::before,
+  .tl-item::after{ display:none; }
 
   .tl-item{
     position:absolute;
-    top:0;         /* JS overrides this per card */
+    top:0;
     padding-left:0;
-    width:calc(50% - var(--gutter));
+    width:calc(50% - var(--gutter) - 34px);
     margin-bottom:0;
   }
   .tl-item.left { left:0; }
   .tl-item.right{ right:0; }
+}
 
-  /* the node, on the line */
-  .tl-item.left::before{
-    left:auto;
-    right:calc(var(--gutter) * -1);
-    margin-right:calc(var(--node-size) / -2);
-    margin-left:0;
-  }
-  .tl-item.right::before{
-    left:calc(var(--gutter) * -1);
-    margin-left:calc(var(--node-size) / -2);
-  }
-
-  /* the arm, from the line to the card */
-  .tl-item.left::after{
-    left:auto;
-    right:calc(var(--gutter) * -1);
-    width:var(--gutter);
-  }
-  .tl-item.right::after{
-    left:calc(var(--gutter) * -1);
-    width:var(--gutter);
-  }
+/* the snaking line and its pins */
+.tl-curve{
+  position:absolute;
+  top:0;left:0;
+  z-index:1;
+  pointer-events:none;
+  overflow:visible;
+}
+.tl-curve-path{
+  fill:none;
+  stroke:var(--e);
+  stroke-width:3;
+  stroke-dasharray:11 9;
+  stroke-linecap:round;
+  opacity:.5;
+}
+.tl-stub{
+  stroke:var(--e);
+  stroke-width:2;
+  stroke-dasharray:4 4;
+  opacity:.42;
+}
+.tl-pin-body{
+  fill:var(--r);
+  stroke:var(--e);
+  stroke-width:2.2;
+}
+.tl-pin-dot{
+  fill:var(--w);
 }
 
 /* ══ TRIP CARD ══
@@ -2113,6 +2104,90 @@ select.fi{
   margin-top:.2rem;
 }
 
+
+/* ══ PLAY ROUTE, IN THE TRIP DETAIL ══ */
+.ts-sec-ttl{display:flex;align-items:center;justify-content:space-between;gap:.6rem}
+.ts-play-btn{
+  flex-shrink:0;
+  font-size:.55rem;font-weight:700;letter-spacing:.07em;text-transform:uppercase;
+  background:var(--r);color:var(--s);
+  border:2px solid var(--e);
+  box-shadow:2px 2px 0 var(--s);
+  padding:.25rem .5rem;
+  cursor:pointer;
+  transition:transform .1s,box-shadow .1s,background .15s;
+}
+.ts-play-btn:hover{background:var(--rl);transform:translate(-1px,-1px);box-shadow:3px 3px 0 var(--s)}
+.ts-play-btn.playing{background:var(--e);color:var(--go);border-color:var(--go)}
+
+.ts-map-holder{position:relative}
+.ts-play-hud{
+  position:absolute;
+  left:.5rem;right:.5rem;bottom:.5rem;
+  z-index:500;
+  display:none;
+  align-items:center;gap:.5rem;
+  background:rgba(26,15,5,.82);
+  border:1.5px solid var(--go);
+  backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);
+  padding:.35rem .6rem;
+}
+.ts-play-hud.on{display:flex}
+.ts-play-mode{font-size:.95rem;line-height:1;flex-shrink:0}
+.ts-play-place{
+  font-family:var(--ff-d);
+  font-size:.78rem;font-weight:700;
+  color:var(--s);
+  flex:1;min-width:0;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+.ts-play-track{
+  flex-shrink:0;
+  width:56px;height:3px;
+  background:var(--bm);
+  overflow:hidden;
+}
+.ts-play-track i{
+  display:block;height:100%;
+  background:var(--go);
+  width:0;
+  transition:width .3s linear;
+}
+
+
+/* ══ DISTANCE, IN THE STATS ══ */
+.dist-headline{
+  display:flex;align-items:baseline;gap:.4rem;flex-wrap:wrap;
+  margin-bottom:.9rem;
+}
+.dh-n{
+  font-family:var(--ff-d);
+  font-size:2.4rem;font-weight:900;
+  color:var(--r);
+  line-height:1;
+  font-variant-numeric:tabular-nums;
+}
+.dh-u{font-size:.9rem;font-weight:700;color:var(--gh)}
+.dh-note{
+  font-size:.6rem;color:var(--gh);
+  margin-left:auto;
+}
+.dist-extra{
+  display:flex;flex-wrap:wrap;gap:.5rem;
+  margin-top:.7rem;
+  padding-top:.6rem;
+  border-top:2px solid var(--cd);
+}
+.dist-extra span{
+  font-size:.66rem;
+  color:var(--bm);
+}
+.dist-extra b{
+  color:var(--e);
+  font-variant-numeric:tabular-nums;
+}
+.fact-dim{color:var(--gh);font-size:.68rem}
+
 /* ══ TOAST ══ */
 .toast{position:fixed;bottom:1.3rem;left:50%;z-index:2000;transform:translateX(-50%) translateY(55px);background:var(--f);color:var(--c);border:2px solid var(--fl);padding:.52rem 1.1rem;font-size:.7rem;font-weight:600;letter-spacing:.04em;white-space:nowrap;transition:transform .28s cubic-bezier(.22,1,.36,1)}
 .toast.on{transform:translateX(-50%) translateY(0)}
@@ -2427,8 +2502,20 @@ select.fi{
 
         <!-- where it was -->
         <div class="ts-map-wrap" id="ts-map-wrap">
-          <div class="ts-sec-ttl"><span class="t-sk">Kde to bolo</span><span class="t-en">Where it was</span></div>
-          <div class="ts-map" id="ts-map"></div>
+          <div class="ts-sec-ttl">
+            <span><span class="t-sk">Kde to bolo</span><span class="t-en">Where it was</span></span>
+            <button class="ts-play-btn" id="ts-play-btn" onclick="playTripDetail()">
+              &#9654; <span class="t-sk">Prehrať cestu</span><span class="t-en">Play route</span>
+            </button>
+          </div>
+          <div class="ts-map-holder">
+            <div class="ts-map" id="ts-map"></div>
+            <div class="ts-play-hud" id="ts-play-hud">
+              <span class="ts-play-mode" id="ts-play-mode"></span>
+              <span class="ts-play-place" id="ts-play-place"></span>
+              <span class="ts-play-track"><i id="ts-play-bar"></i></span>
+            </div>
+          </div>
           <div class="ts-stops" id="ts-stops"></div>
         <div class="ts-dist" id="ts-dist"></div>
         </div>
@@ -2658,7 +2745,7 @@ const SEED = [
 /* ═══════════ VERSION ═══════════
    Bump this on every iteration that ships — shown in the topbar next
    to the app icon, same pattern as Kvašung. One place to update. */
-const APP_VERSION = 'v2.21.0';
+const APP_VERSION = 'v2.22.0';
 
 /* ═══════════ PLURALS ═══════════
    Slovak splits nouns three ways by count: 1 takes the singular, 2–4 take
@@ -3582,13 +3669,13 @@ function computeDistance(t){
   if(!stops.length){
     // no stops yet — fall back to the trip's own point, there and back
     if(typeof t.lat !== 'number' || typeof t.lng !== 'number') return null;
-    const mode = t.outMode || 'plane';
+    const mode = outModeFor(t, [t.lat, t.lng]);
     const km = Math.round(kmBetween(HOME_POINT, { lat:t.lat, lng:t.lng }) *
                           (MODES[mode] ? MODES[mode].factor : 1)) * 2;
     return { total: km, legs: [], byMode: { [mode]: km }, estimated: true };
   }
 
-  const outMode = t.outMode || 'plane';
+  const outMode = outModeFor(t, [stops[0].lat, stops[0].lng]);
   const f = MODES[outMode] ? MODES[outMode].factor : 1;
   const out  = Math.round(kmBetween(HOME_POINT, stops[0]) * f);
   const back = Math.round(kmBetween(stops[stops.length-1], HOME_POINT) * f);
@@ -4814,10 +4901,13 @@ function clearPlay(){
   playTimers.forEach(clearTimeout);
   playTimers = [];
   if(playRaf){ cancelAnimationFrame(playRaf); playRaf = null; }
-  safeMap(()=>{ playLayers.forEach(l=>map.removeLayer(l)); });
+
+  const M = pm();
+  if(M){ try{ playLayers.forEach(l => M.removeLayer(l)); }catch(e){} }
   playLayers = [];
   playing = false;
   playVehicle = null;
+  playMap = null;
 
   document.getElementById('play-hud').classList.remove('on');
   const card = document.getElementById('play-card');
@@ -4828,8 +4918,12 @@ function clearPlay(){
     btn.classList.remove('playing');
     btn.disabled = false;
   }
-  drawMarkers();   // back to whatever the current view should be
+  // the big map has pins to restore; the detail sheet redraws itself
+  if(!playInDetail) drawMarkers();
+  playInDetail = false;
 }
+
+let playInDetail = false;
 
 /* ═══════════ JOURNEY PLAYBACK ═══════════
  *
@@ -4846,6 +4940,12 @@ function clearPlay(){
  */
 let playRaf = null;
 let playVehicle = null;
+
+/* Which map the playback is currently driving. The same state machine runs
+   both the big map and the little one in the trip detail — there was no sense
+   writing it twice, and a second copy would have drifted out of step. */
+let playMap = null;
+function pm(){ return playMap || map; }
 
 /* Playback speed. The full overview is 50-odd trips — at a leisurely pace
    that's a long sit, so you can wind it on. The trip-level playback is short
@@ -4908,7 +5008,8 @@ function legCurve(a, b, arcAmount, n){
    to see the shape of where you've been. */
 function stageLeg(from, to){
   return new Promise(resolve=>{
-    if(!mapOk || !map){ resolve(); return; }
+    const M = pm();
+    if(!M){ resolve(); return; }
 
     if(playScope === 'overview'){
       resolve();   // the camera was already set once, before playback began
@@ -4916,20 +5017,20 @@ function stageLeg(from, to){
     }
 
     const bounds = L.latLngBounds([from, to]).pad(0.35);
-    map.flyToBounds(bounds, { duration: 0.9, maxZoom: 11 });
+    M.flyToBounds(bounds, { duration: 0.9, maxZoom: 11 });
 
     let settled = false;
     const done = ()=>{
       if(settled) return;
       settled = true;
-      map.off('moveend', onMoveEnd);
+      M.off('moveend', onMoveEnd);
       resolve();
     };
     const onMoveEnd = ()=>{
       // camera has arrived; give the tiles a beat to fill in
       playTimers.push(setTimeout(done, Math.max(220, 420 / playSpeed)));
     };
-    map.on('moveend', onMoveEnd);
+    M.on('moveend', onMoveEnd);
 
     // never hang forever if the tiles are slow or a moveend never fires
     playTimers.push(setTimeout(done, 3000));
@@ -4940,7 +5041,8 @@ function stageLeg(from, to){
    it. Resolves when the vehicle reaches the far end. */
 function flyLeg(from, to, mode){
   return new Promise(resolve=>{
-    if(!mapOk || !map || !playing){ resolve(); return; }
+    const M = pm();
+    if(!M || !playing){ resolve(); return; }
 
     const cfg = PLAY_MODES[mode] || PLAY_MODES.car;
     const pts = legCurve(from, to, cfg.arc, 120);
@@ -4948,13 +5050,13 @@ function flyLeg(from, to, mode){
     // the full route, faint, so you can see where it's going
     const ghost = L.polyline(pts, {
       color: cfg.colour, weight: 1.5, opacity: 0.2, dashArray: cfg.dash
-    }).addTo(map);
+    }).addTo(M);
     playLayers.push(ghost);
 
     // the travelled portion, drawn as it goes
     const trail = L.polyline([pts[0]], {
       color: cfg.colour, weight: 3, opacity: 0.85
-    }).addTo(map);
+    }).addTo(M);
     playLayers.push(trail);
 
     const vehicle = L.marker(pts[0], {
@@ -4966,15 +5068,15 @@ function flyLeg(from, to, mode){
       }),
       interactive: false,
       zIndexOffset: 1000
-    }).addTo(map);
+    }).addTo(M);
     playLayers.push(vehicle);
     playVehicle = vehicle;
 
     /* Duration scales with how far the leg actually is on screen, so a hop
        across a city and a flight across an ocean both take a sensible amount
        of time rather than the same fixed tick. */
-    const px = map.latLngToContainerPoint(pts[0])
-                  .distanceTo(map.latLngToContainerPoint(pts[pts.length-1]));
+    const px = M.latLngToContainerPoint(pts[0])
+                  .distanceTo(M.latLngToContainerPoint(pts[pts.length-1]));
     let dur = (Math.max(1400, Math.min(4200, px * 4)) / cfg.speed) / playSpeed;
     // the overview flies a lot of legs; keep each one brisk
     if(playScope === 'overview') dur *= 0.45;
@@ -5152,6 +5254,83 @@ function legsForTrip(t, HOME){
   return legs;
 }
 
+/* Play one trip inside its own detail sheet, on the little map there.
+   Reuses the same state machine as the big map — see pm() — so a flight looks
+   like a flight in both places, and there's only one implementation to keep
+   honest. */
+async function playTripDetail(){
+  if(openId == null) return;
+  if(playing){ clearPlay(); return; }
+  if(!tsMap) return;   // the mini map hasn't been built (no coordinates)
+
+  const t = getT().find(x => x.id === openId);
+  if(!t) return;
+
+  const HOME = [HOME_POINT.lat, HOME_POINT.lng];
+  const legs = legsForTrip(t, HOME);
+  if(!legs.length) return;
+
+  playing = true;
+  playInDetail = true;
+  playMap = tsMap;
+  playScope = 'trip';
+  tap(12);
+
+  const btn = document.getElementById('ts-play-btn');
+  if(btn) btn.classList.add('playing');
+
+  // the mini map is normally locked; the playback needs to move the camera
+  tsMap.invalidateSize();
+
+  const hud = document.getElementById('ts-play-hud');
+  if(hud) hud.classList.add('on');
+
+  for(let i = 0; i < legs.length; i++){
+    if(!playing) break;
+    const leg = legs[i];
+
+    if(hud){
+      const cfg = PLAY_MODES[leg.mode] || PLAY_MODES.car;
+      document.getElementById('ts-play-mode').textContent = cfg.icon;
+      document.getElementById('ts-play-place').textContent =
+        leg.isReturn ? (lang === 'sk' ? 'Domov' : 'Home') : (leg.place || nm(t));
+      document.getElementById('ts-play-bar').style.width =
+        Math.round(((i + 1) / legs.length) * 100) + '%';
+    }
+
+    await stageLeg(leg.from, leg.to);
+    if(!playing) break;
+
+    await flyLeg(leg.from, leg.to, leg.mode);
+    if(!playing) break;
+
+    if(leg.arrive){
+      const pin = L.marker(leg.to, {
+        icon: mkPin(t.cat, tsMap.getZoom(), false)
+      }).addTo(tsMap);
+      playLayers.push(pin);
+    }
+
+    if(playVehicle){
+      tsMap.removeLayer(playVehicle);
+      playLayers = playLayers.filter(l => l !== playVehicle);
+      playVehicle = null;
+    }
+
+    await pause(leg.isReturn ? 700 : 1100);
+  }
+
+  if(playing){
+    await pause(500);
+    clearPlay();
+  }
+  if(btn) btn.classList.remove('playing');
+  if(hud) hud.classList.remove('on');
+
+  // put the trip's own pins back
+  renderTripMap(getT().find(x => x.id === openId));
+}
+
 async function playJourney(){
   if(!mapOk || !map) return;
   if(playing){ clearPlay(); return; }
@@ -5171,15 +5350,17 @@ async function playJourney(){
   document.getElementById('play-hud').classList.add('on');
 
   // clear the map down to nothing
-  markers.forEach(m => map.removeLayer(m));
-  markers = [];
-  clearSubMarkers();
+  if(!playInDetail){
+    markers.forEach(m => map.removeLayer(m));
+    markers = [];
+    clearSubMarkers();
+  }
 
   if(playScope === 'overview'){
     // frame everything once and stay there
     const all = [];
     legs.forEach(l => { all.push(l.from); all.push(l.to); });
-    map.flyToBounds(L.latLngBounds(all).pad(0.15), { duration: 1.1 });
+    pm().flyToBounds(L.latLngBounds(all).pad(0.15), { duration: 1.1 });
     await pause(1300);
     if(!playing) return;
   }
@@ -5208,13 +5389,13 @@ async function playJourney(){
     // drop a permanent pin where we landed
     if(leg.arrive){
       const pin = L.marker(leg.to, {
-        icon: mkPin(leg.trip.cat, map.getZoom(), false)
-      }).addTo(map);
+        icon: mkPin(leg.trip.cat, pm().getZoom(), false)
+      }).addTo(pm());
       playLayers.push(pin);
     }
 
     if(playVehicle){
-      map.removeLayer(playVehicle);
+      pm().removeLayer(playVehicle);
       playLayers = playLayers.filter(l => l !== playVehicle);
       playVehicle = null;
     }
@@ -5470,37 +5651,17 @@ function buildTl(){
   requestAnimationFrame(positionTimeline);
 }
 
-/* ═══════════ TIMELINE PACKING ═══════════
-   A fixed negative margin can't work here: how far a card should pull up
-   depends on how tall the PREVIOUS card was, and that's only known once
-   both are rendered. So this runs after the fact — walk the items in order,
-   and for each one (past the first) pull it up by however much clearance
-   there is below the item two positions back on the same side.
-
-   Concretely: item i sits on one side of the line; the item most likely to
-   leave dead space above it is i-1, which is on the OTHER side. Pull i up
-   until its top meets i-1's bottom, with a small gap, but never let it
-   climb past i-2's bottom (the last item on ITS OWN side) — that would
-   make it overlap a card in its own column, which reads as broken rather
-   than interleaved. */
-/* Compute an absolute top for every card in each year's lane.
+/* ═══════════ TIMELINE LAYOUT ═══════════
  *
- * This replaced a margin-based approach that turned out not to work: on this
- * layout, .tl-item elements are normal block children, so their offsetTop is
- * always their position in DOCUMENT order — item 4's natural top includes
- * the height of items 0-3 regardless of which side they're on. A negative
- * margin computed from "the previous item" is therefore comparing against
- * the wrong thing whenever two same-side cards appear in a row: the gap
- * that actually needs closing is in one column, between non-adjacent items,
- * and document-order neighbours can't see that.
+ * The line snakes: it bends out toward each card in turn, so every trip sits
+ * in its own curve rather than several sharing one straight run. Each card
+ * gets its own pin at the apex of its bend, connected by a short stub.
  *
- * The fix is to stop asking CSS layout to answer a question about two
- * independent columns and just place each card directly: walk the items in
- * order, keep a running "next free y" for the left column and the right
- * column separately, and put each card at max(its own column's floor, the
- * OTHER column's floor + gap) — never above the last card in its own
- * column (that would create the exact overlap being avoided), but pulled up
- * to sit just under whatever the other side is currently doing. */
+ * This has to be done in JS, not CSS, for the same reason the packing did:
+ * where a bend belongs depends on where its card ended up, and that isn't
+ * known until the cards have been measured. So: place the cards first, then
+ * draw a path through the points they turned out to occupy.
+ */
 function positionTimeline(){
   const isDesktop = window.innerWidth >= 820;
 
@@ -5508,30 +5669,133 @@ function positionTimeline(){
     const items = Array.from(lanes.children).filter(el => el.classList.contains('tl-item'));
     if(!items.length) return;
 
+    // clear any previous path — the layout may have changed under us
+    const oldPath = lanes.querySelector('.tl-curve');
+    if(oldPath) oldPath.remove();
+
     if(!isDesktop){
-      // phones stack in one column; static flow handles it, nothing to compute
-      items.forEach(el => { el.style.top = ''; });
+      // phones keep the simple stacked column with the line down the left
+      items.forEach(el => { el.style.top = ''; el.style.left = ''; el.style.right = ''; });
       lanes.style.height = '';
       return;
     }
 
-    const GAP = 18;
+    const GAP = 26;
     const floor = { left: 0, right: 0 };
+    const anchors = [];   // where each card's pin ends up, in lane coordinates
 
-    /* Each column packs independently — a card goes directly under the last
-       card ON ITS OWN SIDE, full stop. No cross-column constraint. That IS
-       the fix: the gap in the screenshot was empty space in one column
-       while the other kept going, and the only way to close it is to let
-       the columns move at their own pace instead of tying them together. */
     items.forEach(item=>{
       const side = item.classList.contains('left') ? 'left' : 'right';
       const y = floor[side];
       item.style.top = y + 'px';
       floor[side] = y + item.offsetHeight + GAP;
+
+      // the pin sits beside the card, level with its upper third
+      anchors.push({
+        side,
+        y: y + Math.min(46, item.offsetHeight * 0.28),
+        item
+      });
     });
 
-    lanes.style.height = Math.max(floor.left, floor.right) + 'px';
+    const height = Math.max(floor.left, floor.right);
+    lanes.style.height = height + 'px';
+
+    drawTimelineCurve(lanes, anchors, height);
   });
+}
+
+/* The snaking line, drawn through the pins in document order.
+ *
+ * Anchors alternate sides, so a smooth curve through them naturally weaves —
+ * we just have to give each segment enough horizontal throw to look like a
+ * deliberate bend rather than a wobble. Bezier control points are pushed out
+ * past each anchor in the direction it sits, which is what makes the line
+ * bulge toward the card instead of cutting the corner. */
+function drawTimelineCurve(lanes, anchors, height){
+  if(!anchors.length) return;
+
+  const w = lanes.offsetWidth;
+  if(!w) return;
+
+  const mid = w / 2;
+  const GUTTER = 60;              // matches --gutter in the CSS
+  const xFor = a => a.side === 'left'
+    ? mid - GUTTER                // pin sits to the LEFT of centre, by the card
+    : mid + GUTTER;
+
+  const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+  svg.setAttribute('class', 'tl-curve');
+  svg.setAttribute('width', w);
+  svg.setAttribute('height', height);
+  svg.setAttribute('viewBox', '0 0 ' + w + ' ' + height);
+
+  // start above the first pin and finish below the last, so the line runs
+  // off both ends rather than stopping dead at a card
+  const first = anchors[0];
+  const last = anchors[anchors.length - 1];
+
+  let d = 'M ' + mid + ' 0';
+  d += ' C ' + mid + ' ' + (first.y * 0.4) + ', ' +
+       xFor(first) + ' ' + (first.y - 40) + ', ' +
+       xFor(first) + ' ' + first.y;
+
+  for(let i = 1; i < anchors.length; i++){
+    const a = anchors[i-1];
+    const b = anchors[i];
+    const ax = xFor(a), bx = xFor(b);
+    const dy = b.y - a.y;
+
+    // the control points reach vertically toward each other, which keeps the
+    // crossing smooth even when two cards are far apart
+    d += ' C ' + ax + ' ' + (a.y + dy * 0.45) + ', ' +
+         bx + ' ' + (b.y - dy * 0.45) + ', ' +
+         bx + ' ' + b.y;
+  }
+
+  d += ' C ' + xFor(last) + ' ' + (last.y + 50) + ', ' +
+       mid + ' ' + (height - (height - last.y) * 0.4) + ', ' +
+       mid + ' ' + height;
+
+  const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+  path.setAttribute('class', 'tl-curve-path');
+  path.setAttribute('d', d);
+  svg.appendChild(path);
+
+  // a pin at every anchor — one per card, never shared
+  anchors.forEach(a=>{
+    const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+    g.setAttribute('class', 'tl-pin');
+    g.setAttribute('transform', 'translate(' + xFor(a) + ',' + a.y + ')');
+
+    // a classic teardrop, not a diamond
+    const pin = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    pin.setAttribute('class', 'tl-pin-body');
+    pin.setAttribute('d',
+      'M 0,7 C -6,-1 -9,-5 -9,-9 A 9,9 0 1 1 9,-9 C 9,-5 6,-1 0,7 Z');
+    g.appendChild(pin);
+
+    const dot = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+    dot.setAttribute('class', 'tl-pin-dot');
+    dot.setAttribute('cx', '0');
+    dot.setAttribute('cy', '-9');
+    dot.setAttribute('r', '3.4');
+    g.appendChild(dot);
+
+    svg.appendChild(g);
+
+    // the stub from the pin to its card
+    const stub = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+    stub.setAttribute('class', 'tl-stub');
+    const inner = a.side === 'left' ? xFor(a) - GUTTER : xFor(a) + GUTTER;
+    stub.setAttribute('x1', xFor(a));
+    stub.setAttribute('y1', a.y);
+    stub.setAttribute('x2', inner);
+    stub.setAttribute('y2', a.y);
+    svg.appendChild(stub);
+  });
+
+  lanes.insertBefore(svg, lanes.firstChild);
 }
 
 let positionTimer = null;
@@ -5661,6 +5925,85 @@ function bar(label, pct, color, val, kind, value){
     '</div>'+
     '<div class="bar-val'+(dim?' dim':'')+'"'+click+'>'+val+'</div>';
 }
+
+/* Kilometres, split by how they were travelled. Derived from the stops on
+   every render — add a stop or change a leg's mode and these move with it. */
+function distanceSection(trips, sk, loc){
+  const byMode = {};
+  let total = 0;
+
+  trips.forEach(t=>{
+    const d = tripDistance(t);
+    if(!d) return;
+    total += d.total;
+    Object.entries(d.byMode || {}).forEach(([mode, km])=>{
+      byMode[mode] = (byMode[mode] || 0) + km;
+    });
+  });
+
+  if(!total) return '';
+
+  const rows = Object.entries(byMode).sort((a,b) => b[1] - a[1]);
+  const max = rows.length ? rows[0][1] : 1;
+
+  let h = '<div class="stat-section"><div class="stat-title">'+
+    (sk ? 'Koľko sme prešli' : 'Distance covered')+'</div>';
+
+  h += '<div class="dist-headline">'+
+    '<span class="dh-n">'+total.toLocaleString(loc)+'</span>'+
+    '<span class="dh-u">km</span>'+
+    '<span class="dh-note">'+
+      (sk ? 'z Bratislavy a späť' : 'from Bratislava and back')+
+    '</span>'+
+  '</div>';
+
+  h += '<div class="bar-chart">';
+  rows.forEach(([mode, km])=>{
+    const cfg = MODES[mode];
+    if(!cfg) return;
+    const pct = Math.round(km / max * 100);
+    const share = ((km / total) * 100).toFixed(0);
+    h += bar(
+      cfg.icon + ' ' + esc(modeLabel(mode)),
+      pct,
+      MODE_COLOUR[mode] || 'var(--r)',
+      km.toLocaleString(loc) + ' km <em>' + share + '%</em>'
+    );
+  });
+  h += '</div>';
+
+  // a few figures the bars don't say
+  const flights = trips.filter(t=>{
+    const d = tripDistance(t);
+    return d && d.byMode && d.byMode.plane;
+  });
+  const flownKm = byMode.plane || 0;
+  const groundKm = total - flownKm;
+
+  h += '<div class="dist-extra">';
+  if(flownKm){
+    h += '<span><b>'+flights.length+'</b> '+(sk?'výletov lietadlom':'trips by air')+'</span>';
+  }
+  if(groundKm){
+    h += '<span><b>'+groundKm.toLocaleString(loc)+' km</b> '+(sk?'po zemi':'on the ground')+'</span>';
+  }
+  h += '<span><b>'+Math.round(total / Math.max(trips.length,1)).toLocaleString(loc)+' km</b> '+
+    (sk?'priemer na výlet':'average per trip')+'</span>';
+  h += '</div>';
+
+  h += '</div>';
+  return h;
+}
+
+/* Colours for the distance bars — one per mode, matching the playback. */
+const MODE_COLOUR = {
+  plane: '#B5350A',
+  car:   '#3D2208',
+  train: '#2A4420',
+  bus:   '#5C3410',
+  boat:  '#0B4EA2',
+  foot:  '#7A6A52'
+};
 
 /* The details, written as things worth knowing rather than a list of maxima.
    Everything is derived live, so a new trip rewrites the story on its own —
@@ -5844,12 +6187,92 @@ function funFacts(trips, all, ctx){
     sk ? 'Doma vs. vonku' : 'Home vs. away',
     sk
       ? '<b>' + qty(home,'trip') + '</b> po Slovensku.<br>' +
-        '<b>' + abroad + '</b> do zahraničia.<br>' +
-        (cat.ski.d ? '<span class="fact-since">' + qty(cat.ski.d,'day') + ' na lyžiach počas ' + skiSeasons + ' sezón.</span>' : '')
+        '<b>' + abroad + '</b> do zahraničia.'
       : '<b>' + qty(home,'trip') + '</b> in Slovakia.<br>' +
-        '<b>' + abroad + '</b> abroad.<br>' +
-        (cat.ski.d ? '<span class="fact-since">' + qty(cat.ski.d,'day') + ' on skis across ' + skiSeasons + ' seasons.</span>' : '')
+        '<b>' + abroad + '</b> abroad.'
   );
+
+  /* Days by category. Singling out skiing and ignoring the beach and the gigs
+     was arbitrary — every category earns its line, and they're generated from
+     the data rather than hand-picked, so a new category would appear here on
+     its own. */
+  const catDays = Object.entries(cat)
+    .filter(([,v]) => v.d > 0)
+    .sort((a,b) => b[1].d - a[1].d);
+
+  if(catDays.length){
+    h += card('\uD83D\uDCCA',
+      sk ? 'Dni podľa typu' : 'Days by type',
+      catDays.map(([k,v])=>{
+        const seasons = new Set(
+          trips.filter(t=>t.cat===k).map(t=>(t.dateFrom||'').slice(0,4))
+        ).size;
+        return '<b>' + v.d + '</b> ' + esc(catLabel(k).toLowerCase()) +
+          ' <span class="fact-dim">(' + v.n + '\u00D7, ' + seasons + ' ' +
+          (sk ? (seasons === 1 ? 'rok' : seasons < 5 ? 'roky' : 'rokov')
+              : (seasons === 1 ? 'year' : 'years')) + ')</span>';
+      }).join('<br>')
+    );
+  }
+
+  /* Distance superlatives. These only exist because the stops carry a mode,
+     so they'll get sharper as more legs are filled in — which is the point. */
+  const withDist = trips
+    .map(t => ({ t, d: tripDistance(t) }))
+    .filter(x => x.d && x.d.total);
+
+  const flights = withDist.filter(x => x.d.byMode && x.d.byMode.plane);
+  const drives  = withDist.filter(x => x.d.byMode && x.d.byMode.car);
+
+  if(flights.length){
+    const longestFlight  = flights.reduce((m,x) => x.d.byMode.plane > m.d.byMode.plane ? x : m, flights[0]);
+    const shortestFlight = flights.reduce((m,x) => x.d.byMode.plane < m.d.byMode.plane ? x : m, flights[0]);
+    const totalFlown = flights.reduce((sum,x) => sum + x.d.byMode.plane, 0);
+
+    h += card('\u2708\uFE0F',
+      sk ? 'Vo vzduchu' : 'In the air',
+      (sk ? 'Najdlhší let: <b>' : 'Longest flight: <b>') + esc(nm(longestFlight.t)) + '</b><br>' +
+      '<span class="fact-dim">' + longestFlight.d.byMode.plane.toLocaleString(loc) + ' km</span><br>' +
+      (sk ? 'Najkratší: <b>' : 'Shortest: <b>') + esc(nm(shortestFlight.t)) + '</b><br>' +
+      '<span class="fact-dim">' + shortestFlight.d.byMode.plane.toLocaleString(loc) + ' km</span>' +
+      '<span class="fact-since">' + (sk ? 'Priemer: ' : 'Average: ') +
+        Math.round(totalFlown / flights.length).toLocaleString(loc) + ' km</span>'
+    );
+  }
+
+  if(drives.length){
+    const longestDrive = drives.reduce((m,x) => x.d.byMode.car > m.d.byMode.car ? x : m, drives[0]);
+    const totalDriven = drives.reduce((sum,x) => sum + x.d.byMode.car, 0);
+
+    h += card('\uD83D\uDE97',
+      sk ? 'Za volantom' : 'Behind the wheel',
+      (sk ? 'Najviac najazdené: <b>' : 'Most driven: <b>') + esc(nm(longestDrive.t)) + '</b><br>' +
+      '<span class="fact-dim">' + longestDrive.d.byMode.car.toLocaleString(loc) + ' km</span><br>' +
+      (sk ? 'Spolu: <b>' : 'In total: <b>') + totalDriven.toLocaleString(loc) + ' km</b>' +
+      '<span class="fact-since">' + (sk ? 'Priemer na výlet: ' : 'Average per trip: ') +
+        Math.round(totalDriven / drives.length).toLocaleString(loc) + ' km</span>'
+    );
+  }
+
+  if(withDist.length > 1){
+    const longestTrip = withDist.reduce((m,x) => x.d.total > m.d.total ? x : m, withDist[0]);
+    const shortestTrip = withDist.reduce((m,x) => x.d.total < m.d.total ? x : m, withDist[0]);
+    const allKm = withDist.reduce((sum,x) => sum + x.d.total, 0);
+    const perDay = totalDays ? Math.round(allKm / totalDays) : 0;
+
+    h += card('\uD83D\uDCCF',
+      sk ? 'Priemery' : 'Averages',
+      (sk ? '<b>' : '<b>') + Math.round(allKm / withDist.length).toLocaleString(loc) + ' km</b> ' +
+        (sk ? 'na výlet' : 'per trip') + '<br>' +
+      '<b>' + perDay.toLocaleString(loc) + ' km</b> ' + (sk ? 'na deň preč' : 'per day away') + '<br>' +
+      '<b>' + (totalDays / trips.length).toFixed(1) + '</b> ' +
+        (sk ? 'dní na výlet' : 'days per trip') +
+      '<span class="fact-since">' +
+        (sk ? 'Najkratší: ' : 'Shortest: ') + esc(nm(shortestTrip.t)) +
+        ' (' + shortestTrip.d.total.toLocaleString(loc) + ' km)' +
+      '</span>'
+    );
+  }
 
   h += card('\uD83D\uDEEC',
     sk ? 'Prvý a posledný' : 'First and latest',
@@ -6042,6 +6465,7 @@ function buildStats(){
   });
   h += '</tbody></table></div>';
 
+  h += distanceSection(trips, sk, loc);
   h += funFacts(trips, all, { sk, loc, cat, ymap, yKeys, ctrs, totalDays, daysTogether, pctTravelling, mon });
 
   box.innerHTML = h;
