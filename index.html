@@ -2745,7 +2745,7 @@ const SEED = [
 /* ═══════════ VERSION ═══════════
    Bump this on every iteration that ships — shown in the topbar next
    to the app icon, same pattern as Kvašung. One place to update. */
-const APP_VERSION = 'v2.22.0';
+const APP_VERSION = 'v2.22.1';
 
 /* ═══════════ PLURALS ═══════════
    Slovak splits nouns three ways by count: 1 takes the singular, 2–4 take
@@ -5735,9 +5735,13 @@ function drawTimelineCurve(lanes, anchors, height){
   const first = anchors[0];
   const last = anchors[anchors.length - 1];
 
+  // entry/exit stubs use the same handle floor as the between-pin segments,
+  // so the tangent length is consistent and the run-in/run-out don't kink
+  const endReach = Math.max(GUTTER * 0.6, 34);
+
   let d = 'M ' + mid + ' 0';
   d += ' C ' + mid + ' ' + (first.y * 0.4) + ', ' +
-       xFor(first) + ' ' + (first.y - 40) + ', ' +
+       xFor(first) + ' ' + (first.y - endReach) + ', ' +
        xFor(first) + ' ' + first.y;
 
   for(let i = 1; i < anchors.length; i++){
@@ -5746,14 +5750,22 @@ function drawTimelineCurve(lanes, anchors, height){
     const ax = xFor(a), bx = xFor(b);
     const dy = b.y - a.y;
 
-    // the control points reach vertically toward each other, which keeps the
-    // crossing smooth even when two cards are far apart
-    d += ' C ' + ax + ' ' + (a.y + dy * 0.45) + ', ' +
-         bx + ' ' + (b.y - dy * 0.45) + ', ' +
+    // The handles leave and arrive VERTICALLY (control x == anchor x), so the
+    // tangent at every pin is straight up-and-down and the two segments meeting
+    // there share it — no corner. The trap is length: when two cards sit close
+    // (small dy) a plain dy*0.45 handle shrinks to almost nothing, the tangent
+    // collapses and the join snaps into a V. So give each handle a floor that
+    // also scales with the horizontal throw between the sides, which is what the
+    // eye reads as the depth of the weave. Never shorter than that.
+    const throw_ = Math.abs(bx - ax);
+    const reach = Math.max(dy * 0.45, throw_ * 0.6, 34);
+
+    d += ' C ' + ax + ' ' + (a.y + reach) + ', ' +
+         bx + ' ' + (b.y - reach) + ', ' +
          bx + ' ' + b.y;
   }
 
-  d += ' C ' + xFor(last) + ' ' + (last.y + 50) + ', ' +
+  d += ' C ' + xFor(last) + ' ' + (last.y + endReach) + ', ' +
        mid + ' ' + (height - (height - last.y) * 0.4) + ', ' +
        mid + ' ' + height;
 
